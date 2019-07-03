@@ -370,6 +370,11 @@ int main(int argc, char * argv[])
                 exit(EXIT_FAILURE);
             }
 
+            fprintf(f, "Vector:\n");
+            for (int i = 0; i < proc_info[MASTER].N; i++) {
+                fprintf(f, "%.8lf ", buf_x[i]);
+            }
+            fprintf(f, "\n Result:\n");
             /* write result */
             for (int i = 0; i < proc_info[MASTER].N; i++) {
                 fprintf(f, "%.8lf\n", res[i]);
