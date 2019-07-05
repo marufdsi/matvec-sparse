@@ -18,7 +18,8 @@
 #include "partition.h"
 
 /* Partition policy selection {EQUAL_NZ, EQUAL_ROWS} */
-enum policies policy = EQUAL_NZ;
+//enum policies policy = EQUAL_NZ;
+enum policies policy = EQUAL_ROWS;
 MPI_Datatype proc_info_type;
 
 enum tag { REQUEST_TAG, REPLY_TAG };
