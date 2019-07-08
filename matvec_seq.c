@@ -18,7 +18,6 @@ void mat_vec_mult(const double *values,
                     const int NZ)
 {
     for (int k = 0 ; k < NZ; k++) {
-        printf("i_id:%d, j_idx:%d, values:%lf, x:%lf, y:%lf, mult:%lf\n", i_idx[k], j_idx[k], values[k], x[ j_idx[k]], y[ i_idx[k] ], (values[k] * x[ j_idx[k] ]));
         y[ i_idx[k] ] += values[k] * x[ j_idx[k] ];
     }
 }
@@ -76,6 +75,9 @@ int main(int argc, char * argv[])
 
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
+        for (int i = 0; i < N; i++) {
+            y[i] = 1;
+        }
         double my_comp_time = 0;
         __sw_start(0);
         mat_vec_mult(values, i_idx, j_idx, x, y, NZ);
