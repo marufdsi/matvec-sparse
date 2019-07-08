@@ -96,21 +96,24 @@ int main(int argc, char * argv[])
         // file exists
         fclose(checkFile);
         if ( !(resultCSV = fopen("SeqSpMVResult.csv", "w")) ) {
-            fprintf(stderr, "fopen: failed to open file SeqSpMVResult.csv");
+            printf("fopen: failed to open file SeqSpMVResult.csv");
             exit(EXIT_FAILURE);
         }
     }
     else
     {
         if ( !(resultCSV = fopen("SeqSpMVResult.csv", "w")) ) {
-            fprintf(stderr, "fopen: failed to open file SeqSpMVResult.csv");
+            printf("fopen: failed to open file SeqSpMVResult.csv");
             exit(EXIT_FAILURE);
         }
         fprintf(resultCSV, "MatrixName,ComputationTime,Stdev,TotalRun\n");
     }
 
     fprintf(resultCSV, "%s,%10.3lf,%4.3lf,%d\n", in_file, mean, stdev, TOTAL_RUNS);
-
+    if ( fclose(resultCSV) != 0) {
+        printf("fopen: failed to open file SeqSpMVResult");
+        exit(EXIT_FAILURE);
+    }
 
     printf("Sequential Avg Computation time and Stdev: %10.3lf [%4.3lf] ms\n\n", mean, stdev);
 
