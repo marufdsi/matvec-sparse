@@ -382,7 +382,7 @@ int main(int argc, char * argv[])
             fprintf(resultCSV, "MatrixName,ComputationTime,Stdev,TotalRun,nProcess,PartitionType,TotalExecutionTime\n");
         }
 
-        fprintf(resultCSV, "%s,%10.3lf,%4.3lf,%d,%d,%s,%10.3lf\n", in_file, mean, stdev, TOTAL_RUNS, nprocs, policy, (mean + partition_time));
+        fprintf(resultCSV, "%s,%10.3lf,%4.3lf,%d,%d,%d,%10.3lf\n", in_file, mean, stdev, TOTAL_RUNS, nprocs, (policy==EQUAL_ROWS?0:1), (mean + partition_time));
         if ( fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
             exit(EXIT_FAILURE);
