@@ -6,6 +6,9 @@
 #include "mmio-wrapper.h"
 #include "stopwatch.h"
 #include "util.h"
+#include <math.h>
+
+#define TOTAL_RUNS 100
 
 void mat_vec_mult(const double *values,
                     const int *i_idx,
@@ -69,6 +72,24 @@ int main(int argc, char * argv[])
     __sw_start(0);
     mat_vec_mult(values, i_idx, j_idx, x, y, NZ);
     __sw_stop(0, &comp_time);
+
+    double stdev = 0, mean = 0, runs[TOTAL_RUNS];
+    for (int r = 0; r < TOTAL_RUNS; r++) {
+        double my_comp_time = 0;
+        __sw_start(0);
+        mat_vec_mult(values, i_idx, j_idx, x, y, NZ);
+        //MPI_Barrier(MPI_COMM_WORLD);
+        __sw_stop(0, &my_comp_time);
+        runs[r] = (my_comp_time) * 1000.0;
+        mean += runs[r];
+    }
+    mean /= TOTAL_RUNS;
+    for (int r = 0; r < TOTAL_RUNS; r++) {
+        stdev += (runs[r] - mean) * (runs[r] - mean);
+    }
+    stdev = sqrt(stdev);
+
+    printf("Sequential Avg Computation time and Stdev: %10.3lf [%4.3lf] ms\n\n", mean, stdev);
 
     printf("Total execution time: %10.3lf ms\n", comp_time);
 
