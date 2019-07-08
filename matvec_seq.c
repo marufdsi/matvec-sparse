@@ -91,7 +91,7 @@ int main(int argc, char * argv[])
 
     printf("Sequential Avg Computation time and Stdev: %10.3lf [%4.3lf] ms\n\n", mean, stdev);
 
-//    printf("Total execution time: %10.3lf ms\n", comp_time);
+    printf("Total execution time: %10.3lf ms\n", comp_time);
 
     if (out_file != NULL) {
         printf("Writing result to '%s'\n", out_file);
