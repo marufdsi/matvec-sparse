@@ -80,10 +80,9 @@ int main(int argc, char * argv[])
         mat_vec_mult(values, i_idx, j_idx, x, y, NZ);
         //MPI_Barrier(MPI_COMM_WORLD);
         __sw_stop(0, &my_comp_time);
-        runs[r] = (my_comp_time) * 1000.0;
+        runs[r] = my_comp_time;
         mean += runs[r];
     }
-    printf("Total Runtime of %d times: %10.3lf\n", TOTAL_RUNS,  mean);
     mean /= TOTAL_RUNS;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         stdev += (runs[r] - mean) * (runs[r] - mean);
@@ -92,7 +91,7 @@ int main(int argc, char * argv[])
 
     printf("Sequential Avg Computation time and Stdev: %10.3lf [%4.3lf] ms\n\n", mean, stdev);
 
-    printf("Total execution time: %10.3lf ms\n", comp_time);
+//    printf("Total execution time: %10.3lf ms\n", comp_time);
 
     if (out_file != NULL) {
         printf("Writing result to '%s'\n", out_file);
