@@ -83,7 +83,7 @@ int main(int argc, char * argv[])
         runs[r] = (my_comp_time) * 1000.0;
         mean += runs[r];
     }
-    printf("Total Runtime of %d times: %10.3lf\n", mean);
+    printf("Total Runtime of %d times: %10.3lf\n", TOTAL_RUNS,  mean);
     mean /= TOTAL_RUNS;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         stdev += (runs[r] - mean) * (runs[r] - mean);
