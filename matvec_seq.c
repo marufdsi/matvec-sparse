@@ -18,6 +18,7 @@ void mat_vec_mult(const double *values,
                     const int NZ)
 {
     for (int k = 0 ; k < NZ; k++) {
+        printf("i_id:%d, j_idx:%d, values:%lf, x:%lf, y:%lf, mult:%lf\n", i_idx[k], j_idx[k], values[k], x[ j_idx[k]], y[ i_idx[k] ], (values[k] * x[ j_idx[k] ]));
         y[ i_idx[k] ] += values[k] * x[ j_idx[k] ];
     }
 }
