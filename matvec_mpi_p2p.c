@@ -361,6 +361,28 @@ int main(int argc, char * argv[])
 
     /* write to output file */
     if (rank == MASTER) {
+
+        FILE *resultCSV;
+        FILE *checkFile;
+        if((checkFile = fopen("MPISpMVResult.csv","r"))!=NULL)
+        {
+            // file exists
+            fclose(checkFile);
+            if ( !(resultCSV = fopen("MPISpMVResult.csv", "w")) ) {
+                fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
+                exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            if ( !(resultCSV = fopen("MPISpMVResult.csv", "w")) ) {
+                fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
+                exit(EXIT_FAILURE);
+            }
+            fprintf(resultCSV, "MatrixName,ComputationTime,Stdev,TotalRun,PartitionType,TotalExecutionTime\n");
+        }
+
+        fprintf(resultCSV, "%s,%10.3lf,%4.3lf,%d,%s,%10.3lf\n", in_file, mean, stdev, TOTAL_RUNS,policy, (mean + partition_time));
         
         if (out_file != NULL) {
             printf("Writing result to '%s'\n", out_file);
