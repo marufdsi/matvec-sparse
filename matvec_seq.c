@@ -76,7 +76,7 @@ int main(int argc, char * argv[])
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
         for (int i = 0; i < N; i++) {
-            y[i] = 1;
+            y[i] = 0;
         }
         double my_comp_time = 0;
         __sw_start(0);
