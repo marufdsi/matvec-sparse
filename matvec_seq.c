@@ -95,7 +95,7 @@ int main(int argc, char * argv[])
     {
         // file exists
         fclose(checkFile);
-        if ( !(resultCSV = fopen("SeqSpMVResult.csv", "w")) ) {
+        if ( !(resultCSV = fopen("SeqSpMVResult.csv", "a")) ) {
             printf("fopen: failed to open file SeqSpMVResult.csv");
             exit(EXIT_FAILURE);
         }

@@ -368,7 +368,7 @@ int main(int argc, char * argv[])
         {
             // file exists
             fclose(checkFile);
-            if ( !(resultCSV = fopen("MPISpMVResult.csv", "w")) ) {
+            if ( !(resultCSV = fopen("MPISpMVResult.csv", "a")) ) {
                 fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
                 exit(EXIT_FAILURE);
             }
