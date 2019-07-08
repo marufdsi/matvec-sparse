@@ -1,10 +1,10 @@
 # C compiler 
 CC = gcc
-CFLAGS = -O2 -std=gnu99 -DDEBUG
+CFLAGS = -O3 -std=gnu99 -DDEBUG
 
 # MPI compiler wrapper
 MPI_C = mpicc
-MPI_CFLAGS = -O2 -std=gnu99 -DDEBUG
+MPI_CFLAGS = -O3 -std=gnu99 -DDEBUG
 
 # Link libraries
 LDFLAGS = -lm -lrt

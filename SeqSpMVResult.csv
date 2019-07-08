@@ -1,0 +1,8 @@
+MatrixName,ComputationTime,Stdev,TotalRun
+input/ecology1_2.mtx,     6.480,0.072,100
+input/ecology1_2_original.mtx,     6.293,0.063,100
+input/4elt_2_original.mtx,     0.112,0.002,100
+input/4elt_2.mtx,     0.112,0.001,100
+input/4elt_4.mtx,     0.112,0.002,100
+input/4elt_8.mtx,     0.112,0.001,100
+input/4elt_16.mtx,     0.112,0.001,100
