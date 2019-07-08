@@ -352,7 +352,7 @@ int main(int argc, char * argv[])
         for (int r = 0; r < TOTAL_RUNS; r++) {
             stdev += (runs[r] - mean) * (runs[r] - mean);
         }
-        stdev = sqrt(stdev);
+        stdev = sqrt(stdev/(TOTAL_RUNS-1));
 
         printf("[%d] Computation time: %10.3lf [%4.3lf] ms\n\n", rank, mean, stdev);
         printf("[%d] Total execution time: %10.3lf ms\n", rank, mean + partition_time);
