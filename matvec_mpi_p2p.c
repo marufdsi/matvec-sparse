@@ -8,7 +8,7 @@
 
 #undef DEBUG
 
-#define TOTAL_RUNS 0
+#define TOTAL_RUNS 100
 
 #define MAX_RANDOM_NUM (1<<20)
 #define MASTER 0
