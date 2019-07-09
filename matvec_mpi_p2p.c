@@ -185,12 +185,16 @@ double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
     MPI_Scatterv(buf_values, nz_count, nz_offset, MPI_DOUBLE, values, 
                     proc_info[rank].nz_count, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
+    if(rank != MASTER){
+        printf("nz_count:%d\n", proc_info[rank].nz_count);
+        for (int i = 0; i < proc_info[rank].nz_count; ++i) {
+            printf("values:%lf ** ", values[i]);
+        }
+        printf("\n");
+    }
     /* Local elements multiplication */
     for (int k = 0 ; k < proc_info[rank].nz_count; k++) {
         if ( in_range( j_idx[k], proc_info[rank].row_start_idx, proc_info[rank].row_count) ) {
-            if(values[k] * x[ j_idx[k] ] == 0){
-                printf("i=$d, j=%d, values=%lf, x=%lf\n", i_idx[k], j_idx[k], values[k], x[j_idx[k]]);
-            }
             y[ i_idx[k] - proc_info[rank].row_start_idx ] += values[k] * x[ j_idx[k] ];
         }
     }
