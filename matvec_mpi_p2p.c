@@ -341,8 +341,14 @@ int main(int argc, char * argv[])
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
-    if (rank == MASTER)
+    if (rank == MASTER) {
         printf("Computation time: %10.3lf ms\n", (MPI_Wtime() - t) * 1000.0);
+        printf("Result: ");
+        for (int i = 0; i < all_proc_info[MASTER].N; i++) {
+            printf("**%.8lf** ", res[i]);
+        }
+        printf("\n");
+    }
 
 
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
