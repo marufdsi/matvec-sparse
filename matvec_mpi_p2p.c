@@ -37,11 +37,11 @@ double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
         *row_count, *row_offset;
 
     /* scatter to processors all info that will be needed */
-    /*if (rank == MASTER)
+    if (rank == MASTER)
         proc_info = all_proc_info;
     else
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );
-    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);*/
+    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *)calloc_or_exit( proc_info[rank].row_count, sizeof(double) );
@@ -345,11 +345,11 @@ int main(int argc, char * argv[])
         debug("[%d] Starting algorithm...\n", rank);
     }
     /* scatter to processors all info that will be needed */
-    if (rank == MASTER)
+    /*if (rank == MASTER)
         proc_info = all_proc_info;
     else
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );
-    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);
+    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);*/
 
     if (rank == MASTER) t = MPI_Wtime();
     /* Matrix-vector multiplication for each processes */
