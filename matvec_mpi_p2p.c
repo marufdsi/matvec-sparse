@@ -186,14 +186,14 @@ double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
                     proc_info[rank].nz_count, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
     /* Local elements multiplication */
-    printf("Rank:%d range %d to %d \n", rank, proc_info[rank].row_start_idx, proc_info[rank].row_count);
     for (int k = 0 ; k < proc_info[rank].nz_count; k++) {
-        printf("i:%d, j%d, value:%lf\n", i_idx[k], j_idx[k], values[k]);
         if ( in_range( j_idx[k], proc_info[rank].row_start_idx, proc_info[rank].row_count) ) {
+            if(values[k] * x[ j_idx[k] ] == 0){
+                printf("i=$d, j=%d, values=%lf, x=%lf\n", i_idx[k], j_idx[k], values[k], x[j_idx[k]]);
+            }
             y[ i_idx[k] - proc_info[rank].row_start_idx ] += values[k] * x[ j_idx[k] ];
         }
     }
-    printf("List of Non-zero Elements\n");
 
     /* wait for all blocks to arrive */
     int p;
