@@ -247,7 +247,7 @@ int main(int argc, char * argv[])
         rank;       /* id of task/process */
     
     /***** MPI MASTER (root) process only ******/
-    proc_info_t *all_proc_info;
+    proc_info_t *proc_info;
 
     int *buf_i_idx,     /* row index for all matrix elements */
         *buf_j_idx;     /* column index for all matrix elements */
@@ -279,33 +279,33 @@ int main(int argc, char * argv[])
         }
 
         /* initialize proc_info array */
-        all_proc_info = (proc_info_t *)malloc_or_exit( nprocs * sizeof(proc_info_t) );
+        proc_info = (proc_info_t *)malloc_or_exit( nprocs * sizeof(proc_info_t) );
         
         /* read matrix */
         if ( read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
-                            &all_proc_info[MASTER].N, &all_proc_info[MASTER].NZ) != 0) {
+                            &proc_info[MASTER].N, &proc_info[MASTER].NZ) != 0) {
             fprintf(stderr, "read_matrix: failed\n");
             exit(EXIT_FAILURE);
         }
 
         debug("[%d] Read matrix from '%s'!\n", rank, in_file);
         debug("[%d] Matrix properties: N = %d, NZ = %d\n\n",rank,
-              all_proc_info[MASTER].N, all_proc_info[MASTER].NZ);
+              proc_info[MASTER].N, proc_info[MASTER].NZ);
 
         /* initialize process info */
         for (int p = 0; p < nprocs; p++) {
             if (p != MASTER) {
-                all_proc_info[p] = all_proc_info[MASTER];
+                proc_info[p] = proc_info[MASTER];
             }
         }
 
         /* allocate x, res vector */
-        buf_x = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
-        res = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
+        buf_x = (double *)malloc_or_exit( proc_info[MASTER].N * sizeof(double) );
+        res = (double *)malloc_or_exit( proc_info[MASTER].N * sizeof(double) );
 
         /* generate random vector */
         //random_vec(buf_x, N, MAX_RANDOM_NUM);
-        for (int i = 0; i < all_proc_info[MASTER].N; i++) {
+        for (int i = 0; i < proc_info[MASTER].N; i++) {
             buf_x[i] = 1;
         }
 
@@ -314,11 +314,11 @@ int main(int argc, char * argv[])
         /* divide work across processes */
         if (policy == EQUAL_ROWS) {
             printf("[%d] Policy: Equal number of ROWS\n", rank);
-            partition_equal_rows(all_proc_info, nprocs, buf_i_idx);
+            partition_equal_rows(proc_info, nprocs, buf_i_idx);
         }
         else if (policy == EQUAL_NZ) {
             printf("[%d] Policy: Equal number of NZ ENTRIES\n", rank);
-            partition_equal_nz_elements(all_proc_info, nprocs, buf_i_idx);
+            partition_equal_nz_elements(proc_info, nprocs, buf_i_idx);
         }
         else {
             fprintf(stderr, "Wrong policy defined...");
@@ -340,16 +340,16 @@ int main(int argc, char * argv[])
     first_run = 0;
     if (rank == MASTER) t = MPI_Wtime();
     /* Matrix-vector multiplication for each processes */
-    res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
+    res = mat_vec_mult_parallel(rank, nprocs, proc_info, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
     if (rank == MASTER) {
         printf("Computation time: %10.3lf ms\n", (MPI_Wtime() - t) * 1000.0);
         printf("Values: ");
-        for (int i = 0; i < all_proc_info[MASTER].NZ; i++) {
+        for (int i = 0; i < proc_info[MASTER].NZ; i++) {
             printf("**%.8lf** ", buf_values[i]);
         }
         printf("\n");printf("Result: ");
-        for (int i = 0; i < all_proc_info[MASTER].N; i++) {
+        for (int i = 0; i < proc_info[MASTER].N; i++) {
             printf("**%.8lf** ", res[i]);
         }
         printf("\n");
@@ -360,7 +360,7 @@ int main(int argc, char * argv[])
     for (int r = 0; r < TOTAL_RUNS; r++) {
         MPI_Barrier(MPI_COMM_WORLD);
         if (rank == MASTER) t = MPI_Wtime();
-        res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
+        res = mat_vec_mult_parallel(rank, nprocs, proc_info, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
         //MPI_Barrier(MPI_COMM_WORLD);
         if (rank == MASTER){
@@ -421,12 +421,12 @@ int main(int argc, char * argv[])
             }
 
             fprintf(f, "Vector:\n");
-            for (int i = 0; i < all_proc_info[MASTER].N; i++) {
+            for (int i = 0; i < proc_info[MASTER].N; i++) {
                 fprintf(f, "%.8lf ", buf_x[i]);
             }
             fprintf(f, "\n Result:\n");
             /* write result */
-            for (int i = 0; i < all_proc_info[MASTER].N; i++) {
+            for (int i = 0; i < proc_info[MASTER].N; i++) {
                 fprintf(f, "%.8lf\n", res[i]);
             }
             
