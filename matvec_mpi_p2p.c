@@ -262,7 +262,7 @@ int main(int argc, char * argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    printf("Rank: %d\n", rank);
+//    printf("Rank: %d\n", rank);
     create_mpi_datatypes(&proc_info_type);
 
     /* master thread reads matrix */
@@ -337,12 +337,9 @@ int main(int argc, char * argv[])
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );
     MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);
 
-    if (rank == MASTER) t = MPI_Wtime();
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
-    if (rank == MASTER)
-        printf("Computation time: %10.3lf ms\n", (MPI_Wtime() - t) * 1000.0);
 
 
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
