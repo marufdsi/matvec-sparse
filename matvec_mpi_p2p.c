@@ -344,7 +344,7 @@ int main(int argc, char * argv[])
     if (rank == MASTER) {
         printf("Computation time: %10.3lf ms\n", (MPI_Wtime() - t) * 1000.0);
         printf("Values: ");
-        for (int i = 0; i < all_proc_info[MASTER].N; i++) {
+        for (int i = 0; i < all_proc_info[MASTER].nz_count; i++) {
             printf("**%.8lf** ", buf_values[i]);
         }
         printf("\n");printf("Result: ");
