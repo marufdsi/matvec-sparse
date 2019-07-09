@@ -23,7 +23,7 @@
 enum policies policy = EQUAL_ROWS;
 MPI_Datatype proc_info_type;
 proc_info_t *proc_info;
-
+int first_run = 0;
 enum tag { REQUEST_TAG, REPLY_TAG };
 
 double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
@@ -185,19 +185,21 @@ double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
     MPI_Scatterv(buf_values, nz_count, nz_offset, MPI_DOUBLE, values, 
                     proc_info[rank].nz_count, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
-    if(rank != MASTER){
-        printf("Non Master nz_count:%d\n", proc_info[rank].nz_count);
-        for (int i = 0; i < proc_info[rank].nz_count; ++i) {
-            printf("Non-Master i=%d, j=%d, values:%lf ** ", i_idx[i], j_idx[i],values[i]);
+    if (first_run == 0) {
+        if (rank != MASTER) {
+            printf("Non Master nz_count:%d\n", proc_info[rank].nz_count);
+            for (int i = 0; i < proc_info[rank].nz_count; ++i) {
+                printf("Non-Master i=%d, j=%d, values:%lf ** ", i_idx[i], j_idx[i], values[i]);
+            }
+            printf("\n");
         }
-        printf("\n");
-    }
-    if(rank == MASTER){
-        printf("Master nz_count:%d\n", proc_info[rank].nz_count);
-        for (int i = 0; i < proc_info[rank].nz_count; ++i) {
-            printf("Master i=%d, j=%d, values:%lf ** ", i_idx[i], j_idx[i],values[i]);
+        if (rank == MASTER) {
+            printf("Master nz_count:%d\n", proc_info[rank].nz_count);
+            for (int i = 0; i < proc_info[rank].nz_count; ++i) {
+                printf("Master i=%d, j=%d, values:%lf ** ", i_idx[i], j_idx[i], values[i]);
+            }
+            printf("\n");
         }
-        printf("\n");
     }
     /* Local elements multiplication */
     for (int k = 0 ; k < proc_info[rank].nz_count; k++) {
@@ -351,6 +353,7 @@ int main(int argc, char * argv[])
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );
     MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);*/
 
+    first_run = 0;
     if (rank == MASTER) t = MPI_Wtime();
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
@@ -367,7 +370,7 @@ int main(int argc, char * argv[])
         }
         printf("\n");
     }
-
+    first_run += 1;
 
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
