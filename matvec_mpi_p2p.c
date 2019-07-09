@@ -330,13 +330,6 @@ int main(int argc, char * argv[])
         debug("[%d] Starting algorithm...\n", rank);
     }
 
-    int i = 0;
-    char hostname[256];
-    gethostname(hostname, sizeof(hostname));
-    printf("PID %d on %s ready for attach\n", getpid(), hostname);
-    fflush(stdout);
-    while (0 == i)
-        sleep(5);
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, proc_info, buf_i_idx, 
                                 buf_j_idx, buf_values, buf_x);
