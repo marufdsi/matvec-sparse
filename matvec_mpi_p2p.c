@@ -22,14 +22,14 @@
 //enum policies policy = EQUAL_NZ;
 enum policies policy = EQUAL_ROWS;
 MPI_Datatype proc_info_type;
-proc_info_t *proc_info;
+//proc_info_t *proc_info;
 int first_run = 0;
 enum tag { REQUEST_TAG, REPLY_TAG };
 
 double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
                             int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x)
 {
-//    proc_info_t *proc_info; /* info about submatrix; different per process */
+    proc_info_t *proc_info; /* info about submatrix; different per process */
     double *res;            /* result of multiplication res = A*x */
 
     /***** MPI MASTER (root) process only ******/
@@ -185,22 +185,6 @@ double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
     MPI_Scatterv(buf_values, nz_count, nz_offset, MPI_DOUBLE, values, 
                     proc_info[rank].nz_count, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
-    if (first_run == 0) {
-        if (rank != MASTER) {
-            printf("Non Master nz_count:%d\n", proc_info[rank].nz_count);
-            for (int i = 0; i < proc_info[rank].nz_count; ++i) {
-                printf("Non-Master i=%d, j=%d, values:%lf ** ", i_idx[i], j_idx[i], values[i]);
-            }
-            printf("\n");
-        }
-        if (rank == MASTER) {
-            printf("Master nz_count:%d\n", proc_info[rank].nz_count);
-            for (int i = 0; i < proc_info[rank].nz_count; ++i) {
-                printf("Master i=%d, j=%d, values:%lf ** ", i_idx[i], j_idx[i], values[i]);
-            }
-            printf("\n");
-        }
-    }
     /* Local elements multiplication */
     for (int k = 0 ; k < proc_info[rank].nz_count; k++) {
         if ( in_range( j_idx[k], proc_info[rank].row_start_idx, proc_info[rank].row_count) ) {
@@ -329,11 +313,11 @@ int main(int argc, char * argv[])
         
         /* divide work across processes */
         if (policy == EQUAL_ROWS) {
-            debug("[%d] Policy: Equal number of ROWS\n", rank);
+            printf("[%d] Policy: Equal number of ROWS\n", rank);
             partition_equal_rows(all_proc_info, nprocs, buf_i_idx);
         }
         else if (policy == EQUAL_NZ) {
-            debug("[%d] Policy: Equal number of NZ ENTRIES\n", rank);
+            printf("[%d] Policy: Equal number of NZ ENTRIES\n", rank);
             partition_equal_nz_elements(all_proc_info, nprocs, buf_i_idx);
         }
         else {
