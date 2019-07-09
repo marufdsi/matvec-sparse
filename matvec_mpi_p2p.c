@@ -329,11 +329,14 @@ int main(int argc, char * argv[])
         debug("[%d] Partition time: %10.3lf ms\n\n", rank, partition_time);
         debug("[%d] Starting algorithm...\n", rank);
     }
-
+    if (rank == MASTER) t = MPI_Wtime();
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, proc_info, buf_i_idx, 
                                 buf_j_idx, buf_values, buf_x);
-    
+    if (rank == MASTER)
+        printf("Computation time: %10.3lf ms\n", (MPI_Wtime() - t) * 1000.0);
+
+
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
         MPI_Barrier(MPI_COMM_WORLD);
