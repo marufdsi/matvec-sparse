@@ -22,13 +22,14 @@
 //enum policies policy = EQUAL_NZ;
 enum policies policy = EQUAL_ROWS;
 MPI_Datatype proc_info_type;
+proc_info_t *proc_info;
 
 enum tag { REQUEST_TAG, REPLY_TAG };
 
 double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
                               int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x)
 {
-    proc_info_t *proc_info; /* info about submatrix; different per process */
+//    proc_info_t *proc_info; /* info about submatrix; different per process */
     double *res;            /* result of multiplication res = A*x */
 
     /***** MPI MASTER (root) process only ******/
@@ -36,11 +37,11 @@ double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
             *row_count, *row_offset;
 
     /* scatter to processors all info that will be needed */
-    if (rank == MASTER)
+    /*if (rank == MASTER)
         proc_info = all_proc_info;
     else
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );
-    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);
+    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);*/
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *)calloc_or_exit( proc_info[rank].row_count, sizeof(double) );
@@ -246,7 +247,7 @@ int main(int argc, char * argv[])
             rank;       /* id of task/process */
 
     /***** MPI MASTER (root) process only ******/
-    proc_info_t *proc_info;
+    proc_info_t *all_proc_info;
 
     int *buf_i_idx,     /* row index for all matrix elements */
             *buf_j_idx;     /* column index for all matrix elements */
@@ -278,33 +279,33 @@ int main(int argc, char * argv[])
         }
 
         /* initialize proc_info array */
-        proc_info = (proc_info_t *)malloc_or_exit( nprocs * sizeof(proc_info_t) );
+        all_proc_info = (proc_info_t *)malloc_or_exit( nprocs * sizeof(proc_info_t) );
 
         /* read matrix */
         if ( read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
-                         &proc_info[MASTER].N, &proc_info[MASTER].NZ) != 0) {
+                         &all_proc_info[MASTER].N, &all_proc_info[MASTER].NZ) != 0) {
             fprintf(stderr, "read_matrix: failed\n");
             exit(EXIT_FAILURE);
         }
 
         debug("[%d] Read matrix from '%s'!\n", rank, in_file);
         debug("[%d] Matrix properties: N = %d, NZ = %d\n\n",rank,
-              proc_info[MASTER].N, proc_info[MASTER].NZ);
+              all_proc_info[MASTER].N, all_proc_info[MASTER].NZ);
 
         /* initialize process info */
         for (int p = 0; p < nprocs; p++) {
             if (p != MASTER) {
-                proc_info[p] = proc_info[MASTER];
+                all_proc_info[p] = all_proc_info[MASTER];
             }
         }
 
         /* allocate x, res vector */
-        buf_x = (double *)malloc_or_exit( proc_info[MASTER].N * sizeof(double) );
-        res = (double *)malloc_or_exit( proc_info[MASTER].N * sizeof(double) );
+        buf_x = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
+        res = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
 
         /* generate random vector */
         //random_vec(buf_x, N, MAX_RANDOM_NUM);
-        for (int i = 0; i < proc_info[MASTER].N; i++) {
+        for (int i = 0; i < all_proc_info[MASTER].N; i++) {
             buf_x[i] = 1;
         }
 
@@ -313,11 +314,11 @@ int main(int argc, char * argv[])
         /* divide work across processes */
         if (policy == EQUAL_ROWS) {
             debug("[%d] Policy: Equal number of ROWS\n", rank);
-            partition_equal_rows(proc_info, nprocs, buf_i_idx);
+            partition_equal_rows(all_proc_info, nprocs, buf_i_idx);
         }
         else if (policy == EQUAL_NZ) {
             debug("[%d] Policy: Equal number of NZ ENTRIES\n", rank);
-            partition_equal_nz_elements(proc_info, nprocs, buf_i_idx);
+            partition_equal_nz_elements(all_proc_info, nprocs, buf_i_idx);
         }
         else {
             fprintf(stderr, "Wrong policy defined...");
@@ -329,9 +330,16 @@ int main(int argc, char * argv[])
         debug("[%d] Partition time: %10.3lf ms\n\n", rank, partition_time);
         debug("[%d] Starting algorithm...\n", rank);
     }
+    /* scatter to processors all info that will be needed */
+    if (rank == MASTER)
+        proc_info = all_proc_info;
+    else
+        proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );
+    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);
+
     if (rank == MASTER) t = MPI_Wtime();
     /* Matrix-vector multiplication for each processes */
-    res = mat_vec_mult_parallel(rank, nprocs, proc_info, buf_i_idx,
+    res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
     if (rank == MASTER)
         printf("Computation time: %10.3lf ms\n", (MPI_Wtime() - t) * 1000.0);
@@ -341,7 +349,7 @@ int main(int argc, char * argv[])
     for (int r = 0; r < TOTAL_RUNS; r++) {
         MPI_Barrier(MPI_COMM_WORLD);
         if (rank == MASTER) t = MPI_Wtime();
-        res = mat_vec_mult_parallel(rank, nprocs, proc_info, buf_i_idx,
+        res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
                                     buf_j_idx, buf_values, buf_x);
         //MPI_Barrier(MPI_COMM_WORLD);
         if (rank == MASTER){
@@ -402,12 +410,12 @@ int main(int argc, char * argv[])
             }
 
             fprintf(f, "Vector:\n");
-            for (int i = 0; i < proc_info[MASTER].N; i++) {
+            for (int i = 0; i < all_proc_info[MASTER].N; i++) {
                 fprintf(f, "%.8lf ", buf_x[i]);
             }
             fprintf(f, "\n Result:\n");
             /* write result */
-            for (int i = 0; i < proc_info[MASTER].N; i++) {
+            for (int i = 0; i < all_proc_info[MASTER].N; i++) {
                 fprintf(f, "%.8lf\n", res[i]);
             }
 
