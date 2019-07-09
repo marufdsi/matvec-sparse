@@ -133,6 +133,7 @@ double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
             continue;
         }
         debug("[%d] Sending requests to process %2d \t[%5d]\n", rank, p, to_send[p]);
+        printf("[%d] Sending requests to process %2d \t[%5d]\n", rank, p, to_send[p]);
 
         /* logistics */
         expect[p] = 1;
@@ -146,6 +147,7 @@ double* mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
                     MPI_COMM_WORLD, &recv_reqs[p]);
     }
     debug("[%d] Sent all requests! [%4d]\n", rank, req_made);
+    printf("[%d] Sent all requests! [%4d]\n", rank, req_made);
 
     /* notify the processes about the number of requests they should expect */
     if (rank == MASTER)
