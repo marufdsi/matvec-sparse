@@ -313,11 +313,11 @@ int main(int argc, char * argv[])
 
         /* divide work across processes */
         if (policy == EQUAL_ROWS) {
-            debug("[%d] Policy: Equal number of ROWS\n", rank);
+            printf("[%d] Policy: Equal number of ROWS\n", rank);
             partition_equal_rows(all_proc_info, nprocs, buf_i_idx);
         }
         else if (policy == EQUAL_NZ) {
-            debug("[%d] Policy: Equal number of NZ ENTRIES\n", rank);
+            printf("[%d] Policy: Equal number of NZ ENTRIES\n", rank);
             partition_equal_nz_elements(all_proc_info, nprocs, buf_i_idx);
         }
         else {
