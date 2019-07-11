@@ -74,11 +74,11 @@ int read_matrix (const char * filename, int **i_idx, int **j_idx, double **value
     return 0;
 }
 
-int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, double **values, int *N, int *NZ, int rank)
+int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, double **values, int *M, int *N, int *NZ, int *first_row, int *last_row, int rank)
 {
     FILE *f;
     MM_typecode matcode;
-    int errorcode, nrows, ncols, nz_elements;
+    int errorcode, nrows, ncols, nz_elements, start_row = 0, end_row = 0;
 
     /* open the file */
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
@@ -112,13 +112,15 @@ int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, doub
     }
 
     /* matrix should be square */
-    if (nrows != ncols) {
+    /*if (nrows != ncols) {
         fprintf(stderr, "Matrix is NOT square (rows=%d, cols=%d)\n", nrows, ncols);
         return 1;
-    }
+    }*/
 
-    *N = nrows;
+    *M = nrows;
+    *N = ncols;
     *NZ = nz_elements;
+    start_row = ncols;
 
     /* reserve memory for vector */
     *i_idx = (int *)malloc( nz_elements * sizeof(int) );
@@ -129,8 +131,14 @@ int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, doub
     for (int i = 0; i < *NZ; i++) {
         fscanf(f, "%d %d %lf", &(*i_idx)[i], &(*j_idx)[i], &(*values)[i]);
         (*i_idx)[i]--; (*j_idx)[i]--;
+        if(start_row>(*i_idx))
+            start_row = (*i_idx);
+        if(end_row<(*i_idx))
+            end_row = (*i_idx);
     }
 
+    (*first_row) = start_row;
+    (*last_row) = end_row;
     /* close the file */
     if ( fclose(f) != 0 ) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
