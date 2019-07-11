@@ -371,7 +371,9 @@ int main(int argc, char *argv[]) {
         proc_info = all_proc_info;
     else
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );*/
-    MPI_Bcast(proc_info, nprocs, proc_info_type, rank, MPI_COMM_WORLD);
+//    MPI_Bcast(proc_info, nprocs, proc_info_type, rank, MPI_COMM_WORLD);
+
+    MPI_Allgather(&proc_info[rank],1,proc_info_type,proc_info_type,1,proc_info_type,MPI_COMM_WORLD);
 
 
     MPI_Barrier(MPI_COMM_WORLD);
