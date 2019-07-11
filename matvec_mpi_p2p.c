@@ -266,9 +266,38 @@ int main(int argc, char * argv[])
     create_mpi_datatypes(&proc_info_type);
 
     /* master thread reads matrix */
+    if (argc < 2 || argc > 3) {
+        printf("Usage: %s input_file [output_file]\n", argv[0]);
+        return 0;
+    }
+    else {
+        in_file = argv[1];
+        if (argc == 3)
+            out_file = argv[2];
+    }
+
+    /* initialize proc_info array */
+    all_proc_info = (proc_info_t *)malloc_or_exit( nprocs * sizeof(proc_info_t) );
+
+    if ( read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
+                     &all_proc_info[rank].N, &all_proc_info[rank].NZ) != 0, rank) {
+        fprintf(stderr, "read_matrix: failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("[%d] Read matrix from '%s'!\n", rank, in_file);
+    printf("[%d] Matrix properties: N = %d, NZ = %d\n\n",rank, all_proc_info[rank].N, all_proc_info[rank].NZ);
+
+    for (int j = 0; j < all_proc_info[rank].NZ; ++j) {
+        printf("rank=%d, i=%d, j=%d, values=%lf", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
+    }
+    return 0;
+
+    buf_x = (double *)malloc_or_exit( all_proc_info[rank].N * sizeof(double) );
+//    res = (double *)malloc_or_exit( all_proc_info[rank].N * sizeof(double) );
     if (rank == MASTER) {
         /* read arguments */
-        if (argc < 2 || argc > 3) {
+        /*if (argc < 2 || argc > 3) {
             printf("Usage: %s input_file [output_file]\n", argv[0]);
             return 0;
         }
@@ -276,32 +305,32 @@ int main(int argc, char * argv[])
             in_file = argv[1];
             if (argc == 3)
                 out_file = argv[2];
-        }
+        }*/
 
         /* initialize proc_info array */
-        all_proc_info = (proc_info_t *)malloc_or_exit( nprocs * sizeof(proc_info_t) );
+//        all_proc_info = (proc_info_t *)malloc_or_exit( nprocs * sizeof(proc_info_t) );
 
         /* read matrix */
-        if ( read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
+        /*if ( read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
                          &all_proc_info[MASTER].N, &all_proc_info[MASTER].NZ) != 0) {
             fprintf(stderr, "read_matrix: failed\n");
             exit(EXIT_FAILURE);
-        }
+        }*/
 
-        debug("[%d] Read matrix from '%s'!\n", rank, in_file);
+        /*debug("[%d] Read matrix from '%s'!\n", rank, in_file);
         debug("[%d] Matrix properties: N = %d, NZ = %d\n\n",rank,
-              all_proc_info[MASTER].N, all_proc_info[MASTER].NZ);
+              all_proc_info[MASTER].N, all_proc_info[MASTER].NZ);*/
 
         /* initialize process info */
-        for (int p = 0; p < nprocs; p++) {
+        /*for (int p = 0; p < nprocs; p++) {
             if (p != MASTER) {
                 all_proc_info[p] = all_proc_info[MASTER];
             }
-        }
+        }*/
 
         /* allocate x, res vector */
-        buf_x = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
-        res = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
+//        buf_x = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
+//        res = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
 
         /* generate random vector */
         //random_vec(buf_x, N, MAX_RANDOM_NUM);
@@ -312,7 +341,7 @@ int main(int argc, char * argv[])
         t = MPI_Wtime();
 
         /* divide work across processes */
-        if (policy == EQUAL_ROWS) {
+        /*if (policy == EQUAL_ROWS) {
             printf("[%d] Policy: Equal number of ROWS\n", rank);
             partition_equal_rows(all_proc_info, nprocs, buf_i_idx);
         }
@@ -323,7 +352,7 @@ int main(int argc, char * argv[])
         else {
             fprintf(stderr, "Wrong policy defined...");
             exit(EXIT_FAILURE);
-        }
+        }*/
 
         partition_time = (MPI_Wtime() - t) * 1000.0;
 
@@ -331,17 +360,17 @@ int main(int argc, char * argv[])
         debug("[%d] Starting algorithm...\n", rank);
     }
     /* scatter to processors all info that will be needed */
-    if (rank == MASTER)
+    /*if (rank == MASTER)
         proc_info = all_proc_info;
     else
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );
-    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);
+    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);*/
 
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
 
-
+/*
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
         MPI_Barrier(MPI_COMM_WORLD);
@@ -353,10 +382,10 @@ int main(int argc, char * argv[])
             runs[r] = (MPI_Wtime() - t) * 1000.0;
             mean += runs[r];
         }
-    }
+    }*/
 
     /* print execution stats */
-    if (rank == MASTER) {
+  /*  if (rank == MASTER) {
         mean /= TOTAL_RUNS;
         for (int r = 0; r < TOTAL_RUNS; r++) {
             stdev += (runs[r] - mean) * (runs[r] - mean);
@@ -367,11 +396,11 @@ int main(int argc, char * argv[])
         printf("[%d] Total execution time: %10.3lf ms\n", rank, mean + partition_time);
         debug("Finished!\n");
     }
-
+*/
     /* write to output file */
     if (rank == MASTER) {
 
-        FILE *resultCSV;
+        /*FILE *resultCSV;
         FILE *checkFile;
         if((checkFile = fopen("MPISpMVResult.csv","r"))!=NULL)
         {
@@ -399,7 +428,7 @@ int main(int argc, char * argv[])
         if (out_file != NULL) {
             printf("Writing result to '%s'\n", out_file);
 
-            /* open file */
+            *//* open file *//*
             FILE *f;
             if ( !(f = fopen(out_file, "w")) ) {
                 fprintf(stderr, "fopen: failed to open file '%s'", out_file);
@@ -411,27 +440,32 @@ int main(int argc, char * argv[])
                 fprintf(f, "%.8lf ", buf_x[i]);
             }
             fprintf(f, "\n Result:\n");
-            /* write result */
+            *//* write result *//*
             for (int i = 0; i < all_proc_info[MASTER].N; i++) {
                 fprintf(f, "%.8lf\n", res[i]);
             }
 
-            /* close file */
+            *//* close file *//*
             if ( fclose(f) != 0) {
                 fprintf(stderr, "fopen: failed to open file '%s'", out_file);
                 exit(EXIT_FAILURE);
             }
 
             printf("Done!\n");
-        }
+        }*/
 
         /* free the memory */
-        free(buf_values);
+        /*free(buf_values);
         free(buf_i_idx);
         free(buf_j_idx);
         free(buf_x);
-        free(res);
+        free(res);*/
     }
+    free(buf_values);
+    free(buf_i_idx);
+    free(buf_j_idx);
+    free(buf_x);
+//    free(res);
 
     /* MPI: end */
     MPI_Finalize();

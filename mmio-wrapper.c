@@ -11,15 +11,17 @@
 #include "mmio.h"
 
 /* Reads a matrix from a Matrix Market file, stored in COO format */
-int read_matrix (const char * filename, int **i_idx, int **j_idx, double **values, int *N, int *NZ)
+int read_matrix (const char * filename, int **i_idx, int **j_idx, double **values, int *N, int *NZ, int rank)
 {
     FILE *f;
     MM_typecode matcode;
     int errorcode, nrows, ncols, nz_elements;
      
     /* open the file */
-    if ( (f = fopen(filename, "r")) == NULL ) {
-        fprintf(stderr, "Cannot open '%s'\n", filename);
+    char rank_wise_filename[MM_MAX_LINE_LENGTH];
+    sprintf(rank_wise_filename, "%s_%d", filename, rank);
+    if ( (f = fopen(rank_wise_filename, "r")) == NULL ) {
+        fprintf(stderr, "Cannot open '%s'\n", rank_wise_filename);
         return 1;
     }
     
