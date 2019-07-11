@@ -292,12 +292,12 @@ int main(int argc, char *argv[]) {
     for (int j = 0; j < all_proc_info[rank].NZ; ++j) {
         printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    /*MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
-    return 0;
+    return 0;*/
 
     buf_x = (double *) malloc_or_exit(all_proc_info[rank].N * sizeof(double));
-//    res = (double *)malloc_or_exit( all_proc_info[rank].N * sizeof(double) );
+    res = (double *)malloc_or_exit( all_proc_info[rank].N * sizeof(double) );
     for (int i = 0; i < all_proc_info[rank].N; i++) {
         buf_x[i] = 1;
     }
@@ -369,9 +369,18 @@ int main(int argc, char *argv[]) {
     /*if (rank == MASTER)
         proc_info = all_proc_info;
     else
-        proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );
-    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);*/
+        proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );*/
+    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);
 
+    if(rank == 0){
+        printf("Slave's info at slave: start_row=%d, end_row=%d\n", proc_info[1].first_row, proc_info[0].last_row);
+    }
+    if(rank == 1){
+        printf("Master's info at slave: start_row=%d, end_row=%d\n", proc_info[0].first_row, proc_info[0].last_row);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    return 0;
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
@@ -471,7 +480,7 @@ int main(int argc, char *argv[]) {
     free(buf_i_idx);
     free(buf_j_idx);
     free(buf_x);
-//    free(res);
+    free(res);
 
     /* MPI: end */
     MPI_Finalize();
