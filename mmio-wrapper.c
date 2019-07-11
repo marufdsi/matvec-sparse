@@ -131,10 +131,10 @@ int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, doub
     for (int i = 0; i < *NZ; i++) {
         fscanf(f, "%d %d %lf", &(*i_idx)[i], &(*j_idx)[i], &(*values)[i]);
         (*i_idx)[i]--; (*j_idx)[i]--;
-        if(start_row>(int)(*i_idx))
-            start_row = (int)(*i_idx);
-        if(end_row<(int)(*i_idx))
-            end_row = (int)(*i_idx);
+        if(start_row>(*i_idx)[i])
+            start_row = (*i_idx)[i];
+        if(end_row<(*i_idx)[i])
+            end_row = (*i_idx)[i];
     }
 
     (*first_row) = start_row;
