@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
             rank;       /* id of task/process */
 
     /***** MPI MASTER (root) process only ******/
-    proc_info_t *all_proc_info;
+//    proc_info_t *all_proc_info;
 
     int *buf_i_idx,     /* row index for all matrix elements */
             *buf_j_idx;     /* column index for all matrix elements */
@@ -276,30 +276,30 @@ int main(int argc, char *argv[]) {
     }
 
     /* initialize proc_info array */
-    all_proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
+//    all_proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
     proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
 
     if (rank_wise_read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
-                              &all_proc_info[rank].M, &all_proc_info[rank].N, &all_proc_info[rank].NZ,
-                              &all_proc_info[rank].first_row, &all_proc_info[rank].last_row, rank) != 0) {
+                              &proc_info[rank].M, &proc_info[rank].N, &proc_info[rank].NZ,
+                              &proc_info[rank].first_row, &proc_info[rank].last_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
 
     printf("[%d] Read matrix from '%s'!\n", rank, in_file);
-    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, start_row=%d, last_row=%d\n\n", rank, all_proc_info[rank].M,
-           all_proc_info[rank].N, all_proc_info[rank].NZ, all_proc_info[rank].first_row, all_proc_info[rank].last_row);
+    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, start_row=%d, last_row=%d\n\n", rank, proc_info[rank].M,
+           proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
 
-    for (int j = 0; j < all_proc_info[rank].NZ; ++j) {
+    for (int j = 0; j < proc_info[rank].NZ; ++j) {
         printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
     }
     /*MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
     return 0;*/
 
-    buf_x = (double *) malloc_or_exit(all_proc_info[rank].N * sizeof(double));
-    res = (double *)malloc_or_exit( all_proc_info[rank].N * sizeof(double) );
-    for (int i = 0; i < all_proc_info[rank].N; i++) {
+    buf_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
+    res = (double *)malloc_or_exit( proc_info[rank].N * sizeof(double) );
+    for (int i = 0; i < proc_info[rank].N; i++) {
         buf_x[i] = 1;
     }
     if (rank == MASTER) {
@@ -384,7 +384,7 @@ int main(int argc, char *argv[]) {
     MPI_Finalize();
     return 0;
     /* Matrix-vector multiplication for each processes */
-    res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
+    res = mat_vec_mult_parallel(rank, nprocs, proc_info, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
 
 /*
