@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mmio-wrapper.h"
 #include "mmio.h"
@@ -81,7 +82,8 @@ int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, doub
 
     /* open the file */
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
-    sprintf(rank_wise_filename, "%s_%d", filename, rank);
+    char *_ptr = strtok(filename, ".");
+    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank,strtok(NULL, "-"));
     if ( (f = fopen(rank_wise_filename, "r")) == NULL ) {
         fprintf(stderr, "Cannot open '%s'\n", rank_wise_filename);
         return 1;
