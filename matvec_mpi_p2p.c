@@ -376,6 +376,8 @@ int main(int argc, char *argv[]) {
     /// Share process info among all the processes
     MPI_Allgather(&proc_info[rank],1,proc_info_type,proc_info,1,proc_info_type,MPI_COMM_WORLD);
 
+    if(rank == 0)
+        printf("Slave: first_row=%d\n", proc_info[1].first_row);
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
     return 0;
