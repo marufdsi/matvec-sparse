@@ -374,12 +374,11 @@ int main(int argc, char *argv[]) {
     MPI_Bcast(proc_info, nprocs, proc_info_type, rank, MPI_COMM_WORLD);
 
 
-    printf("Print Broad cast info");
     if(rank == 1){
-        printf("Master's info at slave: first_row=%d, last_row=%d\n", proc_info[0].first_row, proc_info[0].last_row);
+        printf("Master's info at slave: dimension=%d, first_row=%d, last_row=%d\n", proc_info[0].N, proc_info[0].first_row, proc_info[0].last_row);
     }
     if(rank == 0){
-        printf("Slave's info at master: first_row=%d, last_row=%d\n", proc_info[1].first_row, proc_info[0].last_row);
+        printf("Slave's info at master: Dimension=%d, first_row=%d, last_row=%d\n", proc_info[0].N, proc_info[1].first_row, proc_info[0].last_row);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
