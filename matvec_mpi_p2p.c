@@ -370,7 +370,7 @@ int main(int argc, char *argv[]) {
         proc_info = all_proc_info;
     else
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );*/
-    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);
+    MPI_Bcast(proc_info, nprocs, proc_info_type, rank, MPI_COMM_WORLD);
 
     if(rank == 0){
         printf("Slave's info at slave: start_row=%d, end_row=%d\n", proc_info[1].first_row, proc_info[0].last_row);
