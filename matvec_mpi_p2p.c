@@ -291,7 +291,8 @@ int main(int argc, char * argv[])
     for (int j = 0; j < all_proc_info[rank].NZ; ++j) {
         printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
     }
-//    return 0;
+    MPI_Barrier(MPI_COMM_WORLD);
+    return 0;
 
     buf_x = (double *)malloc_or_exit( all_proc_info[rank].N * sizeof(double) );
 //    res = (double *)malloc_or_exit( all_proc_info[rank].N * sizeof(double) );
