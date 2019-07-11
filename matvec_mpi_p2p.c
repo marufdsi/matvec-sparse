@@ -262,7 +262,7 @@ int main(int argc, char * argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-//    printf("Rank: %d\n", rank);
+    printf("Rank: %d\n", rank);
     create_mpi_datatypes(&proc_info_type);
 
     /* master thread reads matrix */
