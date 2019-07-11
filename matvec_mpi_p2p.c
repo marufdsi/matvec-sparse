@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
 
     /* initialize proc_info array */
 //    all_proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
-    proc_info_t *proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
+    proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
 
     if (rank_wise_read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
                               &proc_info[rank].M, &proc_info[rank].N, &proc_info[rank].NZ,
@@ -373,14 +373,8 @@ int main(int argc, char *argv[]) {
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );*/
 //    MPI_Bcast(proc_info, nprocs, proc_info_type, rank, MPI_COMM_WORLD);
 
+    /// Share process info among all the processes
     MPI_Allgather(&proc_info[rank],1,proc_info_type,proc_info,1,proc_info_type,MPI_COMM_WORLD);
-
-    if(rank == 1){
-        printf("Master's info at slave: dimension=%d, first_row=%d, last_row=%d\n", proc_info[0].N, proc_info[0].first_row, proc_info[0].last_row);
-    }
-    if(rank == 0){
-        printf("Slave's info at master: Dimension=%d, first_row=%d, last_row=%d\n", proc_info[1].N, proc_info[1].first_row, proc_info[1].last_row);
-    }
 
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
