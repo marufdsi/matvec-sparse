@@ -292,6 +292,7 @@ int main(int argc, char * argv[])
         printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
     }
     MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
     return 0;
 
     buf_x = (double *)malloc_or_exit( all_proc_info[rank].N * sizeof(double) );
