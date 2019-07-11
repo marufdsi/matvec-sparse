@@ -232,7 +232,7 @@ void create_mpi_datatypes(MPI_Datatype *proc_info_type) {
     /* create `proc_info_t` datatype */
     offsets[0] = 0;
     oldtypes[0] = MPI_INT;
-    blockcounts[0] = 6;
+    blockcounts[0] = 9;
 
     MPI_Type_create_struct(1, blockcounts, offsets, oldtypes, proc_info_type);
     MPI_Type_commit(proc_info_type);
@@ -376,10 +376,10 @@ int main(int argc, char *argv[]) {
 
     printf("Print Broad cast info");
     if(rank == 1){
-        printf("Master's info at slave: start_row=%d, end_row=%d\n", proc_info[0].first_row, proc_info[0].last_row);
+        printf("Master's info at slave: first_row=%d, last_row=%d\n", proc_info[0].first_row, proc_info[0].last_row);
     }
     if(rank == 0){
-        printf("Slave's info at slave: start_row=%d, end_row=%d\n", proc_info[1].first_row, proc_info[0].last_row);
+        printf("Slave's info at master: first_row=%d, last_row=%d\n", proc_info[1].first_row, proc_info[0].last_row);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
