@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
 
     if (rank_wise_read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
                               &all_proc_info[rank].M, &all_proc_info[rank].N, &all_proc_info[rank].NZ,
-                              &all_proc_info[rank].first_row, all_proc_info[rank].last_row, rank) != 0) {
+                              &all_proc_info[rank].first_row, &all_proc_info[rank].last_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
