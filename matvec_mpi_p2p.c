@@ -279,8 +279,8 @@ int main(int argc, char * argv[])
     /* initialize proc_info array */
     all_proc_info = (proc_info_t *)malloc_or_exit( nprocs * sizeof(proc_info_t) );
 
-    if ( read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
-                     &all_proc_info[rank].N, &all_proc_info[rank].NZ) != 0, rank) {
+    if ( rank_wise_read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
+                     &all_proc_info[rank].N, &all_proc_info[rank].NZ, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }

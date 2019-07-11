@@ -73,7 +73,7 @@ int read_matrix (const char * filename, int **i_idx, int **j_idx, double **value
     return 0;
 }
 
-int read_matrix (const char * filename, int **i_idx, int **j_idx, double **values, int *N, int *NZ, int rank)
+int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, double **values, int *N, int *NZ, int rank)
 {
     FILE *f;
     MM_typecode matcode;
