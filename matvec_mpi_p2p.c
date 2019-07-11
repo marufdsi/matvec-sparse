@@ -277,6 +277,7 @@ int main(int argc, char *argv[]) {
 
     /* initialize proc_info array */
     all_proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
+    proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
 
     if (rank_wise_read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
                               &all_proc_info[rank].M, &all_proc_info[rank].N, &all_proc_info[rank].NZ,
@@ -372,11 +373,13 @@ int main(int argc, char *argv[]) {
         proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );*/
     MPI_Bcast(proc_info, nprocs, proc_info_type, rank, MPI_COMM_WORLD);
 
-    if(rank == 0){
-        printf("Slave's info at slave: start_row=%d, end_row=%d\n", proc_info[1].first_row, proc_info[0].last_row);
-    }
+
+    printf("Print Broad cast info");
     if(rank == 1){
         printf("Master's info at slave: start_row=%d, end_row=%d\n", proc_info[0].first_row, proc_info[0].last_row);
+    }
+    if(rank == 0){
+        printf("Slave's info at slave: start_row=%d, end_row=%d\n", proc_info[1].first_row, proc_info[0].last_row);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
