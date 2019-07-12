@@ -155,6 +155,15 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     else
         MPI_Reduce(expect, expect, nprocs, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);*/
 //    MPI_Scatter(expect, 1, MPI_INT, &expect[rank], 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+
+    printf("Process=%d expect: ");
+    for (int p = 0; p < nprocs; p++) {
+        if (expect[p] >0)
+            printf("*%d* ", p);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    return 0;
     MPI_Allreduce(expect, expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     /**** reply to requests ****/
