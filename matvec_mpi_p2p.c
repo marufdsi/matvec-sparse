@@ -59,7 +59,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
 
     int *to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
-    char *map = (char *) malloc_or_exit(proc_info[rank].N * sizeof(char));
+    int *map = (int *) malloc_or_exit(proc_info[rank].N * sizeof(int));
 
     /* build sending blocks to processors */
     int dest, col;
