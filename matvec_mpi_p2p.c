@@ -114,8 +114,8 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         assert(dest >= 0);
 
         /* insert new request */
-        printf("process %d requests col=%d to process %d\n", rank, col, dest);
         send_buf[dest][to_send[dest]++] = col;
+        printf("process %d requests col=%d to process %d\n", rank, send_buf[dest][to_send[dest]-1], dest);
         map[col] = 1;
     }
 
