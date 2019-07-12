@@ -65,6 +65,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     int dest, col;
     for (int i = 0; i < proc_info[rank].NZ; i++) {
         col = buf_j_idx[i];
+        if(rank==MASTER){
+            printf("col=%d\n", col);
+        }
         /* check whether I need to send a request */
         if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) || map[col] > 0) {
             continue;
