@@ -152,7 +152,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     /* Local elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
-        if (in_diagonal(buf_i_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
+        if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k]-proc_info[rank].first_row];
         }
     }
