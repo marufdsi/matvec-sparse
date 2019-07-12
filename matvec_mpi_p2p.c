@@ -239,14 +239,6 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int *row_count, *row_offset;
-    row_count = (int *) malloc_or_exit(nprocs * sizeof(int));
-    row_offset = (int *) malloc_or_exit(nprocs * sizeof(int));
-    for (int p = 0; p < nprocs; p++) {
-        row_count[p] = proc_info[p].M;
-        row_offset[p] = proc_info[p].first_row;
-    }
-
 //    printf("[%d] Read matrix from '%s'!\n", rank, in_file);
 //    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M, proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
 
@@ -273,6 +265,13 @@ int main(int argc, char *argv[]) {
     /// Share process info among all the processes
     MPI_Allgather(&proc_info[rank], 1, proc_info_type, proc_info, 1, proc_info_type, MPI_COMM_WORLD);
 
+    int *row_count, *row_offset;
+    row_count = (int *) malloc_or_exit(nprocs * sizeof(int));
+    row_offset = (int *) malloc_or_exit(nprocs * sizeof(int));
+    for (int p = 0; p < nprocs; p++) {
+        row_count[p] = proc_info[p].M;
+        row_offset[p] = proc_info[p].first_row;
+    }
 
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
