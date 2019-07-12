@@ -64,6 +64,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         col = buf_j_idx[i];
 
         /* check whether I need to send a request */
+        if (rank == MASTER){
+            printf("col=%d in or not=%d\n", in_diagonal(col, proc_info[p].first_row, proc_info[p].last_row));
+        }
         if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) ||
             map[col] > 0)
             continue;
@@ -73,9 +76,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
          */
         dest = -1;
         for (int p = 0; p < nprocs; p++) {
-            if (rank == MASTER){
-                printf("col=%d in or not=%d\n", in_diagonal(col, proc_info[p].first_row, proc_info[p].last_row));
-            }
             if (in_diagonal(col, proc_info[p].first_row, proc_info[p].last_row)) {
                 dest = p;
                 break;
