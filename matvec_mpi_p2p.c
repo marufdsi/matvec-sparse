@@ -64,9 +64,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         col = buf_j_idx[i];
 
         /* check whether I need to send a request */
-        if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) ||
-            map[col] > 0)
+        if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) || map[col] > 0) {
             continue;
+        }
 
         /* search which process has the element
          * NOTE: Due to small number or processes, serial search is faster
@@ -80,7 +80,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
         assert(dest >= 0);
 
-        if (rank == MASTER){
+        if (rank == MASTER) {
             printf("col=%d process=%d\n", col, dest);
         }
         /* insert new request */
@@ -140,7 +140,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         /* fill rep_buf[p] with requested x elements */
         MPI_Recv(reqs, req_count, MPI_INT, status.MPI_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         for (int i = 0; i < req_count; i++) {
-            if(reqs[i]<proc_info[rank].first_row || reqs[i]>proc_info[rank].last_row){
+            if (reqs[i] < proc_info[rank].first_row || reqs[i] > proc_info[rank].last_row) {
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
                 return NULL;
             }
@@ -156,7 +156,8 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* Local elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
-            y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k]-proc_info[rank].first_row];
+            y[buf_i_idx[k] - proc_info[rank].first_row] +=
+                    buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
         }
     }
 
@@ -170,10 +171,10 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
         assert(p != MPI_UNDEFINED);
 
-        printf("to_send=%d\n",to_send[p]);
+        printf("to_send=%d\n", to_send[p]);
         /* fill x array with new elements */
         for (int i = 0; i < to_send[p]; i++) {
-            if (recv_buf[p][i]==0){
+            if (recv_buf[p][i] == 0) {
                 printf("*********************** Req Process=%d, process=%d ***************************", p, rank);
             }
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
@@ -183,7 +184,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* Global elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
-            printf("[%d]buf value=%lf, recieved value=%lf, index=%d \n", rank, buf_values[k], vecFromRemotePros[buf_j_idx[k]], buf_j_idx[k]);
+//            printf("[%d]buf value=%lf, recieved value=%lf, index=%d \n", rank, buf_values[k], vecFromRemotePros[buf_j_idx[k]], buf_j_idx[k]);
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
@@ -246,7 +247,6 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    printf("Rank: %d\n", rank);
     create_mpi_datatypes(&proc_info_type);
 
     /* master thread reads matrix */
@@ -270,9 +270,9 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    printf("[%d] Read matrix from '%s'!\n", rank, in_file);
-    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M,
-           proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
+//    printf("[%d] Read matrix from '%s'!\n", rank, in_file);
+//    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M,
+    proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
 
     for (int j = 0; j < proc_info[rank].NZ; ++j) {
 //        printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
     return 0;*/
 
     buf_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    res = (double *)malloc_or_exit( proc_info[rank].N * sizeof(double) );
+    res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     for (int i = 0; i < proc_info[rank].N; i++) {
         buf_x[i] = 1;
     }
@@ -298,7 +298,7 @@ int main(int argc, char *argv[]) {
     }
 
     /// Share process info among all the processes
-    MPI_Allgather(&proc_info[rank],1,proc_info_type,proc_info,1,proc_info_type,MPI_COMM_WORLD);
+    MPI_Allgather(&proc_info[rank], 1, proc_info_type, proc_info, 1, proc_info_type, MPI_COMM_WORLD);
 
 
     /* Matrix-vector multiplication for each processes */
