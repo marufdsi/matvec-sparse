@@ -76,7 +76,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* allocate buffers for requests sending */
     int **send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
     for (int i = 0; i < nprocs; i++) {
-        if (i != rank && proc_info[i].row_count > 0)
+        if (i != rank && proc_info[i].M > 0)
             send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
     }
 /*
@@ -217,7 +217,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     printf("\n");
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
-    return 0;
+    return NULL;
 
     /* wait for all blocks to arrive */
     int p;
