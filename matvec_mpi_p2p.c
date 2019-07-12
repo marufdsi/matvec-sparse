@@ -141,8 +141,8 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
                 return NULL;
             }
-            if (buf_x[reqs[i] - proc_info[rank].first_row]>1){
-                printf("*********************** Req=%d, process=%d ***************************", reqs[i], rank);
+            if (buf_x[reqs[i] - proc_info[rank].first_row]==1){
+                printf("*********************** Req=%d, first row=%d, process=%d ***************************", reqs[i], proc_info[rank].first_row, rank);
             }
             rep_buf[p][i] = buf_x[reqs[i] - proc_info[rank].first_row];
         }
@@ -173,7 +173,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
         /* fill x array with new elements */
         for (int i = 0; i < to_send[p]; i++) {
-            if (recv_buf[p][i]>1){
+            if (recv_buf[p][i]==0){
                 printf("*********************** Req Process=%d, process=%d ***************************", p, rank);
             }
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
