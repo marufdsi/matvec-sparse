@@ -169,7 +169,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
         /* fill x array with new elements */
         for (int i = 0; i < to_send[p]; i++) {
-            printf("received value=%lf\n", recv_buf[p][i]);
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
         }
     }
@@ -177,7 +176,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* Global elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
-            printf("value get from remote=%lf\n", (double)vecFromRemotePros[buf_j_idx[k]]);
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * (double)vecFromRemotePros[buf_j_idx[k]];
         }
     }
@@ -274,75 +272,15 @@ int main(int argc, char *argv[]) {
         buf_x[i] = 1;
     }
     if (rank == MASTER) {
-        /* read arguments */
-        /*if (argc < 2 || argc > 3) {
-            printf("Usage: %s input_file [output_file]\n", argv[0]);
-            return 0;
-        }
-        else {
-            in_file = argv[1];
-            if (argc == 3)
-                out_file = argv[2];
-        }*/
 
-        /* initialize proc_info array */
-//        all_proc_info = (proc_info_t *)malloc_or_exit( nprocs * sizeof(proc_info_t) );
-
-        /* read matrix */
-        /*if ( read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
-                         &all_proc_info[MASTER].N, &all_proc_info[MASTER].NZ) != 0) {
-            fprintf(stderr, "read_matrix: failed\n");
-            exit(EXIT_FAILURE);
-        }*/
-
-        /*debug("[%d] Read matrix from '%s'!\n", rank, in_file);
-        debug("[%d] Matrix properties: N = %d, NZ = %d\n\n",rank,
-              all_proc_info[MASTER].N, all_proc_info[MASTER].NZ);*/
-
-        /* initialize process info */
-        /*for (int p = 0; p < nprocs; p++) {
-            if (p != MASTER) {
-                all_proc_info[p] = all_proc_info[MASTER];
-            }
-        }*/
-
-        /* allocate x, res vector */
-//        buf_x = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
-//        res = (double *)malloc_or_exit( all_proc_info[MASTER].N * sizeof(double) );
-
-        /* generate random vector */
-        //random_vec(buf_x, N, MAX_RANDOM_NUM);
-        /*for (int i = 0; i < all_proc_info[MASTER].N; i++) {
-            buf_x[i] = 1;
-        }*/
 
         t = MPI_Wtime();
-
-        /* divide work across processes */
-        /*if (policy == EQUAL_ROWS) {
-            printf("[%d] Policy: Equal number of ROWS\n", rank);
-            partition_equal_rows(all_proc_info, nprocs, buf_i_idx);
-        }
-        else if (policy == EQUAL_NZ) {
-            printf("[%d] Policy: Equal number of NZ ENTRIES\n", rank);
-            partition_equal_nz_elements(all_proc_info, nprocs, buf_i_idx);
-        }
-        else {
-            fprintf(stderr, "Wrong policy defined...");
-            exit(EXIT_FAILURE);
-        }*/
 
         partition_time = (MPI_Wtime() - t) * 1000.0;
 
         debug("[%d] Partition time: %10.3lf ms\n\n", rank, partition_time);
         debug("[%d] Starting algorithm...\n", rank);
     }
-    /* scatter to processors all info that will be needed */
-    /*if (rank == MASTER)
-        proc_info = all_proc_info;
-    else
-        proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );*/
-//    MPI_Bcast(proc_info, nprocs, proc_info_type, rank, MPI_COMM_WORLD);
 
     /// Share process info among all the processes
     MPI_Allgather(&proc_info[rank],1,proc_info_type,proc_info,1,proc_info_type,MPI_COMM_WORLD);
@@ -351,6 +289,12 @@ int main(int argc, char *argv[]) {
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
+    if (rank == MASTER) {
+        printf("Result Y= ");
+        for (int i = 0; i < proc_info[MASTER].N; ++i) {
+            printf("|%lf| ", res[i]);
+        }
+    }
 
 /*
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
