@@ -32,8 +32,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     double *res;            /* result of multiplication res = A*x */
 
     /***** MPI MASTER (root) process only ******/
-    int *nz_count, *nz_offset,    /* auxilliary arrays used for Scatterv/Gatherv */
-            *row_count, *row_offset;
+    int *row_count, *row_offset;
 
 
     /* allocate memory for vectors and submatrixes */
@@ -47,7 +46,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
 
     /* process auxilliary arrays for scatterv/gatherv ops */
-    if (rank == MASTER) {
+    /*if (rank == MASTER) {
         row_count = (int *) malloc_or_exit(nprocs * sizeof(int));
         row_offset = (int *) malloc_or_exit(nprocs * sizeof(int));
         nz_count = (int *) malloc_or_exit(nprocs * sizeof(int));
@@ -59,7 +58,16 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
             nz_count[p] = proc_info[p].NZ;
             nz_offset[p] = proc_info[p].NZ;
         }
+    }*/
+
+    row_count = (int *) malloc_or_exit(nprocs * sizeof(int));
+    row_offset = (int *) malloc_or_exit(nprocs * sizeof(int));
+
+    for (int p = 0; p < nprocs; p++) {
+        row_count[p] = proc_info[p].M;
+        row_offset[p] = proc_info[p].first_row;
     }
+
 
     /* allocate buffers for requests sending */
     int **send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
