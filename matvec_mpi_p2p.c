@@ -64,9 +64,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         col = buf_j_idx[i];
 
         /* check whether I need to send a request */
-        if (rank == MASTER){
-            printf("col=%d in or not=%d\n", col, in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row));
-        }
         if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) ||
             map[col] > 0)
             continue;
@@ -83,6 +80,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
         assert(dest >= 0);
 
+        if (rank == MASTER){
+            printf("col=%d process=%d\n", col, dest);
+        }
         /* insert new request */
         send_buf[dest][to_send[dest]++] = col;
         map[col] = 1;
