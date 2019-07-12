@@ -34,6 +34,10 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /***** MPI MASTER (root) process only ******/
     int *row_count, *row_offset;
 
+    printf("process rank %d data: ", rank);
+    for (int l = 0; l < proc_info[rank].NZ; ++l) {
+        printf("i=%d, j=%d, v=%lf\n", buf_i_idx[l], buf_j_idx[l], buf_values[l]);
+    }
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
