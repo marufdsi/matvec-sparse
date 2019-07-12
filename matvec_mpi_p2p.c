@@ -160,23 +160,13 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
-    printf("Process=%d expect: ", rank);
-    for (int p = 0; p < nprocs; p++) {
-        if (all_process_expect[p] >0)
-            printf("*%d requests from %d* ", all_process_expect[p], p);
-    }
-    printf("\n");
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;
     /**** reply to requests ****/
     int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
     double **rep_buf = (double **) malloc_or_exit(nprocs * sizeof(double *)); /* reply blocks storage */
 
     MPI_Status status;
     int req_count;
-    for (int p = 0; p < expect[rank]; p++) {
+    for (int p = 0; p < all_process_expect[rank]; p++) {
         /* Wait until a request comes */
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &req_count);
