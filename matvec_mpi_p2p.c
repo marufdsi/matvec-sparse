@@ -39,7 +39,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
-    double *x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
     if (rank == MASTER) {
         res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     }
@@ -59,7 +58,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
 
     int *to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
-    int *map = (int *) malloc_or_exit(proc_info[rank].N * sizeof(int));
+    int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
 
     /* build sending blocks to processors */
     int dest, col;
@@ -168,7 +167,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* wait for all blocks to arrive */
     int p;
     printf("[%d] Waiting for %d requests\n", rank, req_made);
-    double *vecFromRemotePros = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
+    double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
         assert(p != MPI_UNDEFINED);
@@ -176,9 +175,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         printf("to_send=%d\n", to_send[p]);
         /* fill x array with new elements */
         for (int i = 0; i < to_send[p]; i++) {
-            if (recv_buf[p][i] == 0) {
-                printf("*********************** Req Process=%d, process=%d ***************************", p, rank);
-            }
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
         }
     }
