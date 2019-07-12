@@ -173,6 +173,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
         /* fill x array with new elements */
         for (int i = 0; i < to_send[p]; i++) {
+            if (recv_buf[p][i]>1){
+                printf("*********************** Req Process=%d, process=%d ***************************", p, rank);
+            }
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
         }
     }
