@@ -115,7 +115,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
         /* insert new request */
         send_buf[dest][to_send[dest]++] = col;
-        printf("process %d requests col=%d to process %d\n", rank, send_buf[dest][to_send[dest]-1], dest);
+        printf("process %d requests col=%d, index=%d to process %d\n", rank, send_buf[dest][to_send[dest]-1], (to_send[dest]-1), dest);
         map[col] = 1;
     }
 
@@ -148,7 +148,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         /* send the request */
         printf("Request from %d to %d: ", rank, p);
         for (int i = 0; i < to_send[p]; ++i) {
-            printf("col=%d ", send_buf[p][i]);
+            printf(" index=%d, col=%d ", i, send_buf[p][i]);
         }
         printf("\n");
         MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG,
