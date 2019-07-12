@@ -182,14 +182,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
     }
 
-    printf("Vector Y in process %d: ", rank);
-    for (int j = 0; j < proc_info[rank].M; ++j) {
-        printf(" %lf ", y[j]);
-    }
-    printf("\n");
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return y;
 
     /* gather y elements from processes and save it to res */
     debug("[%d] Gathering results...\n", rank);
