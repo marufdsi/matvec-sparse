@@ -271,8 +271,7 @@ int main(int argc, char *argv[]) {
     }
 
 //    printf("[%d] Read matrix from '%s'!\n", rank, in_file);
-//    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M,
-    proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
+//    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M, proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
 
     for (int j = 0; j < proc_info[rank].NZ; ++j) {
 //        printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
