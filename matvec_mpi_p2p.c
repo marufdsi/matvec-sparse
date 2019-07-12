@@ -28,23 +28,13 @@ enum tag {
     REQUEST_TAG, REPLY_TAG
 };
 
-double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x) {
+double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x, int *row_count, int *row_offset) {
     double *res;            /* result of multiplication res = A*x */
-
-    /***** MPI MASTER (root) process only ******/
-    int *row_count, *row_offset;
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
     if (rank == MASTER) {
         res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    }
-
-    row_count = (int *) malloc_or_exit(nprocs * sizeof(int));
-    row_offset = (int *) malloc_or_exit(nprocs * sizeof(int));
-    for (int p = 0; p < nprocs; p++) {
-        row_count[p] = proc_info[p].M;
-        row_offset[p] = proc_info[p].first_row;
     }
 
     /* allocate buffers for requests sending */
@@ -249,6 +239,14 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    int *row_count, *row_offset;
+    row_count = (int *) malloc_or_exit(nprocs * sizeof(int));
+    row_offset = (int *) malloc_or_exit(nprocs * sizeof(int));
+    for (int p = 0; p < nprocs; p++) {
+        row_count[p] = proc_info[p].M;
+        row_offset[p] = proc_info[p].first_row;
+    }
+
 //    printf("[%d] Read matrix from '%s'!\n", rank, in_file);
 //    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M, proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
 
@@ -277,7 +275,7 @@ int main(int argc, char *argv[]) {
 
 
     /* Matrix-vector multiplication for each processes */
-    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x);
+    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
     if (rank == MASTER) {
         printf("Result Y= ");
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
