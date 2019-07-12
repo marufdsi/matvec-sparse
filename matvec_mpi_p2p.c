@@ -81,7 +81,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         assert(dest >= 0);
 
         if (rank == MASTER) {
-            printf("col=%d process=%d\n", col, dest);
+            printf("[%d] col=%d process=%d\n", rank, col, dest);
         }
         /* insert new request */
         send_buf[dest][to_send[dest]++] = col;
