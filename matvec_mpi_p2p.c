@@ -185,14 +185,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
-    printf("rank=%d results: Y[%d]= ", rank, rank);
-    for (int j = 0; j < proc_info[rank].M; ++j) {
-        printf("|%lf| ", y[j]);
-    }
-    printf("\n");
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;
 
     /* gather y elements from processes and save it to res */
     debug("[%d] Gathering results...\n", rank);
@@ -257,7 +249,6 @@ int main(int argc, char *argv[]) {
     }
 
     /* initialize proc_info array */
-//    all_proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
     proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
 
     if (rank_wise_read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
@@ -268,7 +259,7 @@ int main(int argc, char *argv[]) {
     }
 
 //    printf("[%d] Read matrix from '%s'!\n", rank, in_file);
-//    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M, proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
+    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M, proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
 
     for (int j = 0; j < proc_info[rank].NZ; ++j) {
 //        printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
