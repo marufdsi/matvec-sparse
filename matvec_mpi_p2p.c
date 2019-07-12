@@ -31,6 +31,9 @@ enum tag {
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x) {
     double *res;            /* result of multiplication res = A*x */
 
+    for (int i = 0; i < proc_info[rank].NZ; i++) {
+        printf("[%d] i=%d, j=%d, val=%lf\n", rank, buf_i_idx[i], buf_j_idx[i], buf_values[i]);
+    }
     /***** MPI MASTER (root) process only ******/
     int *row_count, *row_offset;
 
@@ -62,7 +65,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     int dest, col;
     for (int i = 0; i < proc_info[rank].NZ; i++) {
         col = buf_j_idx[i];
-
         /* check whether I need to send a request */
         if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) || map[col] > 0) {
             continue;
@@ -264,9 +266,6 @@ int main(int argc, char *argv[]) {
     for (int j = 0; j < proc_info[rank].NZ; ++j) {
         printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
     }
-    /*MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;*/
 
     buf_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
@@ -289,8 +288,7 @@ int main(int argc, char *argv[]) {
 
 
     /* Matrix-vector multiplication for each processes */
-    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx,
-                                buf_j_idx, buf_values, buf_x);
+    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x);
     if (rank == MASTER) {
         printf("Result Y= ");
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
@@ -298,6 +296,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
+
+    /*MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    return 0;*/
 /*
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
