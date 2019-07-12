@@ -166,7 +166,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* wait for all blocks to arrive */
     int p;
     debug("[%d] Waiting for %d requests\n", rank, req_made);
-    char *vecFromRemotePros = (char *) malloc_or_exit(proc_info[rank].N * sizeof(char));
+    double *vecFromRemotePros = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
         assert(p != MPI_UNDEFINED);
@@ -183,8 +183,8 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* Global elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
-            printf("[%d]buf value=%lf, recieved value=%lf\n", rank, buf_values[k], (double)vecFromRemotePros[buf_j_idx[k]]);
-            y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * (double)vecFromRemotePros[buf_j_idx[k]];
+            printf("[%d]buf value=%lf, recieved value=%lf\n", rank, buf_values[k], vecFromRemotePros[buf_j_idx[k]]);
+            y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
     printf("rank=%d results: Y[%d]= ", rank, rank);
