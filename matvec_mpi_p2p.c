@@ -31,9 +31,6 @@ enum tag {
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x) {
     double *res;            /* result of multiplication res = A*x */
 
-    for (int i = 0; i < proc_info[rank].NZ; i++) {
-        printf("[%d] i=%d, j=%d, val=%lf\n", rank, buf_i_idx[i], buf_j_idx[i], buf_values[i]);
-    }
     /***** MPI MASTER (root) process only ******/
     int *row_count, *row_offset;
 
