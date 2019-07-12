@@ -29,5 +29,6 @@ void * malloc_or_exit(size_t size);
 void * calloc_or_exit(size_t nmemb, size_t size);
 
 char in_range(int num, int start, int count);
+char in_diagonal(int num, int start, int end);
 
 #endif

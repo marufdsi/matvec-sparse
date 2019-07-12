@@ -48,3 +48,10 @@ char in_range(int num, int start, int count) {
     return (start <= num && num < start + count);
 }
 
+/*
+ * Check if integer num is in range [start, start + count)
+ */
+char in_diagonal(int num, int start, int end) {
+    return (start <= num && num <= end);
+}
+

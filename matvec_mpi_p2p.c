@@ -28,28 +28,20 @@ enum tag {
     REQUEST_TAG, REPLY_TAG
 };
 
-double *mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
-                              int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x) {
-//    proc_info_t *proc_info; /* info about submatrix; different per process */
+double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x) {
     double *res;            /* result of multiplication res = A*x */
 
     /***** MPI MASTER (root) process only ******/
     int *nz_count, *nz_offset,    /* auxilliary arrays used for Scatterv/Gatherv */
             *row_count, *row_offset;
 
-    /* scatter to processors all info that will be needed */
-    /*if (rank == MASTER)
-        proc_info = all_proc_info;
-    else
-        proc_info = (proc_info_t *)malloc( nprocs * sizeof(proc_info_t) );
-    MPI_Bcast(proc_info, nprocs, proc_info_type, MASTER, MPI_COMM_WORLD);*/
 
     /* allocate memory for vectors and submatrixes */
-    double *y = (double *) calloc_or_exit(proc_info[rank].row_count, sizeof(double));
-    double *x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    int *i_idx = (int *) malloc_or_exit(proc_info[rank].nz_count * sizeof(int));
-    int *j_idx = (int *) malloc_or_exit(proc_info[rank].nz_count * sizeof(int));
-    double *values = (double *) malloc_or_exit(proc_info[rank].nz_count * sizeof(double));
+    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
+    double *x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
+//    int *i_idx = (int *) malloc_or_exit(proc_info[rank].NZ * sizeof(int));
+//    int *j_idx = (int *) malloc_or_exit(proc_info[rank].NZ * sizeof(int));
+//    double *values = (double *) malloc_or_exit(proc_info[rank].NZ * sizeof(double));
     if (rank == MASTER) {
         res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     }
@@ -62,10 +54,10 @@ double *mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
         nz_offset = (int *) malloc_or_exit(nprocs * sizeof(int));
 
         for (int p = 0; p < nprocs; p++) {
-            row_count[p] = proc_info[p].row_count;
-            row_offset[p] = proc_info[p].row_start_idx;
-            nz_count[p] = proc_info[p].nz_count;
-            nz_offset[p] = proc_info[p].nz_start_idx;
+            row_count[p] = proc_info[p].M;
+            row_offset[p] = proc_info[p].first_row;
+            nz_count[p] = proc_info[p].NZ;
+            nz_offset[p] = proc_info[p].NZ;
         }
     }
 
@@ -73,27 +65,27 @@ double *mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
     int **send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
     for (int i = 0; i < nprocs; i++) {
         if (i != rank && proc_info[i].row_count > 0)
-            send_buf[i] = (int *) malloc_or_exit(proc_info[i].row_count * sizeof(int));
+            send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
     }
-
-    /* scatter x vector to processes */
+/*
+    *//* scatter x vector to processes *//*
     MPI_Scatterv(buf_x, row_count, row_offset, MPI_DOUBLE, &x[proc_info[rank].row_start_idx],
-                 proc_info[rank].row_count, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
+                 proc_info[rank].M, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
-    /* scatter j_idx elements to processes */
+    *//* scatter j_idx elements to processes *//*
     MPI_Scatterv(buf_j_idx, nz_count, nz_offset, MPI_INT, j_idx,
-                 proc_info[rank].nz_count, MPI_INT, MASTER, MPI_COMM_WORLD);
+                 proc_info[rank].nz_count, MPI_INT, MASTER, MPI_COMM_WORLD);*/
 
     int *to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
     char *map = (char *) malloc_or_exit(proc_info[rank].N * sizeof(char));
 
     /* build sending blocks to processors */
     int dest, col;
-    for (int i = 0; i < proc_info[rank].nz_count; i++) {
-        col = j_idx[i];
+    for (int i = 0; i < proc_info[rank].NZ; i++) {
+        col = buf_j_idx[i];
 
         /* check whether I need to send a request */
-        if (in_range(col, proc_info[rank].row_start_idx, proc_info[rank].row_count) ||
+        if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) ||
             map[col] > 0)
             continue;
 
@@ -102,7 +94,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
          */
         dest = -1;
         for (int p = 0; p < nprocs; p++) {
-            if (in_range(col, proc_info[p].row_start_idx, proc_info[p].row_count)) {
+            if (in_diagonal(col, proc_info[p].first_row, proc_info[p].last_row)) {
                 dest = p;
                 break;
             }
@@ -150,14 +142,15 @@ double *mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
     debug("[%d] Sent all requests! [%4d]\n", rank, req_made);
 
     /* notify the processes about the number of requests they should expect */
-    if (rank == MASTER)
+    /*if (rank == MASTER)
         MPI_Reduce(MPI_IN_PLACE, expect, nprocs, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
     else
-        MPI_Reduce(expect, expect, nprocs, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
-    MPI_Scatter(expect, 1, MPI_INT, &expect[rank], 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+        MPI_Reduce(expect, expect, nprocs, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);*/
+//    MPI_Scatter(expect, 1, MPI_INT, &expect[rank], 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+    MPI_Allreduce(expect, expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     /**** reply to requests ****/
-    int *reqs = (int *) malloc_or_exit(proc_info[rank].row_count * sizeof(int));
+    int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
     double **rep_buf = (double **) malloc_or_exit(nprocs * sizeof(double *)); /* reply blocks storage */
 
     MPI_Status status;
@@ -171,7 +164,11 @@ double *mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
         /* fill rep_buf[p] with requested x elements */
         MPI_Recv(reqs, req_count, MPI_INT, status.MPI_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         for (int i = 0; i < req_count; i++) {
-            rep_buf[p][i] = x[reqs[i]];
+            if(reqs[i]<proc_info[p].first_row || reqs[i]>proc_info[p].last_row){
+                printf("Wrong index %d looking at process %d\n", reqs[i], p);
+                return NULL;
+            }
+            rep_buf[p][i] = x[reqs[i] - proc_info[p].first_row];
         }
 
         /* send the requested block */
@@ -181,40 +178,41 @@ double *mat_vec_mult_parallel(int rank, int nprocs, proc_info_t *all_proc_info,
     debug("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
 
     /* scatter j_idx & values to processes */
-    MPI_Scatterv(buf_i_idx, nz_count, nz_offset, MPI_INT, i_idx,
+    /*MPI_Scatterv(buf_i_idx, nz_count, nz_offset, MPI_INT, i_idx,
                  proc_info[rank].nz_count, MPI_INT, MASTER, MPI_COMM_WORLD);
     MPI_Scatterv(buf_values, nz_count, nz_offset, MPI_DOUBLE, values,
-                 proc_info[rank].nz_count, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
+                 proc_info[rank].nz_count, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);*/
 
     /* Local elements multiplication */
-    for (int k = 0; k < proc_info[rank].nz_count; k++) {
-        if (in_range(j_idx[k], proc_info[rank].row_start_idx, proc_info[rank].row_count)) {
-            y[i_idx[k] - proc_info[rank].row_start_idx] += values[k] * x[j_idx[k]];
+    for (int k = 0; k < proc_info[rank].NZ; k++) {
+        if (in_diagonal(buf_i_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
+            y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * x[buf_j_idx[k]-proc_info[rank].first_row];
         }
     }
 
     /* wait for all blocks to arrive */
     int p;
     debug("[%d] Waiting for %d requests\n", rank, req_made);
+    char *vecFromRemotePros = (char *) malloc_or_exit(proc_info[rank].N * sizeof(char));
     for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
         assert(p != MPI_UNDEFINED);
 
         /* fill x array with new elements */
         for (int i = 0; i < to_send[p]; i++)
-            x[send_buf[p][i]] = recv_buf[p][i];
+            vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
     }
 
     /* Global elements multiplication */
-    for (int k = 0; k < proc_info[rank].nz_count; k++) {
-        if (!in_range(j_idx[k], proc_info[rank].row_start_idx, proc_info[rank].row_count)) {
-            y[i_idx[k] - proc_info[rank].row_start_idx] += values[k] * x[j_idx[k]];
+    for (int k = 0; k < proc_info[rank].NZ; k++) {
+        if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
+            y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * (double)vecFromRemotePros[buf_j_idx[k]];
         }
     }
 
     /* gather y elements from processes and save it to res */
     debug("[%d] Gathering results...\n", rank);
-    MPI_Gatherv(y, proc_info[rank].row_count, MPI_DOUBLE, res, row_count,
+    MPI_Gatherv(y, proc_info[rank].M, MPI_DOUBLE, res, row_count,
                 row_offset, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
     /* return final result */
@@ -287,7 +285,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf("[%d] Read matrix from '%s'!\n", rank, in_file);
-    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, start_row=%d, last_row=%d\n\n", rank, proc_info[rank].M,
+    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M,
            proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
 
     for (int j = 0; j < proc_info[rank].NZ; ++j) {
@@ -376,13 +374,9 @@ int main(int argc, char *argv[]) {
     /// Share process info among all the processes
     MPI_Allgather(&proc_info[rank],1,proc_info_type,proc_info,1,proc_info_type,MPI_COMM_WORLD);
 
-    if(rank == 0)
-        printf("Slave: first_row=%d\n", proc_info[1].first_row);
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;
+
     /* Matrix-vector multiplication for each processes */
-    res = mat_vec_mult_parallel(rank, nprocs, proc_info, buf_i_idx,
+    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx,
                                 buf_j_idx, buf_values, buf_x);
 
 /*
