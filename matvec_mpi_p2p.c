@@ -147,7 +147,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG,
                   MPI_COMM_WORLD, &recv_reqs[p]);
     }
-    debug("[%d] Sent all requests! [%4d]\n", rank, req_made);
+    printf("[%d] Sent all requests! [%4d]\n", rank, req_made);
 
     /* notify the processes about the number of requests they should expect */
     /*if (rank == MASTER)
@@ -156,10 +156,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         MPI_Reduce(expect, expect, nprocs, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);*/
 //    MPI_Scatter(expect, 1, MPI_INT, &expect[rank], 1, MPI_INT, MASTER, MPI_COMM_WORLD);
 
-
-
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
     /**** reply to requests ****/
     int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
     double **rep_buf = (double **) malloc_or_exit(nprocs * sizeof(double *)); /* reply blocks storage */
@@ -171,15 +170,15 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &req_count);
         rep_buf[p] = (double *) malloc_or_exit(req_count * sizeof(double));
-
+        printf("rank %d has %d rquests \n", rank, req_count);
         /* fill rep_buf[p] with requested x elements */
         MPI_Recv(reqs, req_count, MPI_INT, status.MPI_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         for (int i = 0; i < req_count; i++) {
-            if(reqs[i]<proc_info[p].first_row || reqs[i]>proc_info[p].last_row){
+            if(reqs[i]<proc_info[rank].first_row || reqs[i]>proc_info[rank].last_row){
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
                 return NULL;
             }
-            rep_buf[p][i] = x[reqs[i] - proc_info[p].first_row];
+            rep_buf[p][i] = x[reqs[i] - proc_info[rank].first_row];
         }
 
         /* send the requested block */
