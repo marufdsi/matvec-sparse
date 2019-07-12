@@ -141,9 +141,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
                 return NULL;
             }
-            if (buf_x[reqs[i] - proc_info[rank].first_row]==0){
-                printf("*********************** Req=%d, first row=%d, process=%d ***************************\n", reqs[i], proc_info[rank].first_row, rank);
-            }
             rep_buf[p][i] = buf_x[reqs[i] - proc_info[rank].first_row];
         }
 
@@ -183,7 +180,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* Global elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
-            printf("[%d]buf value=%lf, recieved value=%lf\n", rank, buf_values[k], vecFromRemotePros[buf_j_idx[k]]);
+            printf("[%d]buf value=%lf, recieved value=%lf, index=%d \n", rank, buf_values[k], vecFromRemotePros[buf_j_idx[k]], buf_j_idx[k]);
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
