@@ -64,9 +64,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     int dest, col;
     for (int i = 0; i < proc_info[rank].NZ; i++) {
         col = buf_j_idx[i];
-        if(rank==MASTER){
-            printf("col=%d, cond=%d, map=%d\n", col, in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row), map[col]);
-        }
         /* check whether I need to send a request */
         if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) || map[col] > 0) {
             continue;
@@ -83,7 +80,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
             }
         }
         assert(dest >= 0);
-        printf("[%d] col=%d process=%d\n", rank, col, dest);
         /* insert new request */
         send_buf[dest][to_send[dest]++] = col;
         map[col] = 1;
@@ -122,7 +118,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG,
                   MPI_COMM_WORLD, &recv_reqs[p]);
     }
-//    printf("[%d] Sent all requests! [%4d]\n", rank, req_made);
 
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
@@ -182,7 +177,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* Global elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
-//            printf("[%d]buf value=%lf, recieved value=%lf, index=%d \n", rank, buf_values[k], vecFromRemotePros[buf_j_idx[k]], buf_j_idx[k]);
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
@@ -260,10 +254,10 @@ int main(int argc, char *argv[]) {
     }
 
 //    printf("[%d] Read matrix from '%s'!\n", rank, in_file);
-    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M, proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
+//    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M, proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
 
     for (int j = 0; j < proc_info[rank].NZ; ++j) {
-        printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
+//        printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
     }
 
     buf_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
