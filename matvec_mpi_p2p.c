@@ -141,7 +141,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
                 return NULL;
             }
-            rep_buf[p][i] = x[reqs[i] - proc_info[rank].first_row];
+            rep_buf[p][i] = buf_x[reqs[i] - proc_info[rank].first_row];
         }
 
         /* send the requested block */
