@@ -141,6 +141,11 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         req_made++;
 
         /* send the request */
+        printf("Request from %d to %d: ", rank, p);
+        for (int i = 0; i < to_send[p]; ++i) {
+            printf("col=%d ", send_buf[p][i]);
+        }
+        printf("\n");
         MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG,
                   MPI_COMM_WORLD, &send_reqs[p]);
         /* recv the block (when it comes) */
@@ -170,9 +175,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &req_count);
         rep_buf[p] = (double *) malloc_or_exit(req_count * sizeof(double));
-        printf("rank %d has %d rquests \n", rank, req_count);
         /* fill rep_buf[p] with requested x elements */
         MPI_Recv(reqs, req_count, MPI_INT, status.MPI_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("rank %d has %d requests from %d \n", rank, req_count, status.MPI_SOURCE);
         for (int i = 0; i < req_count; i++) {
             if(reqs[i]<proc_info[rank].first_row || reqs[i]>proc_info[rank].last_row){
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
@@ -183,9 +188,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
         /* send the requested block */
         MPI_Isend(rep_buf[p], req_count, MPI_DOUBLE, status.MPI_SOURCE, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[0]);
-        debug("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
+        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
     }
-    debug("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
+    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
 
     /* scatter j_idx & values to processes */
     /*MPI_Scatterv(buf_i_idx, nz_count, nz_offset, MPI_INT, i_idx,
