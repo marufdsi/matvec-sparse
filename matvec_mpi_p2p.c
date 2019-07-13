@@ -275,27 +275,27 @@ int main(int argc, char *argv[]) {
     }
 
     /* allocate buffers for requests sending */
-    int **send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
+    /*int **send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
     for (int i = 0; i < nprocs; i++) {
         if (i != rank && proc_info[i].M > 0)
             send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
     }
 
-    int *to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
+    int *to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    *//* # of req to each proc *//*
     int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
 
-    /* build sending blocks to processors */
+    *//* build sending blocks to processors *//*
     int dest, col;
     for (int i = 0; i < proc_info[rank].NZ; i++) {
         col = buf_j_idx[i];
-        /* check whether I need to send a request */
+        *//* check whether I need to send a request *//*
         if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) || map[col] > 0) {
             continue;
         }
 
-        /* search which process has the element
+        *//* search which process has the element
          * NOTE: Due to small number or processes, serial search is faster
-         */
+         *//*
         dest = -1;
         for (int p = 0; p < nprocs; p++) {
             if (in_diagonal(col, proc_info[p].first_row, proc_info[p].last_row)) {
@@ -304,10 +304,10 @@ int main(int argc, char *argv[]) {
             }
         }
         assert(dest >= 0);
-        /* insert new request */
+        *//* insert new request *//*
         send_buf[dest][to_send[dest]++] = col;
         map[col] = 1;
-    }
+    }*/
 
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset/*, send_buf,
