@@ -205,9 +205,14 @@ void create_mpi_datatypes(MPI_Datatype *proc_info_type) {
 }
 
 void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx, int **to_send, int ***send_buf){
-    (*to_send) = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
-    int *map = (int *) calloc_or_exit(nprocs, sizeof(int));
-
+    (*to_send) = (int *) malloc_or_exit(nprocs*sizeof(int));    /* # of req to each proc */
+    int *map = (int *) malloc_or_exit(proc_info[rank].N*sizeof(int));
+    for (int j = 0; j < nprocs; ++j) {
+        (*to_send)[j] = 0;
+    }
+    for (int j = 0; j < proc_info[rank].N; ++j) {
+        map[j] = 0;
+    }
     /* allocate buffers for requests sending */
     (*send_buf) = (int **) malloc_or_exit(nprocs * sizeof(int *));
     for (int i = 0; i < nprocs; i++) {
