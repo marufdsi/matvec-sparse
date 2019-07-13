@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
     }
 
     int *to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
-//    int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
+    int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
 
     /* build sending blocks to processors */
     /*int dest, col;
