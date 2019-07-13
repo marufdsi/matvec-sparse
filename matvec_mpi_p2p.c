@@ -201,7 +201,6 @@ int CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
     int total_communication;
     MPI_Reduce(&count_communication, &total_communication, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
     free(map);
-    free(count_communication);
     return total_communication;
 }
 int main(int argc, char *argv[]) {
