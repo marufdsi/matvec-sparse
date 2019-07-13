@@ -142,14 +142,14 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     /* return final result */
 
-    free(send_reqs);
+    /*free(send_reqs);
     free(recv_reqs);
     free(recv_buf);
     free(expect);
     free(all_process_expect);
     free(reqs);
     free(rep_buf);
-    free(vecFromRemotePros);
+    free(vecFromRemotePros);*/
 
     return res;
 }
