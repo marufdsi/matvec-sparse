@@ -101,7 +101,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         MPI_Isend(rep_buf[p], req_count, MPI_DOUBLE, status.MPI_SOURCE, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[0]);
 //        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
     }
-//    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
+    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
 
     /* Local elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
