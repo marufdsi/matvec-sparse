@@ -229,7 +229,7 @@ void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
         }
         assert(dest >= 0);
          ///insert new request
-        (*send_buf)[dest][(*to_send)[dest]++] = col;
+        send_buf[dest][to_send[dest]++] = col;
         map[col] = 1;
     }
     free(map);
