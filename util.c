@@ -35,7 +35,7 @@ void * malloc_or_exit(size_t size) {
 void * calloc_or_exit(size_t nmemb, size_t size) {
     void * ptr = calloc(nmemb, size);
     if ( !ptr ) {
-        printf(stderr, "calloc: failed to allocate memory\n");
+        fprintf(stderr, "calloc: failed to allocate memory\n");
         exit(EXIT_FAILURE);
     }
     return ptr;
