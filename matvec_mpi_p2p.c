@@ -281,7 +281,7 @@ int main(int argc, char *argv[]) {
             send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
     }
 
-    int *to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
+    int *to_send = (int *) malloc_or_exit(nprocs*sizeof(int));    /* # of req to each proc */
 //    int *map = (int *) calloc_or_exit(nprocs, sizeof(int));
 
     /* build sending blocks to processors */
