@@ -172,6 +172,7 @@ void create_mpi_datatypes(MPI_Datatype *proc_info_type) {
 
 int CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
     int count_communication=0;
+    int interProcessCall=0;
     /* build sending blocks to processors */
     int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
     int dest, col;
@@ -196,10 +197,16 @@ int CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
          ///insert new request
         send_buf[dest][to_send[dest]++] = col;
         map[col] = 1;
+        if(to_send[dest] == 1)
+            interProcessCall++;
         count_communication++;
     }
-    int total_communication;
+    int total_communication, totalInterProcessCall;
     MPI_Reduce(&count_communication, &total_communication, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&interProcessCall, &totalInterProcessCall, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
+    if(rank == MASTER){
+        printf("[%d] Total Inter Process Call=%d\n ", rank, totalInterProcessCall);
+    }
     free(map);
     return total_communication;
 }
