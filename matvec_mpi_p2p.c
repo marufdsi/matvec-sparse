@@ -418,7 +418,6 @@ int main(int argc, char *argv[]) {
     free(res);
     free(row_count);
     free(row_offset);
-    free(send_buf);
 
     /* MPI: end */
     MPI_Finalize();
