@@ -137,7 +137,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     /* gather y elements from processes and save it to res */
     debug("[%d] Gathering results...\n", rank);
-//    MPI_Gatherv(y, proc_info[rank].M, MPI_DOUBLE, res, row_count, row_offset, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
+    MPI_Gatherv(y, proc_info[rank].M, MPI_DOUBLE, res, row_count, row_offset, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
     /* return final result */
 
@@ -315,9 +315,9 @@ int main(int argc, char *argv[]) {
     }*/
 
 
-    /*MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
-    return 0;*/
+    return 0;
 /*
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
