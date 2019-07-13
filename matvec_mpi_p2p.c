@@ -278,13 +278,6 @@ int main(int argc, char *argv[]) {
         row_offset[p] = proc_info[p].first_row;
     }
 
-    /* allocate buffers for requests sending */
-    int **send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
-    for (int i = 0; i < nprocs; i++) {
-        if (i != rank && proc_info[i].M > 0)
-            send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
-    }
-
     int *to_send, * map;
     CalculateInterProcessComm(rank, nprocs, buf_j_idx, &to_send);
 
