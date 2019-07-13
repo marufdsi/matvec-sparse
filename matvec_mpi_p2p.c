@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
     }
 
     int *to_send, * map, **send_buf;
-//    CalculateInterProcessComm(rank, nprocs, buf_j_idx, &to_send, &send_buf);
+    CalculateInterProcessComm(rank, nprocs, buf_j_idx, &to_send, &send_buf);
 
     /* build sending blocks to processors */
     /*int dest, col;
