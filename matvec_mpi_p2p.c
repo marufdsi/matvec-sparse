@@ -29,7 +29,7 @@ enum tag {
 };
 
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x,
-                              int *row_count, int *row_offset/*, int **send_buf, int *to_send*/) {
+                              int *row_count, int *row_offset, int **send_buf, int *to_send) {
     double *res;            /* result of multiplication res = A*x */
 
     /* allocate memory for vectors and submatrixes */
@@ -39,7 +39,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
 
     /* allocate buffers for requests sending */
-     int **send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
+    /* int **send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
      for (int i = 0; i < nprocs; i++) {
          if (i != rank && proc_info[i].M > 0)
              send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
@@ -71,7 +71,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
          ///insert new request
         send_buf[dest][to_send[dest]++] = col;
         map[col] = 1;
-    }
+    }*/
 
     /* MPI request storage */
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
@@ -174,6 +174,16 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
                 row_offset, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
     /* return final result */
+
+    free(send_reqs);
+    free(recv_reqs);
+    free(recv_buf);
+    free(expect);
+    free(all_process_expect);
+    free(reqs);
+    free(rep_buf);
+    free(vecFromRemotePros);
+
     return res;
 }
 
@@ -203,6 +213,31 @@ void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx, int **to_se
     for (int i = 0; i < nprocs; i++) {
         if (i != rank && proc_info[i].M > 0)
             (*send_buf)[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
+    }
+
+    /* build sending blocks to processors */
+    int dest, col;
+    for (int i = 0; i < proc_info[rank].NZ; i++) {
+        col = buf_j_idx[i];
+        /// check whether I need to send a request
+        if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) || map[col] > 0) {
+            continue;
+        }
+
+         ///search which process has the element
+         ////* NOTE: Due to small number or processes, serial search is faster
+
+        dest = -1;
+        for (int p = 0; p < nprocs; p++) {
+            if (in_diagonal(col, proc_info[p].first_row, proc_info[p].last_row)) {
+                dest = p;
+                break;
+            }
+        }
+        assert(dest >= 0);
+         ///insert new request
+        (*send_buf)[dest][(*to_send)[dest]++] = col;
+        map[col] = 1;
     }
 }
 int main(int argc, char *argv[]) {
@@ -288,34 +323,9 @@ int main(int argc, char *argv[]) {
     int *to_send, * map, **send_buf;
     CalculateInterProcessComm(rank, nprocs, buf_j_idx, &to_send, &send_buf);
 
-    /* build sending blocks to processors */
-    /*int dest, col;
-    for (int i = 0; i < proc_info[rank].NZ; i++) {
-        col = buf_j_idx[i];
-        *//* check whether I need to send a request *//*
-        if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) || map[col] > 0) {
-            continue;
-        }
-
-        *//* search which process has the element
-         * NOTE: Due to small number or processes, serial search is faster
-         *//*
-        dest = -1;
-        for (int p = 0; p < nprocs; p++) {
-            if (in_diagonal(col, proc_info[p].first_row, proc_info[p].last_row)) {
-                dest = p;
-                break;
-            }
-        }
-        assert(dest >= 0);
-        *//* insert new request *//*
-        send_buf[dest][to_send[dest]++] = col;
-        map[col] = 1;
-    }*/
-
     /* Matrix-vector multiplication for each processes */
-    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset/*, send_buf,
-                                to_send*/);
+    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset, send_buf,
+                                to_send);
     if (rank == MASTER) {
         printf("Result Y= ");
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
@@ -425,6 +435,8 @@ int main(int argc, char *argv[]) {
     free(res);
     free(row_count);
     free(row_offset);
+    free(send_buf);
+    free(to_send);
 
     /* MPI: end */
     MPI_Finalize();
