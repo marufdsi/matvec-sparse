@@ -297,22 +297,22 @@ int main(int argc, char *argv[]) {
         printf("Total Inter Processor Communication Required: %d\n", total_comm);
     }
 
-    for (int p = 0; p < nprocs; p++) {
+    /*for (int p = 0; p < nprocs; p++) {
         printf("[%d] row count=%d and row offset=%d of process=%d\n", rank, row_count[p], row_offset[p], p);
         if (to_send[p]>0){
             for (int i = 0; i< to_send[p]; ++i) {
                 printf("[%d] send col=%d to process=%d\n", rank, send_buf[p][i], p);
             }
         }
-    }
+    }*/
     /* Matrix-vector multiplication for each processes */
-    /*res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
+    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
     if (rank == MASTER) {
         printf("Result Y= ");
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
             printf("|%lf| ", res[i]);
         }
-    }*/
+    }
 
 
     /*MPI_Barrier(MPI_COMM_WORLD);
