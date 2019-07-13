@@ -300,7 +300,7 @@ int main(int argc, char *argv[]) {
     for (int p = 0; p < nprocs; p++) {
         printf("[%d] row count=%d and row offset=%d of process=%d\n", rank, row_count[p], row_offset[p], p);
         if (to_send[p]>0){
-            for (int i = 0; pi< to_send[p]; ++i) {
+            for (int i = 0; i< to_send[p]; ++i) {
                 printf("[%d] send col=%d to process=%d\n", rank, send_buf[p][i], p);
             }
         }
