@@ -213,6 +213,8 @@ void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx, int **to_se
     for (int j = 0; j < proc_info[rank].N; ++j) {
         map[j] = 0;
     }
+
+    printf("[%d] done initialization\n", rank);
     /* allocate buffers for requests sending */
     (*send_buf) = (int **) malloc_or_exit(nprocs * sizeof(int *));
     for (int i = 0; i < nprocs; i++) {
