@@ -443,6 +443,7 @@ int main(int argc, char *argv[]) {
     free(row_offset);
     free(send_buf);
     free(to_send);
+    free(proc_info);
 
     /* MPI: end */
     MPI_Finalize();
