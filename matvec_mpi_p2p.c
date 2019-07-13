@@ -301,7 +301,7 @@ int main(int argc, char *argv[]) {
 
     int total_comm = CalculateInterProcessComm(rank, nprocs, buf_j_idx);
     if(rank == MASTER){
-        printf("Total Inter Processor Communication Required: %d\n", total_comm);
+        printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm);
     }
 
     /*for (int p = 0; p < nprocs; p++) {
@@ -315,7 +315,7 @@ int main(int argc, char *argv[]) {
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
     if (rank == MASTER) {
-        printf("Result Y= ");
+        printf("[%d] Result Y= ", rank);
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
             printf("|%lf| ", res[i]);
         }
