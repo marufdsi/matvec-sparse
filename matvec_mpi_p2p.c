@@ -39,41 +39,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     }
 
-    /* allocate buffers for requests sending */
-    /* int **send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
-     for (int i = 0; i < nprocs; i++) {
-         if (i != rank && proc_info[i].M > 0)
-             send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
-     }
-
-     int *to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    // # of req to each proc
-    int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
-
-    /// build sending blocks to processors
-    int dest, col;
-    for (int i = 0; i < proc_info[rank].NZ; i++) {
-        col = buf_j_idx[i];
-       ///  check whether I need to send a request
-        if (in_diagonal(col, proc_info[rank].first_row, proc_info[rank].last_row) || map[col] > 0) {
-            continue;
-        }
-
-         ///search which process has the element
-         ///* NOTE: Due to small number or processes, serial search is faster
-
-        dest = -1;
-        for (int p = 0; p < nprocs; p++) {
-            if (in_diagonal(col, proc_info[p].first_row, proc_info[p].last_row)) {
-                dest = p;
-                break;
-            }
-        }
-        assert(dest >= 0);
-         ///insert new request
-        send_buf[dest][to_send[dest]++] = col;
-        map[col] = 1;
-    }*/
-
     /* MPI request storage */
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
@@ -205,10 +170,10 @@ void create_mpi_datatypes(MPI_Datatype *proc_info_type) {
     MPI_Type_commit(proc_info_type);
 }
 
-void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
-    int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
-
+int CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
+    int count_communication=0;
     /* build sending blocks to processors */
+    int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
     int dest, col;
     for (int i = 0; i < proc_info[rank].NZ; i++) {
         col = buf_j_idx[i];
@@ -231,8 +196,13 @@ void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
          ///insert new request
         send_buf[dest][to_send[dest]++] = col;
         map[col] = 1;
+        count_communication++;
     }
+    int total_communication;
+    MPI_Reduce(&count_communication, &total_communication, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
     free(map);
+    free(count_communication);
+    return total_communication;
 }
 int main(int argc, char *argv[]) {
     char *in_file,
@@ -323,8 +293,11 @@ int main(int argc, char *argv[]) {
             send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
     }
 
-    CalculateInterProcessComm(rank, nprocs, buf_j_idx);
-//    printf("[%d] done initialization\n", rank);
+    int total_comm = CalculateInterProcessComm(rank, nprocs, buf_j_idx);
+    if(rank == MASTER){
+        printf("Total Inter Processor Communication Required: %d\n", total_comm);
+    }
+
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
     if (rank == MASTER) {
