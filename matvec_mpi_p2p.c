@@ -308,6 +308,7 @@ int main(int argc, char *argv[]) {
         map[col] = 1;
     }
 
+    printf("[%d] Inter communication of vector data info initialize complete");
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset, send_buf, to_send);
     if (rank == MASTER) {
