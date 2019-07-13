@@ -23,13 +23,14 @@
 enum policies policy = EQUAL_ROWS;
 MPI_Datatype proc_info_type;
 proc_info_t *proc_info;
+int *to_send, * map, **send_buf;
 
 enum tag {
     REQUEST_TAG, REPLY_TAG
 };
 
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x,
-                              int *row_count, int *row_offset, int **send_buf, int *to_send) {
+                              int *row_count, int *row_offset) {
     double *res;            /* result of multiplication res = A*x */
 
     /* allocate memory for vectors and submatrixes */
@@ -204,22 +205,8 @@ void create_mpi_datatypes(MPI_Datatype *proc_info_type) {
     MPI_Type_commit(proc_info_type);
 }
 
-void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx, int **to_send, int ***send_buf){
-    (*to_send) = (int *) malloc_or_exit(nprocs*sizeof(int));    /* # of req to each proc */
-    int *map = (int *) malloc_or_exit(proc_info[rank].N*sizeof(int));
-    for (int j = 0; j < nprocs; ++j) {
-        (*to_send)[j] = 0;
-    }
-    for (int j = 0; j < proc_info[rank].N; ++j) {
-        map[j] = 0;
-    }
-
-    /* allocate buffers for requests sending */
-    (*send_buf) = (int **) malloc_or_exit(nprocs * sizeof(int *));
-    for (int i = 0; i < nprocs; i++) {
-        if (i != rank && proc_info[i].M > 0)
-            (*send_buf)[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
-    }
+void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
+    int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
 
     /* build sending blocks to processors */
     int dest, col;
@@ -245,6 +232,7 @@ void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx, int **to_se
         (*send_buf)[dest][(*to_send)[dest]++] = col;
         map[col] = 1;
     }
+    free(map);
 }
 int main(int argc, char *argv[]) {
     char *in_file,
@@ -284,6 +272,10 @@ int main(int argc, char *argv[]) {
 
     /* initialize proc_info array */
     proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
+
+    to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
+    /* allocate buffers for requests sending */
+    send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
 
     if (rank_wise_read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
                               &proc_info[rank].M, &proc_info[rank].N, &proc_info[rank].NZ,
@@ -326,12 +318,15 @@ int main(int argc, char *argv[]) {
         row_offset[p] = proc_info[p].first_row;
     }
 
-    int *to_send, * map, **send_buf;
-    CalculateInterProcessComm(rank, nprocs, buf_j_idx, &to_send, &send_buf);
+    for (int i = 0; i < nprocs; i++) {
+        if (i != rank && proc_info[i].M > 0)
+            send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
+    }
+
+    CalculateInterProcessComm(rank, nprocs, buf_j_idx);
 //    printf("[%d] done initialization\n", rank);
     /* Matrix-vector multiplication for each processes */
-    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset, send_buf,
-                                to_send);
+    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
     if (rank == MASTER) {
         printf("Result Y= ");
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
