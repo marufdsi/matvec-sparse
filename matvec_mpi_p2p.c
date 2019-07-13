@@ -315,9 +315,9 @@ int main(int argc, char *argv[]) {
     }
 
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    /*MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
-    return 0;
+    return 0;*/
 /*
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
@@ -413,12 +413,12 @@ int main(int argc, char *argv[]) {
     free(buf_i_idx);
     free(buf_j_idx);
     free(buf_x);
-    free(res);
-    free(row_count);
-    free(row_offset);
-    free(send_buf);
-    free(to_send);
-    free(proc_info);
+//    free(res);
+//    free(row_count);
+//    free(row_offset);
+//    free(send_buf);
+//    free(to_send);
+//    free(proc_info);
 
     /* MPI: end */
     MPI_Finalize();
