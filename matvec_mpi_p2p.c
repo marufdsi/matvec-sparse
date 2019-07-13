@@ -328,7 +328,7 @@ int main(int argc, char *argv[]) {
 
     int *to_send, * map, **send_buf;
     CalculateInterProcessComm(rank, nprocs, buf_j_idx, &to_send, &send_buf);
-    printf("[%d] done initialization\n", rank);
+//    printf("[%d] done initialization\n", rank);
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset, send_buf,
                                 to_send);
