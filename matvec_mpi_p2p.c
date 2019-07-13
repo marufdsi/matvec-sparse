@@ -31,6 +31,11 @@ enum tag {
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x, int *row_count, int *row_offset, int **send_buf, int *to_send) {
     double *res;            /* result of multiplication res = A*x */
 
+    for (int p = 0; p < nprocs; p++) {
+        for (int i = 0; i < to_send[p]; ++i) {
+            printf("[%d] send buffer=%d, process=%d, index=%d\n", rank, send_buf[p][i], p, i);
+        }
+    }
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
     if (rank == MASTER) {
@@ -308,7 +313,6 @@ int main(int argc, char *argv[]) {
         map[col] = 1;
     }
 
-    printf("[%d] Inter communication of vector data info initialize complete");
     /* Matrix-vector multiplication for each processes */
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset, send_buf, to_send);
     if (rank == MASTER) {
