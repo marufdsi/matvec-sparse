@@ -194,6 +194,10 @@ void create_mpi_datatypes(MPI_Datatype *proc_info_type) {
     MPI_Type_commit(proc_info_type);
 }
 
+void CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx, int **to_send){
+    (*to_send) = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
+    int *map = (int *) calloc_or_exit(nprocs, sizeof(int));
+}
 int main(int argc, char *argv[]) {
     char *in_file,
             *out_file = NULL;
@@ -281,8 +285,8 @@ int main(int argc, char *argv[]) {
             send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
     }
 
-    int *to_send = (int *) malloc_or_exit(nprocs*sizeof(int));    /* # of req to each proc */
-//    int *map = (int *) calloc_or_exit(nprocs, sizeof(int));
+    int *to_send, * map;
+    CalculateInterProcessComm(rank, nprocs, buf_j_idx, &to_send);
 
     /* build sending blocks to processors */
     /*int dest, col;
