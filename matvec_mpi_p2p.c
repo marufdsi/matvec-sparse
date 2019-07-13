@@ -419,6 +419,9 @@ int main(int argc, char *argv[]) {
     free(buf_j_idx);
     free(buf_x);
     free(res);
+    free(row_count);
+    free(row_offset);
+    free(send_buf);
 
     /* MPI: end */
     MPI_Finalize();
