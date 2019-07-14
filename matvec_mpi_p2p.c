@@ -170,7 +170,7 @@ void create_mpi_datatypes(MPI_Datatype *proc_info_type) {
     MPI_Type_commit(proc_info_type);
 }
 
-int CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
+int* CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
     int count_communication=0;
     int interProcessCall=0;
     /* build sending blocks to processors */
@@ -204,12 +204,17 @@ int CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
     int total_communication, totalInterProcessCall;
     MPI_Reduce(&count_communication, &total_communication, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&interProcessCall, &totalInterProcessCall, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
-    if(rank == MASTER){
-        printf("[%d] Total Inter Process Call=%d\n ", rank, totalInterProcessCall);
-    }
+
     free(map);
-    return total_communication;
+    int *returnPtr;
+    if (rank == MASTER) {
+        returnPtr = (int *) malloc_or_exit(2 * sizeof(int));
+        returnPtr[0] = totalInterProcessCall;
+        returnPtr[1] = total_communication;
+    }
+    return returnPtr;
 }
+
 int main(int argc, char *argv[]) {
     char *in_file,
             *out_file = NULL;
@@ -299,9 +304,10 @@ int main(int argc, char *argv[]) {
             send_buf[i] = (int *) malloc_or_exit(proc_info[i].M * sizeof(int));
     }
 
-    int total_comm = CalculateInterProcessComm(rank, nprocs, buf_j_idx);
+    int *total_comm = CalculateInterProcessComm(rank, nprocs, buf_j_idx);
     if(rank == MASTER){
-        printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm);
+        printf("[%d] Total Inter Process Call=%d\n ", rank, total_comm[0]);
+        printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
     }
 
     /*for (int p = 0; p < nprocs; p++) {
