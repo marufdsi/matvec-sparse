@@ -306,7 +306,7 @@ int main(int argc, char *argv[]) {
 
     int *total_comm = CalculateInterProcessComm(rank, nprocs, buf_j_idx);
     if(rank == MASTER){
-        printf("[%d] Total Inter Process Call=%d\n ", rank, total_comm[0]);
+        printf("[%d] Total Inter Process Call=%d\n", rank, total_comm[0]);
         printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
     }
 
