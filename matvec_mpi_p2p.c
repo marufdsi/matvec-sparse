@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
     double timer = 0, min_time =0, max_time, avg_time;
     t = MPI_Wtime();
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
-    timer = MPI_Wtime() - t;
+    timer = (MPI_Wtime() - t)*1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&timer, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
     avg_time = avg_time/nprocs;
 
     if (rank == MASTER) {
-        printf("[%d] SpMV MinTime: %lf, MaxTime: %lf, AvgTime: %lf\n", rank, min_time, max_time, avg_time);
+        printf("[%d] SpMV MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms]\n", rank, min_time, max_time, avg_time);
         printf("[%d] Result Y= ", rank);
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
             printf("|%lf| ", res[i]);
@@ -350,7 +350,7 @@ int main(int argc, char *argv[]) {
 //        if (rank == MASTER) t = MPI_Wtime();
         t = MPI_Wtime();
         res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
-        timer += MPI_Wtime() - t;
+        timer += (MPI_Wtime() - t)*1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
     }
     latency = timer/ TOTAL_RUNS;
