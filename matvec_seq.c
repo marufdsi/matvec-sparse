@@ -8,7 +8,7 @@
 #include "util.h"
 #include <math.h>
 
-#define TOTAL_RUNS 100
+#define TOTAL_RUNS 1000
 
 void mat_vec_mult(const double *values,
                     const int *i_idx,
