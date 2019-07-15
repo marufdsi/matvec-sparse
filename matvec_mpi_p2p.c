@@ -320,43 +320,59 @@ int main(int argc, char *argv[]) {
     }*/
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
-    if (rank == MASTER) t = MPI_Wtime();
+    double timer = 0, min_time =0, max_time, avg_time;
+    t = MPI_Wtime();
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
+    timer = MPI_Wtime() - t;
     MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&timer, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&timer, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    avg_time = avg_time/nprocs;
+
     if (rank == MASTER) {
-        printf("[%d] SpMV Time: %lf\n", rank, (MPI_Wtime() - t) * 1000.0);
+        printf("[%d] SpMV MinTime: %lf, MaxTime: %lf, AvgTime: %lf\n", rank, min_time, max_time, avg_time);
         printf("[%d] Result Y= ", rank);
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
             printf("|%lf| ", res[i]);
         }
     }
 
-
     /*MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
     return 0;*/
+    MPI_Barrier(MPI_COMM_WORLD);
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
+    double latency = 0.0;
+    timer = 0; min_time =0; max_time = 0; avg_time = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
-        MPI_Barrier(MPI_COMM_WORLD);
-        if (rank == MASTER) t = MPI_Wtime();
+//        MPI_Barrier(MPI_COMM_WORLD);
+//        if (rank == MASTER) t = MPI_Wtime();
+        t = MPI_Wtime();
         res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
+        timer += MPI_Wtime() - t;
         MPI_Barrier(MPI_COMM_WORLD);
-        if (rank == MASTER){
-            runs[r] = (MPI_Wtime() - t) * 1000.0;
-            mean += runs[r];
-        }
     }
+    latency = timer/ TOTAL_RUNS;
+    MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&latency, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&latency, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    mean = avg_time/nprocs;
+    /*if (rank == MASTER){
+        runs[r] = (MPI_Wtime() - t) * 1000.0;
+        mean += runs[r];
+    }*/
 
     /* print execution stats */
       if (rank == MASTER) {
-          mean /= TOTAL_RUNS;
-          for (int r = 0; r < TOTAL_RUNS; r++) {
-              stdev += (runs[r] - mean) * (runs[r] - mean);
-          }
-          stdev = sqrt(stdev/(TOTAL_RUNS-1));
+//          mean /= TOTAL_RUNS;
+//          for (int r = 0; r < TOTAL_RUNS; r++) {
+//              stdev += (runs[r] - mean) * (runs[r] - mean);
+//          }
+//          stdev = sqrt(stdev/(TOTAL_RUNS-1));
 
-          printf("[%d] Computation time: %10.3lf [%4.3lf] ms\n\n", rank, mean, stdev);
-          printf("[%d] Total execution time: %10.3lf ms\n", rank, mean + partition_time);
+          printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, mean);
+//          printf("[%d] Total execution time: %10.3lf ms\n", rank, mean);
 
           FILE *resultCSV;
           FILE *checkFile;
@@ -375,10 +391,10 @@ int main(int argc, char *argv[]) {
                   fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
                   exit(EXIT_FAILURE);
               }
-              fprintf(resultCSV, "MatrixName,ComputationTime,Stdev,TotalRun,nProcess,PartitionType,TotalExecutionTime\n");
+              fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,PartitionType\n");
           }
 
-          fprintf(resultCSV, "%s,%10.3lf,%4.3lf,%d,%d,%d,%10.3lf\n", in_file, mean, stdev, TOTAL_RUNS, nprocs, (policy==EQUAL_ROWS?0:1), (mean + partition_time));
+          fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS, nprocs, (policy==EQUAL_ROWS?0:1));
           if ( fclose(resultCSV) != 0) {
               fprintf(stderr, "fopen: failed to open file MPISpMVResult");
               exit(EXIT_FAILURE);
