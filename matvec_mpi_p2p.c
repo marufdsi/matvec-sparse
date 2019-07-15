@@ -391,10 +391,10 @@ int main(int argc, char *argv[]) {
                   fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
                   exit(EXIT_FAILURE);
               }
-              fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,PartitionType\n");
+              fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests\n");
           }
 
-          fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS, nprocs, (policy==EQUAL_ROWS?0:1));
+          fprintf(resultCSV, "%s,%lf,%lf,%lf,%d,%d,%d,%d\n",in_file,min_time,max_time,mean,TOTAL_RUNS,nprocs,total_comm[0],total_comm[1]);
           if ( fclose(resultCSV) != 0) {
               fprintf(stderr, "fopen: failed to open file MPISpMVResult");
               exit(EXIT_FAILURE);
