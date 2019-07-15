@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == MASTER) {
-        printf("[%d] SpMV Time: %lf\n", (MPI_Wtime() - t) * 1000.0);
+        printf("[%d] SpMV Time: %lf\n", rank, (MPI_Wtime() - t) * 1000.0);
         printf("[%d] Result Y= ", rank);
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
             printf("|%lf| ", res[i]);
