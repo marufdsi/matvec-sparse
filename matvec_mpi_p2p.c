@@ -337,7 +337,7 @@ int main(int argc, char *argv[]) {
     return 0;*/
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
-        MPI_Barrier(MPI_COMM_WORLD);
+//        MPI_Barrier(MPI_COMM_WORLD);
         if (rank == MASTER) t = MPI_Wtime();
         res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
         MPI_Barrier(MPI_COMM_WORLD);
