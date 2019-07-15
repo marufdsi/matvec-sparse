@@ -331,22 +331,20 @@ int main(int argc, char *argv[]) {
     /*MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
     return 0;*/
-/*
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     for (int r = 0; r < TOTAL_RUNS; r++) {
         MPI_Barrier(MPI_COMM_WORLD);
         if (rank == MASTER) t = MPI_Wtime();
-        res = mat_vec_mult_parallel(rank, nprocs, all_proc_info, buf_i_idx,
-                                    buf_j_idx, buf_values, buf_x);
+        res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
         //MPI_Barrier(MPI_COMM_WORLD);
         if (rank == MASTER){
             runs[r] = (MPI_Wtime() - t) * 1000.0;
             mean += runs[r];
         }
-    }*/
+    }
 
     /* print execution stats */
-    /*  if (rank == MASTER) {
+      if (rank == MASTER) {
           mean /= TOTAL_RUNS;
           for (int r = 0; r < TOTAL_RUNS; r++) {
               stdev += (runs[r] - mean) * (runs[r] - mean);
@@ -355,37 +353,37 @@ int main(int argc, char *argv[]) {
 
           printf("[%d] Computation time: %10.3lf [%4.3lf] ms\n\n", rank, mean, stdev);
           printf("[%d] Total execution time: %10.3lf ms\n", rank, mean + partition_time);
-          debug("Finished!\n");
+
+          FILE *resultCSV;
+          FILE *checkFile;
+          if((checkFile = fopen("MPISpMVResult.csv","r"))!=NULL)
+          {
+              // file exists
+              fclose(checkFile);
+              if ( !(resultCSV = fopen("MPISpMVResult.csv", "a")) ) {
+                  fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
+                  exit(EXIT_FAILURE);
+              }
+          }
+          else
+          {
+              if ( !(resultCSV = fopen("MPISpMVResult.csv", "w")) ) {
+                  fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
+                  exit(EXIT_FAILURE);
+              }
+              fprintf(resultCSV, "MatrixName,ComputationTime,Stdev,TotalRun,nProcess,PartitionType,TotalExecutionTime\n");
+          }
+
+          fprintf(resultCSV, "%s,%10.3lf,%4.3lf,%d,%d,%d,%10.3lf\n", in_file, mean, stdev, TOTAL_RUNS, nprocs, (policy==EQUAL_ROWS?0:1), (mean + partition_time));
+          if ( fclose(resultCSV) != 0) {
+              fprintf(stderr, "fopen: failed to open file MPISpMVResult");
+              exit(EXIT_FAILURE);
+          }
       }
-  */
     /* write to output file */
     if (rank == MASTER) {
 
-        /*FILE *resultCSV;
-        FILE *checkFile;
-        if((checkFile = fopen("MPISpMVResult.csv","r"))!=NULL)
-        {
-            // file exists
-            fclose(checkFile);
-            if ( !(resultCSV = fopen("MPISpMVResult.csv", "a")) ) {
-                fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
-                exit(EXIT_FAILURE);
-            }
-        }
-        else
-        {
-            if ( !(resultCSV = fopen("MPISpMVResult.csv", "w")) ) {
-                fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
-                exit(EXIT_FAILURE);
-            }
-            fprintf(resultCSV, "MatrixName,ComputationTime,Stdev,TotalRun,nProcess,PartitionType,TotalExecutionTime\n");
-        }
-
-        fprintf(resultCSV, "%s,%10.3lf,%4.3lf,%d,%d,%d,%10.3lf\n", in_file, mean, stdev, TOTAL_RUNS, nprocs, (policy==EQUAL_ROWS?0:1), (mean + partition_time));
-        if ( fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file MPISpMVResult");
-            exit(EXIT_FAILURE);
-        }
+        /*
         if (out_file != NULL) {
             printf("Writing result to '%s'\n", out_file);
 
