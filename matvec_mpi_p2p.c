@@ -140,16 +140,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     MPI_Gatherv(y, proc_info[rank].M, MPI_DOUBLE, res, row_count, row_offset, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
     /* return final result */
-
-    /*free(send_reqs);
-    free(recv_reqs);
-    free(recv_buf);
-    free(expect);
-    free(all_process_expect);
-    free(reqs);
-    free(rep_buf);
-    free(vecFromRemotePros);*/
-
     return res;
 }
 
