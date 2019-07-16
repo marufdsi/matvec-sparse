@@ -23,7 +23,7 @@
 enum policies policy = EQUAL_ROWS;
 MPI_Datatype proc_info_type;
 proc_info_t *proc_info;
-int *to_send, * map, **send_buf;
+int *to_send, *map, **send_buf;
 
 enum tag {
     REQUEST_TAG, REPLY_TAG
@@ -170,9 +170,9 @@ void create_mpi_datatypes(MPI_Datatype *proc_info_type) {
     MPI_Type_commit(proc_info_type);
 }
 
-int* CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
-    int count_communication=0;
-    int interProcessCall=0;
+int *CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx) {
+    int count_communication = 0;
+    int interProcessCall = 0;
     /* build sending blocks to processors */
     int *map = (int *) calloc_or_exit(proc_info[rank].N, sizeof(int));
     int dest, col;
@@ -183,8 +183,8 @@ int* CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
             continue;
         }
 
-         ///search which process has the element
-         ////* NOTE: Due to small number or processes, serial search is faster
+        ///search which process has the element
+        ////* NOTE: Due to small number or processes, serial search is faster
 
         dest = -1;
         for (int p = 0; p < nprocs; p++) {
@@ -194,10 +194,10 @@ int* CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx){
             }
         }
         assert(dest >= 0);
-         ///insert new request
+        ///insert new request
         send_buf[dest][to_send[dest]++] = col;
         map[col] = 1;
-        if(to_send[dest] == 1)
+        if (to_send[dest] == 1)
             interProcessCall++;
         count_communication++;
     }
@@ -277,16 +277,6 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < proc_info[rank].N; i++) {
         buf_x[i] = 1;
     }
-    if (rank == MASTER) {
-
-
-        t = MPI_Wtime();
-
-        partition_time = (MPI_Wtime() - t) * 1000.0;
-
-        debug("[%d] Partition time: %10.3lf ms\n\n", rank, partition_time);
-        debug("[%d] Starting algorithm...\n", rank);
-    }
 
     /// Share process info among all the processes
     MPI_Allgather(&proc_info[rank], 1, proc_info_type, proc_info, 1, proc_info_type, MPI_COMM_WORLD);
@@ -305,7 +295,7 @@ int main(int argc, char *argv[]) {
     }
 
     int *total_comm = CalculateInterProcessComm(rank, nprocs, buf_j_idx);
-    if(rank == MASTER){
+    if (rank == MASTER) {
         printf("[%d] Total Inter Process Call=%d\n", rank, total_comm[0]);
         printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
     }
@@ -320,15 +310,15 @@ int main(int argc, char *argv[]) {
     }*/
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
-    double timer = 0, min_time =0, max_time, avg_time;
+    double timer = 0, min_time = 0, max_time, avg_time;
     t = MPI_Wtime();
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
-    timer = (MPI_Wtime() - t)*1000.00;
+    timer = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&timer, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&timer, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    avg_time = avg_time/nprocs;
+    avg_time = avg_time / nprocs;
 
     if (rank == MASTER) {
         printf("[%d] SpMV MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms]\n", rank, min_time, max_time, avg_time);
@@ -344,112 +334,54 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     double latency = 0.0;
-    timer = 0; min_time =0; max_time = 0; avg_time = 0;
+    timer = 0;
+    min_time = 0;
+    max_time = 0;
+    avg_time = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
-//        MPI_Barrier(MPI_COMM_WORLD);
-//        if (rank == MASTER) t = MPI_Wtime();
         t = MPI_Wtime();
         res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
-        timer += (MPI_Wtime() - t)*1000.00;
+        timer += (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    latency = timer/ TOTAL_RUNS;
+    latency = timer / TOTAL_RUNS;
     MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&latency, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&latency, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    mean = avg_time/nprocs;
-    /*if (rank == MASTER){
-        runs[r] = (MPI_Wtime() - t) * 1000.0;
-        mean += runs[r];
-    }*/
+    mean = avg_time / nprocs;
 
     /* print execution stats */
-      if (rank == MASTER) {
-//          mean /= TOTAL_RUNS;
-//          for (int r = 0; r < TOTAL_RUNS; r++) {
-//              stdev += (runs[r] - mean) * (runs[r] - mean);
-//          }
-//          stdev = sqrt(stdev/(TOTAL_RUNS-1));
-
-          printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, mean);
-//          printf("[%d] Total execution time: %10.3lf ms\n", rank, mean);
-
-          FILE *resultCSV;
-          FILE *checkFile;
-          if((checkFile = fopen("MPISpMVResult.csv","r"))!=NULL)
-          {
-              // file exists
-              fclose(checkFile);
-              if ( !(resultCSV = fopen("MPISpMVResult.csv", "a")) ) {
-                  fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
-                  exit(EXIT_FAILURE);
-              }
-          }
-          else
-          {
-              if ( !(resultCSV = fopen("MPISpMVResult.csv", "w")) ) {
-                  fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
-                  exit(EXIT_FAILURE);
-              }
-              fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests\n");
-          }
-
-          fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n",in_file,min_time,max_time,mean,TOTAL_RUNS,nprocs,total_comm[0],total_comm[1]);
-          if ( fclose(resultCSV) != 0) {
-              fprintf(stderr, "fopen: failed to open file MPISpMVResult");
-              exit(EXIT_FAILURE);
-          }
-      }
-    /* write to output file */
     if (rank == MASTER) {
-
-        /*
-        if (out_file != NULL) {
-            printf("Writing result to '%s'\n", out_file);
-
-            *//* open file *//*
-            FILE *f;
-            if ( !(f = fopen(out_file, "w")) ) {
-                fprintf(stderr, "fopen: failed to open file '%s'", out_file);
+        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time,
+               mean);
+        FILE *resultCSV;
+        FILE *checkFile;
+        if ((checkFile = fopen("MPISpMVResult.csv", "r")) != NULL) {
+            // file exists
+            fclose(checkFile);
+            if (!(resultCSV = fopen("MPISpMVResult.csv", "a"))) {
+                fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
                 exit(EXIT_FAILURE);
             }
-
-            fprintf(f, "Vector:\n");
-            for (int i = 0; i < all_proc_info[MASTER].N; i++) {
-                fprintf(f, "%.8lf ", buf_x[i]);
-            }
-            fprintf(f, "\n Result:\n");
-            *//* write result *//*
-            for (int i = 0; i < all_proc_info[MASTER].N; i++) {
-                fprintf(f, "%.8lf\n", res[i]);
-            }
-
-            *//* close file *//*
-            if ( fclose(f) != 0) {
-                fprintf(stderr, "fopen: failed to open file '%s'", out_file);
+        } else {
+            if (!(resultCSV = fopen("MPISpMVResult.csv", "w"))) {
+                fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
                 exit(EXIT_FAILURE);
             }
+            fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests\n");
+        }
 
-            printf("Done!\n");
-        }*/
-
-        /* free the memory */
-        /*free(buf_values);
-        free(buf_i_idx);
-        free(buf_j_idx);
-        free(buf_x);
-        free(res);*/
+        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS,
+                nprocs, total_comm[0], total_comm[1]);
+        if (fclose(resultCSV) != 0) {
+            fprintf(stderr, "fopen: failed to open file MPISpMVResult");
+            exit(EXIT_FAILURE);
+        }
     }
     free(buf_values);
     free(buf_i_idx);
     free(buf_j_idx);
     free(buf_x);
-//    free(res);
-//    free(row_count);
-//    free(row_offset);
-//    free(send_buf);
-//    free(to_send);
-//    free(proc_info);
 
     /* MPI: end */
     MPI_Finalize();
