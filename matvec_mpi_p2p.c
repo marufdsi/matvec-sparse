@@ -31,13 +31,13 @@ enum tag {
 
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x,
                               int *row_count, int *row_offset) {
-    double *res;            /* result of multiplication res = A*x */
+//    double *res;            /* result of multiplication res = A*x */
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
-    if (rank == MASTER) {
+    /*if (rank == MASTER) {
         res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    }
+    }*/
 
     /* MPI request storage */
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
@@ -136,11 +136,11 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
 
     /* gather y elements from processes and save it to res */
-    debug("[%d] Gathering results...\n", rank);
-    MPI_Gatherv(y, proc_info[rank].M, MPI_DOUBLE, res, row_count, row_offset, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
+//    debug("[%d] Gathering results...\n", rank);
+//    MPI_Gatherv(y, proc_info[rank].M, MPI_DOUBLE, res, row_count, row_offset, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
     /* return final result */
-    return res;
+    return y;
 }
 
 /*
@@ -262,9 +262,9 @@ int main(int argc, char *argv[]) {
 //        printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
     }
 
-    buf_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    for (int i = 0; i < proc_info[rank].N; i++) {
+    buf_x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
+//    res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
+    for (int i = 0; i < proc_info[rank].M; i++) {
         buf_x[i] = 1;
     }
 
@@ -312,10 +312,10 @@ int main(int argc, char *argv[]) {
 
     if (rank == MASTER) {
         printf("[%d] SpMV MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms]\n", rank, min_time, max_time, avg_time);
-        printf("[%d] Result Y= ", rank);
+        /*printf("[%d] Result Y= ", rank);
         for (int i = 0; i < proc_info[MASTER].N; ++i) {
             printf("|%lf| ", res[i]);
-        }
+        }*/
     }
 
     /*MPI_Barrier(MPI_COMM_WORLD);
