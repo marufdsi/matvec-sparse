@@ -72,7 +72,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         /* recv the block (when it comes) */
         MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
-
+    printf("Done initial request sending\n");
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
@@ -82,6 +82,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     MPI_Status status;
     int req_count;
+    printf("Reply the request\n");
     for (int p = 0; p < all_process_expect[rank]; p++) {
         /* Wait until a request comes */
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
