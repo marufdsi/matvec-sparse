@@ -369,12 +369,12 @@ int main(int argc, char *argv[]) {
         MPI_Reduce(&runTime, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         avg_time = avg_time / nprocs;
         if (rank == MASTER && r<10){
-            printf("[%d] Iteration MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", r, min_time, max_time, avg_time);
+            printf("[%d] Iteration Total: %lf, MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", r, totalTime, min_time, max_time, avg_time);
         }
     }
     latency = totalTime / TOTAL_RUNS;
     if(rank == MASTER){
-        printf("[%d] Latency: %lf\n", rank, latency);
+        printf("[%d] Total Time: %lf, Iterations: %d, Latency: %lf\n", rank, totalTime, TOTAL_RUNS, latency);
     }
     MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&latency, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
