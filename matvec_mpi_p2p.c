@@ -314,6 +314,8 @@ int main(int argc, char *argv[]) {
     }*/
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
+    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
+    MPI_Barrier(MPI_COMM_WORLD);
     double timer = 0, min_time = 0, max_time, avg_time;
     t = MPI_Wtime();
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
@@ -344,17 +346,20 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&timer, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&timer, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    int minNonZero =0, maxNonZero = 0;
+    MPI_Reduce(&proc_info[rank].NZ, &minNonZero, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&proc_info[rank].NZ, &maxNonZero, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
     avg_time = avg_time / nprocs;
     if (rank == MASTER) {
-        printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms]\n", rank, min_time, max_time, avg_time);
+        printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms], Max NonZero: %d, Min NonZero: %d\n", rank, min_time, max_time, avg_time, maxNonZero, minNonZero);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     double latency = 0.0;
     timer = 0;
-    min_time = 0;
-    max_time = 0;
-    avg_time = 0;
+    min_time = 0; max_time = 0; avg_time = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         t = MPI_Wtime();
         res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
