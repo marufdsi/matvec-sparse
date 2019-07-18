@@ -364,12 +364,12 @@ int main(int argc, char *argv[]) {
         t = MPI_Wtime();
         res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
         double runTime = (MPI_Wtime() - t) * 1000.00;
-        count_itr++;
+        MPI_Barrier(MPI_COMM_WORLD);
         totalTime += runTime;
+        count_itr++;
         if(runTime>80){
             printf("[%d] Iteration: %d, Time: %lf\n", rank, r, runTime);
         }
-        MPI_Barrier(MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
