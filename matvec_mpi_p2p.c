@@ -365,6 +365,9 @@ int main(int argc, char *argv[]) {
         double runTime = (MPI_Wtime() - t) * 1000.00;
         count_itr++;
         totalTime += runTime;
+        if(runTime>80){
+            printf("[%d] Time: %lf\n", rank, runTime);
+        }
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
