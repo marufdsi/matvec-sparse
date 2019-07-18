@@ -358,10 +358,12 @@ int main(int argc, char *argv[]) {
     double latency;
     double totalTime = 0;
     min_time = 0; max_time = 0; avg_time = 0;
+    int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         t = MPI_Wtime();
         res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
         double runTime = (MPI_Wtime() - t) * 1000.00;
+        count_itr++;
         totalTime += runTime;
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -374,7 +376,7 @@ int main(int argc, char *argv[]) {
     }
     latency = totalTime / TOTAL_RUNS;
     if(rank == MASTER){
-        printf("[%d] Total Time: %lf, Iterations: %d, Latency: %lf\n", rank, totalTime, TOTAL_RUNS, latency);
+        printf("[%d] Total Time: %lf, Iterations: %d, Latency: %lf\n", rank, totalTime, count_itr, latency);
     }
     MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&latency, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
