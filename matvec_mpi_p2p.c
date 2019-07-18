@@ -41,7 +41,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     /* MPI request storage */
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
-//    MPI_Status *recv_status = (MPI_Status *) malloc_or_exit(nprocs * sizeof(MPI_Status));
+    MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
 
     /* receiving blocks storage */
     double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double *));
@@ -68,6 +68,8 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         /* send the request */
 //        MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
         MPI_Send(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD);
+        /* recv the block (when it comes) */
+        MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
 
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
@@ -115,12 +117,10 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 //    printf("[%d] Waiting for %d requests\n", rank, req_made);
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     for (int q = 0; q < req_made; q++) {
-//        MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
-        MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
-        MPI_Get_count(&status, MPI_INT, &req_count);
-        p = status.MPI_SOURCE;
-        /* recv the block (when it comes) */
-        MPI_Recv(recv_buf[p], req_count, MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
+//        MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
+//        MPI_Get_count(&status, MPI_INT, &req_count);
+//        p = status.MPI_SOURCE;
 
         assert(p != MPI_UNDEFINED);
 
