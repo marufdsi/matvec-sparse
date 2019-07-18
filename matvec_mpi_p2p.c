@@ -100,9 +100,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
         /* send the requested block */
         MPI_Send(rep_buf[p], req_count, MPI_DOUBLE, status.MPI_SOURCE, REPLY_TAG, MPI_COMM_WORLD);
-        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
+//        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
     }
-    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
+//    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
 
     /* Local elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
@@ -116,7 +116,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     /* wait for all blocks to arrive */
     int p;
-    printf("[%d] Waiting for %d requests\n", rank, req_made);
+//    printf("[%d] Waiting for %d requests\n", rank, req_made);
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
@@ -319,7 +319,6 @@ int main(int argc, char *argv[]) {
     }*/
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
-    printf("Call matmul\n");
     double timer = 0, min_time = 0, max_time, avg_time;
     t = MPI_Wtime();
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
