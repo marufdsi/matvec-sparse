@@ -20,7 +20,7 @@
 
 /* Partition policy selection {EQUAL_NZ, EQUAL_ROWS} */
 //enum policies policy = EQUAL_NZ;
-enum policies policy = EQUAL_ROWS;
+//enum policies policy = EQUAL_ROWS;
 MPI_Datatype proc_info_type;
 proc_info_t *proc_info;
 int *to_send, *map, **send_buf;
