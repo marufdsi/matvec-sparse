@@ -8,7 +8,7 @@
 
 #undef DEBUG
 
-#define TOTAL_RUNS 100
+#define TOTAL_RUNS 1
 
 #define MAX_RANDOM_NUM (1<<20)
 #define MASTER 0
@@ -56,7 +56,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
-            send_reqs[p] = MPI_REQUEST_NULL;
+            send_reqs[p] = recv_reqs = MPI_REQUEST_NULL;
             continue;
         }
         debug("[%d] Sending requests to process %2d \t[%5d]\n", rank, p, to_send[p]);
@@ -98,9 +98,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
         /* send the requested block */
         MPI_Send(rep_buf[p], req_count, MPI_DOUBLE, status.MPI_SOURCE, REPLY_TAG, MPI_COMM_WORLD);
-//        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
+        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
     }
-//    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
+    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
 
     /* Local elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
@@ -114,7 +114,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     /* wait for all blocks to arrive */
     int p;
-//    printf("[%d] Waiting for %d requests\n", rank, req_made);
+    printf("[%d] Waiting for %d requests\n", rank, req_made);
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
