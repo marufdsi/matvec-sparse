@@ -374,7 +374,7 @@ int main(int argc, char *argv[]) {
     }
     latency = totalTime / TOTAL_RUNS;
     if(rank == MASTER){
-        printf("[%d] Latency: \n", rank, latency);
+        printf("[%d] Latency: %lf\n", rank, latency);
     }
     MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&latency, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
