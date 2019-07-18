@@ -366,7 +366,7 @@ int main(int argc, char *argv[]) {
         count_itr++;
         totalTime += runTime;
         if(runTime>80){
-            printf("[%d] Time: %lf\n", rank, runTime);
+            printf("[%d] Iteration: %d, Time: %lf\n", rank, r, runTime);
         }
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
