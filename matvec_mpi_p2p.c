@@ -205,6 +205,16 @@ int *CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx) {
     return returnPtr;
 }
 
+double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x) {
+    /* allocate memory for vectors and submatrixes */
+    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
+    /// Sparse Matrix Vector Multiplication without Communication
+    for (int k = 0; k < proc_info[rank].NZ; k++) {
+        y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
+    }
+    return y;
+}
+
 int main(int argc, char *argv[]) {
     char *in_file,
             *out_file = NULL;
@@ -219,7 +229,7 @@ int main(int argc, char *argv[]) {
     int *buf_i_idx,     /* row index for all matrix elements */
             *buf_j_idx;     /* column index for all matrix elements */
     double *buf_values, /* value for all matrix elements */
-            *buf_x,      /* value for all x vector elements */
+            *buf_x, *vec_x,      /* value for all x vector elements */
             *res;        /* final result -> Ax */
 
     /*******************************************/
@@ -263,9 +273,13 @@ int main(int argc, char *argv[]) {
     }
 
     buf_x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
+    vec_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
 //    res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     for (int i = 0; i < proc_info[rank].M; i++) {
         buf_x[i] = 1;
+    }
+    for (int i = 0; i < proc_info[rank].N; i++) {
+        vec_x[i] = 1;
     }
 
     /// Share process info among all the processes
@@ -321,6 +335,19 @@ int main(int argc, char *argv[]) {
     /*MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
     return 0;*/
+    MPI_Barrier(MPI_COMM_WORLD);
+    min_time = 0; max_time = 0; avg_time = 0;
+    t = MPI_Wtime();
+    res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_i_idx, vec_x);
+    timer = (MPI_Wtime() - t) * 1000.00;
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&timer, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&timer, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    avg_time = avg_time / nprocs;
+    if (rank == MASTER) {
+        printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms]\n", rank, min_time, max_time, avg_time);
+    }
     MPI_Barrier(MPI_COMM_WORLD);
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     double latency = 0.0;
