@@ -360,6 +360,7 @@ int main(int argc, char *argv[]) {
     min_time = 0; max_time = 0; avg_time = 0;
     int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
+        MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
         res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
         double runTime = (MPI_Wtime() - t) * 1000.00;
