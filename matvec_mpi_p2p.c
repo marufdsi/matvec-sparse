@@ -66,11 +66,10 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         req_made++;
 
         /* send the request */
-        MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG,
-                  MPI_COMM_WORLD, &send_reqs[p]);
+//        MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
+        MPI_Send(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD);
         /* recv the block (when it comes) */
-        MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG,
-                  MPI_COMM_WORLD, &recv_reqs[p]);
+        MPI_Recv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
 
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
@@ -98,7 +97,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
 
         /* send the requested block */
-        MPI_Isend(rep_buf[p], req_count, MPI_DOUBLE, status.MPI_SOURCE, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[0]);
+        MPI_Send(rep_buf[p], req_count, MPI_DOUBLE, status.MPI_SOURCE, REPLY_TAG, MPI_COMM_WORLD);
 //        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
     }
 //    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
