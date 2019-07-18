@@ -53,7 +53,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* sending requests to processes in blocks */
     int req_made = 0;
     int *expect = (int *) calloc_or_exit(nprocs, sizeof(int));
-    printf("sending requests to processes in blocks");
+    printf("sending requests to processes in blocks\n");
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
@@ -318,6 +318,7 @@ int main(int argc, char *argv[]) {
     }*/
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
+    printf("Call matmul\n");
     double timer = 0, min_time = 0, max_time, avg_time;
     t = MPI_Wtime();
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
