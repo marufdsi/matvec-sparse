@@ -53,6 +53,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* sending requests to processes in blocks */
     int req_made = 0;
     int *expect = (int *) calloc_or_exit(nprocs, sizeof(int));
+    printf("sending requests to processes in blocks");
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
