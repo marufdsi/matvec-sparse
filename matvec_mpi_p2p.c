@@ -56,7 +56,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
-            send_reqs[p] = recv_reqs = MPI_REQUEST_NULL;
+            send_reqs[p] = recv_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
         debug("[%d] Sending requests to process %2d \t[%5d]\n", rank, p, to_send[p]);
