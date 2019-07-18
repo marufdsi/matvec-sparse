@@ -338,7 +338,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     min_time = 0; max_time = 0; avg_time = 0;
     t = MPI_Wtime();
-    res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_i_idx, vec_x);
+    res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
     timer = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
