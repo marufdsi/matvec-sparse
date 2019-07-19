@@ -116,7 +116,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
     MPI_Wait(send_reqs,&status);
     MPI_Wait(rep_send_reqs,&status);
-    free(send_buf);
+//    free(send_buf);
     free(recv_buf);
     free(rep_buf);
     free(vecFromRemotePros);
