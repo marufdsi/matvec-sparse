@@ -8,7 +8,7 @@
 
 #undef DEBUG
 
-#define TOTAL_RUNS 1000
+#define TOTAL_RUNS 100
 
 #define MAX_RANDOM_NUM (1<<20)
 #define MASTER 0
@@ -99,7 +99,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
 
         /* send the requested block */
-        MPI_Send(rep_buf[p], req_count, MPI_DOUBLE, status.MPI_SOURCE, REPLY_TAG, MPI_COMM_WORLD);
+        MPI_Isend(rep_buf[p], req_count, MPI_DOUBLE, status.MPI_SOURCE, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[rank]);
 //        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
     }
 //    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
@@ -112,7 +112,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
     }
 
-
+    MPI_Wait(send_reqs, &status);
 
     /* wait for all blocks to arrive */
     int p;
