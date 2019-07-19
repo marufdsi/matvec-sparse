@@ -343,6 +343,7 @@ int main(int argc, char *argv[]) {
 
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
+    printf("[%d] Initialization Done\n", rank);
     double timer = 0, min_time = 0, max_time, avg_time;
     t = MPI_Wtime();
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x,
