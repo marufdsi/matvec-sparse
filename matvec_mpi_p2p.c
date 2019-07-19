@@ -8,7 +8,7 @@
 
 #undef DEBUG
 
-#define TOTAL_RUNS 1000
+#define TOTAL_RUNS 100
 
 #define MAX_RANDOM_NUM (1<<20)
 #define MASTER 0
@@ -114,11 +114,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
-//    MPI_Wait(send_reqs,&status);
-//    MPI_Wait(rep_send_reqs,&status);
-//    free(send_buf);
     free(recv_buf);
-//    free(rep_buf);
     free(vecFromRemotePros);
     free(reqs);
     /* return final result */
