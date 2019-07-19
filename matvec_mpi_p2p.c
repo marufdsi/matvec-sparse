@@ -75,8 +75,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* Local elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
-            y[buf_i_idx[k] - proc_info[rank].first_row] +=
-                    buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
+            y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
         }
     }
 
@@ -96,11 +95,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
     }
     MPI_Wait(send_reqs, &status);
-    for (int p = 0; p < nprocs; ++p) {
-        /*if (rep_buf_data[p] != NULL)
-            free(rep_buf_data[p]);
-        if (recv_buf[p] != NULL)
-            free(recv_buf[p]);*/
+    for (int p = 0; p < nprocs; p++) {
+        if (to_send[p] > 0)
+            free(recv_buf[p]);
     }
     if (rep_buf_data != NULL)
         free(rep_buf_data);
