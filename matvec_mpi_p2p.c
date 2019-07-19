@@ -30,7 +30,7 @@ enum tag {
 };
 
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x,
-                              int *all_process_expect, int **rep_buf, int *expected_col, int *row_count, int *row_offset) {
+                              int *all_process_expect, int **rep_col_idx, int *expected_col, int *row_count, int *row_offset) {
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
@@ -70,7 +70,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         if(expected_col[p]>0){
             double *rep_buf_data = (double *) malloc_or_exit(expected_col[p] * sizeof(double));
             for (int i = 0; i < expected_col[p]; ++i) {
-                rep_buf_data[i] = buf_x[rep_buf[p][i]];
+                rep_buf_data[i] = buf_x[rep_col_idx[p][i]];
             }
             MPI_Isend(rep_buf_data, expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &rep_send_reqs[p]);
         }
