@@ -313,7 +313,7 @@ int main(int argc, char *argv[]) {
     int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
 
     int *expected_col = (int *) calloc_or_exit(nprocs, sizeof(int));
-    double **rep_buf = (double **) malloc_or_exit(nprocs * sizeof(double *)); /* reply blocks storage */
+    int **rep_col_idx = (int **) malloc_or_exit(nprocs * sizeof(int *)); /* reply blocks storage */
 
 
     MPI_Status status;
@@ -322,7 +322,7 @@ int main(int argc, char *argv[]) {
         /* Wait until a request comes */
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &req_count);
-        rep_buf[p] = (double *) malloc_or_exit(req_count * sizeof(double));
+        rep_col_idx[p] = (int *) malloc_or_exit(req_count * sizeof(int));
         /// reply to this proccess
         int r_p = status.MPI_SOURCE;
         expected_col[r_p] = req_count;
@@ -331,9 +331,9 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < req_count; i++) {
             if (reqs[i] < proc_info[rank].first_row || reqs[i] > proc_info[rank].last_row) {
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
-                return NULL;
+                return 0;
             }
-            rep_buf[r_p][i] = reqs[i] - proc_info[rank].first_row;
+            rep_col_idx[r_p][i] = reqs[i] - proc_info[rank].first_row;
         }
     }
 
@@ -356,7 +356,7 @@ int main(int argc, char *argv[]) {
     double timer = 0, min_time = 0, max_time, avg_time;
     t = MPI_Wtime();
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x,
-            all_process_expect, rep_buf, expected_col, row_count, row_offset);
+            all_process_expect, rep_col_idx, expected_col, row_count, row_offset);
     timer = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -402,7 +402,7 @@ int main(int argc, char *argv[]) {
     for (int r = 0; r < TOTAL_RUNS; r++) {
         MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
-        res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, all_process_expect, rep_buf, expected_col, row_count, row_offset);
+        res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, all_process_expect, rep_col_idx, expected_col, row_count, row_offset);
         double runTime = (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
         totalTime += runTime;
