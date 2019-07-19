@@ -45,7 +45,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     for (int p = 0; p < nprocs; p++) {
         if (to_send[p] > 0)
             recv_buf[p] = (double *) malloc_or_exit(to_send[p] * sizeof(double));
-//        rep_send_reqs[p] = MPI_REQUEST_NULL;
+        rep_send_reqs[p] = MPI_REQUEST_NULL;
     }
 
     /* sending requests to processes in blocks */
@@ -314,6 +314,7 @@ int main(int argc, char *argv[]) {
     }
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
     if (rank == MASTER) {
         printf("[%d] Total Inter Process Call=%d\n", rank, total_comm[0]);
         printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
