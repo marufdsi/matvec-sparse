@@ -330,7 +330,7 @@ int main(int argc, char *argv[]) {
         if(r_p>= nprocs){
             printf("[%d] Error Source: %d\n", rank, r_p);
         }
-        rep_col_idx[p] = (int *) malloc_or_exit(req_count * sizeof(int));
+        rep_col_idx[r_p] = (int *) malloc_or_exit(req_count * sizeof(int));
         expected_col[r_p] = req_count;
         /* fill rep_buf[p] with requested x elements */
         MPI_Recv(reqs, req_count, MPI_INT, r_p, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
