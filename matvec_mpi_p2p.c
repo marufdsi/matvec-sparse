@@ -30,11 +30,7 @@ enum tag {
 };
 
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x,
-                               int **rep_col_idx, int *expected_col, int *row_count, int *row_offset) {
-
-    /* allocate memory for vectors and submatrixes */
-    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
-
+                               int **rep_col_idx, int *expected_col, double *y) {
     /* MPI request storage */
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
@@ -325,9 +321,11 @@ int main(int argc, char *argv[]) {
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
     double timer = 0, min_time = 0, max_time, avg_time;
+    /* allocate memory for vectors and submatrixes */
+    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
     t = MPI_Wtime();
     res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x,
-             rep_col_idx, expected_col, row_count, row_offset);
+             rep_col_idx, expected_col, y);
     timer = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -364,9 +362,10 @@ int main(int argc, char *argv[]) {
     min_time = 0; max_time = 0; avg_time = 0;
     int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
+        y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
         MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
-        res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, row_count, row_offset);
+        res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, y);
         double runTime = (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
         totalTime += runTime;
@@ -426,6 +425,7 @@ int main(int argc, char *argv[]) {
     free(rep_col_idx);
     free(expected_col);
     free(expect);
+    free(y);
 
     /* MPI: end */
     MPI_Finalize();
