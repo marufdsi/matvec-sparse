@@ -328,6 +328,9 @@ int main(int argc, char *argv[]) {
         rep_col_idx[p] = (int *) malloc_or_exit(req_count * sizeof(int));
         /// reply to this proccess
         int r_p = status.MPI_SOURCE;
+        if(r_p>= nprocs){
+            printf("[%d] Error Source: %d\n", rank, r_p);
+        }
         expected_col[r_p] = req_count;
         /* fill rep_buf[p] with requested x elements */
         MPI_Recv(reqs, req_count, MPI_INT, r_p, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -357,15 +360,8 @@ int main(int argc, char *argv[]) {
 
     if (rank == MASTER) {
         printf("[%d] SpMV MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms]\n", rank, min_time, max_time, avg_time);
-        /*printf("[%d] Result Y= ", rank);
-        for (int i = 0; i < proc_info[MASTER].N; ++i) {
-            printf("|%lf| ", res[i]);
-        }*/
     }
 
-    /*MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;*/
     MPI_Barrier(MPI_COMM_WORLD);
     min_time = 0; max_time = 0; avg_time = 0;
     t = MPI_Wtime();
