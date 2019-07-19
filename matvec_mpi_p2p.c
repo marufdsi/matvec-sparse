@@ -312,7 +312,7 @@ int main(int argc, char *argv[]) {
         /* send the request */
         MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
     }
-    printf("[%d] Request Made for the Global Column\n", rank);
+//    printf("[%d] Request Made for the Global Column\n", rank);
     /**** reply to requests ****/
     int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
 
@@ -325,16 +325,15 @@ int main(int argc, char *argv[]) {
         /* Wait until a request comes */
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &req_count);
-        rep_col_idx[p] = (int *) malloc_or_exit(req_count * sizeof(int));
         /// reply to this proccess
         int r_p = status.MPI_SOURCE;
         if(r_p>= nprocs){
             printf("[%d] Error Source: %d\n", rank, r_p);
         }
+        rep_col_idx[p] = (int *) malloc_or_exit(req_count * sizeof(int));
         expected_col[r_p] = req_count;
         /* fill rep_buf[p] with requested x elements */
         MPI_Recv(reqs, req_count, MPI_INT, r_p, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        printf("[%d] Requests Received from: %d\n", rank, r_p);
         for (int i = 0; i < req_count; i++) {
             if (reqs[i] < proc_info[rank].first_row || reqs[i] > proc_info[rank].last_row) {
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
