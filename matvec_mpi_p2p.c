@@ -30,14 +30,10 @@ enum tag {
 };
 
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x,
-                              int *row_count, int *row_offset) {
-//    double *res;            /* result of multiplication res = A*x */
+                              int *all_process_expect, int *row_count, int *row_offset) {
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
-    /*if (rank == MASTER) {
-        res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    }*/
 
     /* MPI request storage */
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
@@ -49,34 +45,30 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     for (int p = 0; p < nprocs; p++) {
         if (to_send[p] > 0)
             recv_buf[p] = (double *) malloc_or_exit(to_send[p] * sizeof(double));
-        rep_send_reqs[p] = MPI_REQUEST_NULL;
+//        rep_send_reqs[p] = MPI_REQUEST_NULL;
     }
 
     /* sending requests to processes in blocks */
     int req_made = 0;
-    int *expect = (int *) calloc_or_exit(nprocs, sizeof(int));
-//    printf("sending requests to processes in blocks\n");
+//    int *expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
             send_reqs[p] = recv_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
-        debug("[%d] Sending requests to process %2d \t[%5d]\n", rank, p, to_send[p]);
-
         /* logistics */
-        expect[p] = 1;
+//        expect[p] = 1;
         req_made++;
 
         /* send the request */
         MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
-//        MPI_Send(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD);
         /* recv the block (when it comes) */
         MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
-//    printf("Done initial request sending\n");
-    int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
-    MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+//    int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
+//    MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     /**** reply to requests ****/
     int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
@@ -84,7 +76,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     MPI_Status status;
     int req_count;
-//    printf("Reply the request\n");
     for (int p = 0; p < all_process_expect[rank]; p++) {
         /* Wait until a request comes */
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
@@ -104,9 +95,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
         /* send the requested block */
         MPI_Isend(rep_buf[p], req_count, MPI_DOUBLE, r_p, REPLY_TAG, MPI_COMM_WORLD, &rep_send_reqs[r_p]);
-//        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
     }
-//    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
 
     /* Local elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
@@ -115,13 +104,10 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
                     buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
         }
     }
-
-    MPI_Wait(rep_send_reqs, &status);
     MPI_Wait(recv_reqs,&status);
 
     /* wait for all blocks to arrive */
 //    int p;
-//    printf("[%d] Waiting for %d requests\n", rank, req_made);
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     /*for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
@@ -150,6 +136,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
+    MPI_Wait(rep_send_reqs, &status);
 
     /* gather y elements from processes and save it to res */
 //    debug("[%d] Gathering results...\n", rank);
@@ -315,6 +302,18 @@ int main(int argc, char *argv[]) {
     }
 
     int *total_comm = CalculateInterProcessComm(rank, nprocs, buf_j_idx);
+
+    int *expect = (int *) calloc_or_exit(nprocs, sizeof(int));
+    for (int p = 0; p < nprocs; p++) {
+        /* need to send to this proc? */
+        if (p == rank || to_send[p] == 0) {
+            continue;
+        }
+        /* logistics */
+        expect[p] = 1;
+    }
+    int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
+    MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     if (rank == MASTER) {
         printf("[%d] Total Inter Process Call=%d\n", rank, total_comm[0]);
         printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
@@ -332,7 +331,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     double timer = 0, min_time = 0, max_time, avg_time;
     t = MPI_Wtime();
-    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, row_count, row_offset);
+    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, all_process_expect, row_count, row_offset);
     timer = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
