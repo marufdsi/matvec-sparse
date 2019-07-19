@@ -95,12 +95,12 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
-//    MPI_Wait(send_reqs, &status);
+    MPI_Wait(send_reqs, &status);
     /*for (int p = 0; p < nprocs; ++p) {
 //        free(rep_buf_data[p]);
         free(recv_buf[p]);
     }*/
-//    free(rep_buf_data);
+    free(rep_buf_data);
     free(recv_buf);
     free(vecFromRemotePros);
     /* return final result */
