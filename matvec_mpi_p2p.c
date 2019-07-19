@@ -97,10 +97,10 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
     MPI_Wait(send_reqs, &status);
     for (int p = 0; p < nprocs; ++p) {
-        free(rep_buf_data[p]);
+//        free(rep_buf_data[p]);
         free(recv_buf[p]);
     }
-    free(rep_buf_data);
+//    free(rep_buf_data);
     free(recv_buf);
     free(vecFromRemotePros);
     /* return final result */
@@ -306,7 +306,6 @@ int main(int argc, char *argv[]) {
         int r_p = status.MPI_SOURCE;
         rep_col_idx[r_p] = (int *) malloc_or_exit(req_count * sizeof(int));
         expected_col[r_p] = req_count;
-        /* fill rep_buf[p] with requested x elements */
         MPI_Recv(reqs, req_count, MPI_INT, r_p, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         for (int i = 0; i < req_count; i++) {
             if (reqs[i] < proc_info[rank].first_row || reqs[i] > proc_info[rank].last_row) {
@@ -424,11 +423,11 @@ int main(int argc, char *argv[]) {
 
     /* MPI: end */
     MPI_Finalize();
-    for (int p = 0; p < nprocs; ++p) {
+    /*for (int p = 0; p < nprocs; ++p) {
         free(send_buf[p]);
     }
     free(send_buf);
-    free(to_send);
+    free(to_send);*/
 
     return 0;
 }
