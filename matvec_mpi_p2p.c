@@ -319,6 +319,8 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Wait(send_reqs, &status);
+    free(all_process_expect);
+    free(reqs);
 
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
@@ -421,6 +423,9 @@ int main(int argc, char *argv[]) {
     free(buf_i_idx);
     free(buf_j_idx);
     free(buf_x);
+    free(rep_col_idx);
+    free(expected_col);
+    free(expect);
 
     /* MPI: end */
     MPI_Finalize();
