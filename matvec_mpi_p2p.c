@@ -91,16 +91,15 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
     }
     MPI_Wait(send_reqs, &status);
-    for (int p = 0; p < nprocs; p++) {
-//        if (to_send[p] > 0)
-//            free(recv_buf[p]);
-    }
+
     if (rep_buf_data != NULL)
         free(rep_buf_data);
     if (recv_buf != NULL)
         free(recv_buf);
     if (vecFromRemotePros != NULL)
         free(vecFromRemotePros);
+    free(send_reqs);
+    free(recv_reqs);
     /* return final result */
     return y;
 }
