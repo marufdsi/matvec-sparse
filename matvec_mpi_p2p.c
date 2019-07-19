@@ -297,6 +297,11 @@ int main(int argc, char *argv[]) {
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
+    if (rank == MASTER) {
+        printf("[%d] Total Inter Process Call=%d\n", rank, total_comm[0]);
+        printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
+    }
+
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
@@ -304,17 +309,15 @@ int main(int argc, char *argv[]) {
             send_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
-
         /* send the request */
         MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
     }
-
+    printf("[%d] Request Made for the Global Column\n", rank);
     /**** reply to requests ****/
     int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
 
     int *expected_col = (int *) calloc_or_exit(nprocs, sizeof(int));
     int **rep_col_idx = (int **) malloc_or_exit(nprocs * sizeof(int *)); /* reply blocks storage */
-
 
     MPI_Status status;
     int req_count;
@@ -328,6 +331,7 @@ int main(int argc, char *argv[]) {
         expected_col[r_p] = req_count;
         /* fill rep_buf[p] with requested x elements */
         MPI_Recv(reqs, req_count, MPI_INT, r_p, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("[%d] Requests Received from: %d\n", rank, r_p);
         for (int i = 0; i < req_count; i++) {
             if (reqs[i] < proc_info[rank].first_row || reqs[i] > proc_info[rank].last_row) {
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
@@ -337,20 +341,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-
-    if (rank == MASTER) {
-        printf("[%d] Total Inter Process Call=%d\n", rank, total_comm[0]);
-        printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
-    }
-
-    /*for (int p = 0; p < nprocs; p++) {
-        printf("[%d] row count=%d and row offset=%d of process=%d\n", rank, row_count[p], row_offset[p], p);
-        if (to_send[p]>0){
-            for (int i = 0; i< to_send[p]; ++i) {
-                printf("[%d] send col=%d to process=%d\n", rank, send_buf[p][i], p);
-            }
-        }
-    }*/
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
     double timer = 0, min_time = 0, max_time, avg_time;
