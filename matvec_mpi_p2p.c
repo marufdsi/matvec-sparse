@@ -50,15 +50,12 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     /* sending requests to processes in blocks */
     int req_made = 0;
-//    int *expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
             send_reqs[p] = recv_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
-        /* logistics */
-//        expect[p] = 1;
         req_made++;
 
         /* send the request */
@@ -66,9 +63,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         /* recv the block (when it comes) */
         MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
-
-//    int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
-//    MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     /**** reply to requests ****/
     int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
@@ -106,22 +100,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
     MPI_Wait(recv_reqs,&status);
 
-    /* wait for all blocks to arrive */
-//    int p;
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
-    /*for (int q = 0; q < req_made; q++) {
-        MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
-//        MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
-//        MPI_Get_count(&status, MPI_INT, &req_count);
-//        p = status.MPI_SOURCE;
-
-        assert(p != MPI_UNDEFINED);
-
-        *//* fill x array with new elements *//*
-        for (int i = 0; i < to_send[p]; i++) {
-            vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
-        }
-    }*/
     for (int p = 0; p < nprocs; ++p) {
         /* fill x array with new elements */
         for (int i = 0; i < to_send[p]; i++) {
@@ -132,16 +111,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     /* Global elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
-//            printf("[%d] Request received=%lf\n", rank, vecFromRemotePros[buf_j_idx[k]]);
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
-    MPI_Wait(rep_send_reqs, &status);
-
-    /* gather y elements from processes and save it to res */
-//    debug("[%d] Gathering results...\n", rank);
-//    MPI_Gatherv(y, proc_info[rank].M, MPI_DOUBLE, res, row_count, row_offset, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
-
     /* return final result */
     return y;
 }
