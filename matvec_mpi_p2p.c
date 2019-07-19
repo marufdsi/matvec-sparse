@@ -36,7 +36,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
 
     /* receiving blocks storage */
-    double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double *));
+    double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double));
     for (int p = 0; p < nprocs; p++) {
         if (to_send[p] > 0)
             recv_buf[p] = (double *) malloc_or_exit(to_send[p] * sizeof(double));
@@ -55,7 +55,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
 
     /**** reply to requests ****/
-    double **rep_buf_data = (double **) malloc_or_exit(nprocs * sizeof(double *));
+    double **rep_buf_data = (double **) malloc_or_exit(nprocs * sizeof(double));
     MPI_Status status;
     for (int p = 0; p < nprocs; ++p) {
         if(expected_col[p]>0){
