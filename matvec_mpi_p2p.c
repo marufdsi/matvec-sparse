@@ -96,8 +96,8 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
     MPI_Wait(send_reqs, &status);
     for (int p = 0; p < nprocs; p++) {
-        if (to_send[p] > 0)
-            free(recv_buf[p]);
+//        if (to_send[p] > 0)
+//            free(recv_buf[p]);
     }
     if (rep_buf_data != NULL)
         free(rep_buf_data);
