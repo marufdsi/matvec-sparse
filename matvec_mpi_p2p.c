@@ -41,6 +41,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
     /* MPI request storage */
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
+    MPI_Request *rep_send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
 
     /* receiving blocks storage */
@@ -48,6 +49,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     for (int p = 0; p < nprocs; p++) {
         if (to_send[p] > 0)
             recv_buf[p] = (double *) malloc_or_exit(to_send[p] * sizeof(double));
+        rep_send_reqs[p] = MPI_REQUEST_NULL;
     }
 
     /* sending requests to processes in blocks */
@@ -88,8 +90,10 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &req_count);
         rep_buf[p] = (double *) malloc_or_exit(req_count * sizeof(double));
+        /// reply to this proccess
+        int r_p = status.MPI_SOURCE;
         /* fill rep_buf[p] with requested x elements */
-        MPI_Recv(reqs, req_count, MPI_INT, status.MPI_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(reqs, req_count, MPI_INT, r_p, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         for (int i = 0; i < req_count; i++) {
             if (reqs[i] < proc_info[rank].first_row || reqs[i] > proc_info[rank].last_row) {
                 printf("Wrong index %d looking at process %d\n", reqs[i], p);
@@ -99,7 +103,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
 
         /* send the requested block */
-        MPI_Isend(rep_buf[p], req_count, MPI_DOUBLE, status.MPI_SOURCE, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[rank]);
+        MPI_Isend(rep_buf[p], req_count, MPI_DOUBLE, r_p, REPLY_TAG, MPI_COMM_WORLD, &rep_send_reqs[r_p]);
 //        printf("[%d] Replying requests from process %2d \t[%5d]\n", rank, status.MPI_SOURCE, req_count);
     }
 //    printf("[%d] Replied to all requests! [%4d]\n", rank, to_send[rank]);
@@ -112,13 +116,14 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
         }
     }
 
-    MPI_Wait(send_reqs, &status);
+    MPI_Wait(rep_send_reqs, &status);
+    MPI_Wait(&recv_reqs,&status);
 
     /* wait for all blocks to arrive */
-    int p;
+//    int p;
 //    printf("[%d] Waiting for %d requests\n", rank, req_made);
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
-    for (int q = 0; q < req_made; q++) {
+    /*for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
 //        MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
 //        MPI_Get_count(&status, MPI_INT, &req_count);
@@ -126,6 +131,12 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
 
         assert(p != MPI_UNDEFINED);
 
+        *//* fill x array with new elements *//*
+        for (int i = 0; i < to_send[p]; i++) {
+            vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
+        }
+    }*/
+    for (int p = 0; p < nprocs; ++p) {
         /* fill x array with new elements */
         for (int i = 0; i < to_send[p]; i++) {
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
