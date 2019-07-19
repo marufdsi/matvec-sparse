@@ -114,6 +114,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
+    free(recv_buf);
+    free(vecFromRemotePros);
+    free(reqs);
     /* return final result */
     return y;
 }
