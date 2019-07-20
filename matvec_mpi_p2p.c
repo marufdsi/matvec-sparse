@@ -35,7 +35,7 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
 
     /* receiving blocks storage */
     double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double));
-    for (int p = 0; p < nprocs; p++) 
+    for (int p = 0; p < nprocs; p++)
         if (to_send[p] > 0)
             recv_buf[p] = (double *) malloc_or_exit(to_send[p] * sizeof(double));
 
@@ -92,10 +92,10 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
         MPI_Waitany(reply_count, send_reqs, &p, allStatus);
 
     for (int p = 0; p < nprocs; ++p) {
-        if (rep_buf_data[p] != NULL)
-            free(rep_buf_data[p]);
-        if (recv_buf[p] != NULL)
-            free(recv_buf[p]);
+//        if (rep_buf_data[p] != NULL)
+//            free(rep_buf_data[p]);
+//        if (recv_buf[p] != NULL)
+//            free(recv_buf[p]);
     }
     free(rep_buf_data);
     free(recv_buf);
