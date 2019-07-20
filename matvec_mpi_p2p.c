@@ -87,13 +87,13 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
         }
     }
+    MPI_Status *allStatus;
+    MPI_Waitall(nprocs, send_reqs, allStatus);
     for (int p = 0; p < nprocs; ++p) {
         if (expected_col[p] > 0) {
-            MPI_Wait(&send_reqs[p], &status);
             free(rep_buf_data[p]);
         }
     }
-
     free(rep_buf_data);
     free(recv_buf);
     free(vecFromRemotePros);
