@@ -8,7 +8,7 @@
 
 #undef DEBUG
 
-#define TOTAL_RUNS 1000
+#define TOTAL_RUNS 100
 
 #define MAX_RANDOM_NUM (1<<20)
 #define MASTER 0
@@ -336,7 +336,7 @@ int main(int argc, char *argv[]) {
         MPI_Barrier(MPI_COMM_WORLD);
         totalTime += runTime;
         count_itr++;
-        if(runTime>200){
+        if(runTime>120){
             printf("[%d] Iteration: %d, Time: %lf\n", rank, r, runTime);
         }
         MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
