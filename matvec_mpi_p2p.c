@@ -29,7 +29,7 @@ enum tag {
     REQUEST_TAG, REPLY_TAG
 };
 
-double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
+void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
                               double *buf_x, int **rep_col_idx, int *expected_col, double *y) {
     /* MPI request storage */
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
@@ -97,8 +97,6 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     free(vecFromRemotePros);
     free(send_reqs);
     free(recv_reqs);
-    /* return final result */
-    return y;
 }
 
 /*
