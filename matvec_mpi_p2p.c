@@ -29,8 +29,8 @@ enum tag {
     REQUEST_TAG, REPLY_TAG
 };
 
-double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x,
-                               int **rep_col_idx, int *expected_col, double *y) {
+double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
+                              double *buf_x, int **rep_col_idx, int *expected_col, double *y) {
     /* MPI request storage */
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
@@ -92,18 +92,9 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
     }
     MPI_Wait(send_reqs, &status);
 
-    for (int p = 0; p < nprocs; ++p) {
-        if(rep_buf_data[p] != NULL)
-            free(rep_buf_data[p]);
-        if(recv_buf[p] != NULL)
-            free(recv_buf[p]);
-    }
-    /*if (rep_buf_data != NULL)
-        free(rep_buf_data);
-    if (recv_buf != NULL)
-        free(recv_buf);*/
-    if (vecFromRemotePros != NULL)
-        free(vecFromRemotePros);
+    free(rep_buf_data);
+    free(recv_buf);
+    free(vecFromRemotePros);
     free(send_reqs);
     free(recv_reqs);
     /* return final result */
@@ -183,15 +174,11 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
 }
 
 int main(int argc, char *argv[]) {
-    char *in_file,
-            *out_file = NULL;
+    char *in_file, *out_file = NULL;
 
     double t, comp_time, partition_time;
     int nprocs,     /* number of tasks/processes */
             rank;       /* id of task/process */
-
-    /***** MPI MASTER (root) process only ******/
-//    proc_info_t *all_proc_info;
 
     int *buf_i_idx,     /* row index for all matrix elements */
             *buf_j_idx;     /* column index for all matrix elements */
@@ -208,7 +195,6 @@ int main(int argc, char *argv[]) {
 
     create_mpi_datatypes(&proc_info_type);
 
-    /* master thread reads matrix */
     if (argc < 2 || argc > 3) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
         return 0;
@@ -232,16 +218,8 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-//    printf("[%d] Read matrix from '%s'!\n", rank, in_file);
-//    printf("[%d] Matrix properties: M=%d, N = %d, NZ = %d, first_row=%d, last_row=%d\n\n", rank, proc_info[rank].M, proc_info[rank].N, proc_info[rank].NZ, proc_info[rank].first_row, proc_info[rank].last_row);
-
-    for (int j = 0; j < proc_info[rank].NZ; ++j) {
-//        printf("rank=%d, i=%d, j=%d, values=%lf\n", rank, buf_i_idx[j], buf_j_idx[j], buf_values[j]);
-    }
-
     buf_x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
     vec_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-//    res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     for (int i = 0; i < proc_info[rank].M; i++) {
         buf_x[i] = 1;
     }
@@ -327,23 +305,8 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     double timer = 0, min_time = 0, max_time, avg_time;
     /* allocate memory for vectors and submatrixes */
-    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
-    t = MPI_Wtime();
-    res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x,
-             rep_col_idx, expected_col, y);
-    timer = (MPI_Wtime() - t) * 1000.00;
+    double *y;
     MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&timer, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&timer, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    avg_time = avg_time / nprocs;
-
-    if (rank == MASTER) {
-        printf("[%d] SpMV MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms]\n", rank, min_time, max_time, avg_time);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    min_time = 0; max_time = 0; avg_time = 0;
     t = MPI_Wtime();
     res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
     timer = (MPI_Wtime() - t) * 1000.00;
@@ -370,7 +333,7 @@ int main(int argc, char *argv[]) {
         y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
         MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
-        res = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, y);
+        mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, y);
         double runTime = (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
         totalTime += runTime;
@@ -431,14 +394,10 @@ int main(int argc, char *argv[]) {
     free(expected_col);
     free(expect);
     free(y);
-
+    free(send_buf);
+    free(to_send);
     /* MPI: end */
     MPI_Finalize();
-    /*for (int p = 0; p < nprocs; ++p) {
-        free(send_buf[p]);
-    }
-    free(send_buf);
-    free(to_send);*/
 
     return 0;
 }
