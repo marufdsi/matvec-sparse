@@ -75,6 +75,7 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
     }
 
     int p;
+    double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
         assert(p != MPI_UNDEFINED);
