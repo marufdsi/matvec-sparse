@@ -42,11 +42,13 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
     }
 
     /* sending requests to processes in blocks */
+    int req_made = 0;
     for (int p = 0; p < nprocs; p++) {
         if (p == rank || to_send[p] == 0) {
             recv_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
+        req_made++;
         /* receive the block (when it comes) */
         MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
@@ -72,14 +74,24 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
         }
     }
 
-    MPI_Wait(recv_reqs, &status);
+    int p;
+    for (int q = 0; q < req_made; q++) {
+        MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
+        assert(p != MPI_UNDEFINED);
+
+        /* fill x array with new elements */
+        for (int i = 0; i < to_send[p]; i++)
+            vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
+    }
+
+    /*MPI_Wait(recv_reqs, &status);
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     for (int p = 0; p < nprocs; ++p) {
-        /* fill x array with new elements */
+        *//* fill x array with new elements *//*
         for (int i = 0; i < to_send[p]; i++) {
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
         }
-    }
+    }*/
 
     /* Global elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
