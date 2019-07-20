@@ -35,11 +35,9 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
 
     /* receiving blocks storage */
     double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double));
-    for (int p = 0; p < nprocs; p++) {
+    for (int p = 0; p < nprocs; p++) 
         if (to_send[p] > 0)
             recv_buf[p] = (double *) malloc_or_exit(to_send[p] * sizeof(double));
-        send_reqs[p] = MPI_REQUEST_NULL;
-    }
 
     /* sending requests to processes in blocks */
     int req_made = 0;
@@ -48,8 +46,9 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             recv_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
+        req_made++;
         /* receive the block (when it comes) */
-        MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[req_made++]);
+        MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
 
     /**** reply to requests ****/
@@ -59,20 +58,18 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
     for (int p = 0; p < nprocs; ++p) {
         if(expected_col[p]>0){
             rep_buf_data[p] = (double *) malloc_or_exit(expected_col[p] * sizeof(double));
-            for (int i = 0; i < expected_col[p]; ++i) {
+            for (int i = 0; i < expected_col[p]; ++i)
                 rep_buf_data[p][i] = buf_x[rep_col_idx[p][i]];
-            }
-            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[reply_count++]);
-
-        }
+            reply_count++;
+            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[p]);
+        } else
+            send_reqs[p] = MPI_REQUEST_NULL;
     }
 
     /* Local elements multiplication */
-    for (int k = 0; k < proc_info[rank].NZ; k++) {
-        if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
+    for (int k = 0; k < proc_info[rank].NZ; k++)
+        if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
-        }
-    }
 
     int p;
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
@@ -87,21 +84,16 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
     }
 
     /* Global elements multiplication */
-    for (int k = 0; k < proc_info[rank].NZ; k++) {
-        if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
+    for (int k = 0; k < proc_info[rank].NZ; k++)
+        if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
-        }
-    }
 
     for (int i=0; i<reply_count; ++i)
-    {
-        MPI_Waitany(reply_count, send_reqs, &p, MPI_STATUS_IGNORE);
-    }
+        MPI_Waitany(reply_count, send_reqs, &p, allStatus);
 
     for (int p = 0; p < nprocs; ++p) {
         if (rep_buf_data[p] != NULL)
             free(rep_buf_data[p]);
-
         if (recv_buf[p] != NULL)
             free(recv_buf[p]);
     }
