@@ -85,15 +85,6 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
     }
 
-    /*MPI_Wait(recv_reqs, &status);
-    double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
-    for (int p = 0; p < nprocs; ++p) {
-        *//* fill x array with new elements *//*
-        for (int i = 0; i < to_send[p]; i++) {
-            vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
-        }
-    }*/
-
     /* Global elements multiplication */
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row)) {
@@ -105,6 +96,9 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
     for (int p = 0; p < nprocs; ++p) {
         if (expected_col[p] > 0) {
             free(rep_buf_data[p]);
+        }
+        if (to_send[p] > 0) {
+            free(recv_buf[p]);
         }
     }
     free(rep_buf_data);
