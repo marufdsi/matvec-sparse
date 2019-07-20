@@ -19,11 +19,9 @@
 #include "partition.h"
 
 /* Partition policy selection {EQUAL_NZ, EQUAL_ROWS} */
-//enum policies policy = EQUAL_NZ;
-//enum policies policy = EQUAL_ROWS;
 MPI_Datatype proc_info_type;
 proc_info_t *proc_info;
-int *to_send, *map, **send_buf;
+int *to_send, **send_buf;
 
 enum tag {
     REQUEST_TAG, REPLY_TAG
@@ -45,12 +43,11 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
 
     /* sending requests to processes in blocks */
     for (int p = 0; p < nprocs; p++) {
-        /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
             recv_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
-        /* recv the block (when it comes) */
+        /* receive the block (when it comes) */
         MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
 
@@ -336,9 +333,9 @@ int main(int argc, char *argv[]) {
         MPI_Barrier(MPI_COMM_WORLD);
         totalTime += runTime;
         count_itr++;
-        if(runTime>120){
+        /*if(runTime>120){
             printf("[%d] Iteration: %d, Time: %lf\n", rank, r, runTime);
-        }
+        }*/
         MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
