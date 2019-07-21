@@ -171,6 +171,8 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
     /// Sparse Matrix Vector Multiplication without Communication
     for (int k = 0; k < proc_info[rank].NZ; k++) {
+        if((buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row]) >0)
+            printf("Greater than zero exist\n");
         y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
     }
     return y;
@@ -310,9 +312,6 @@ int main(int argc, char *argv[]) {
         }
         printf("\n");
     }
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;
     /* Matrix-vector multiplication for each processes */
     double timer = 0, min_time = 0, max_time, avg_time;
     /// y vector for y = M*x/
