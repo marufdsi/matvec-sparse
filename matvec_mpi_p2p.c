@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms], Max NonZero: %d, Min NonZero: %d\n",
                rank, min_time, max_time, avg_time, maxNonZero, minNonZero);
-        printf("[%d] Only Mat Mul Result: y = |");
+        printf("[%d] Only Mat Mul Result: y = |", rank);
         for (int i = 0; i < proc_info[rank].N; ++i) {
             printf("%d| ",res[i]);
         }
@@ -341,7 +341,7 @@ int main(int argc, char *argv[]) {
     t = MPI_Wtime();
     mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, y);
     double runTime = (MPI_Wtime() - t) * 1000.00;
-    printf("[%d] Mat Mul Result: y = |");
+    printf("[%d] Mat Mul Result: y = |", rank);
     for (int i = 0; i < proc_info[rank].M; ++i) {
         printf("%d| ",y[i]);
     }
