@@ -29,26 +29,27 @@ enum tag {
 
 void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
                               double *buf_x, int **rep_col_idx, int *expected_col, double *y) {
-    /// MPI request storage
-    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
-    MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
 
     /// receiving blocks storage
     double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double));
+    int total_req = 0;
     for (int p = 0; p < nprocs; p++)
-        if (to_send[p] > 0)
+        if (to_send[p] > 0) {
             recv_buf[p] = (double *) malloc_or_exit(to_send[p] * sizeof(double));
-
+            total_req++;
+        }
+/// MPI request storage
+    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
+    MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(total_req * sizeof(MPI_Request));
     /// sending receive requests to processes in blocks
     int req_made = 0;
     for (int p = 0; p < nprocs; p++) {
         if (p == rank || to_send[p] == 0) {
-            recv_reqs[p] = MPI_REQUEST_NULL;
+//            recv_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
-        req_made++;
         /// Receive the block (when it comes)
-        MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
+        MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[req_made++]);
     }
 
     /// Reply to the requests.
@@ -60,10 +61,8 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             rep_buf_data[p] = (double *) malloc_or_exit(expected_col[p] * sizeof(double));
             for (int i = 0; i < expected_col[p]; ++i)
                 rep_buf_data[p][i] = buf_x[rep_col_idx[p][i]];
-            send_req_count++;
-            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[p]);
-        } else
-            send_reqs[p] = MPI_REQUEST_NULL;
+            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[send_req_count++]);
+        }
     }
 
     /// Local elements multiplication
@@ -89,8 +88,8 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
 
     /// Wait until send request delivered to through network.
-    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
-    MPI_Waitall(nprocs, recv_reqs, MPI_STATUS_IGNORE);
+    MPI_Waitall(send_req_count, send_reqs, MPI_STATUS_IGNORE);
+    MPI_Waitall(total_req, recv_reqs, MPI_STATUS_IGNORE);
     /// Free the buffer.
     for (int p = 0; p < nprocs; ++p) {
         if (rep_buf_data[p] != NULL)
