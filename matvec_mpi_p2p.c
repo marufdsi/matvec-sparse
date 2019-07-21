@@ -173,7 +173,7 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
     }
-    printf("[%d] Results y: |");
+    printf("[%d] Results y: |", rank);
     for (int i = 0; i < proc_info[rank].M; ++i) {
         printf("%lf|", y[i]);
     }
