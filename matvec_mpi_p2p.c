@@ -270,12 +270,11 @@ int main(int argc, char *argv[]) {
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
-            send_reqs[p] = MPI_REQUEST_NULL;
+//            send_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
-        send_req_count++;
         /* send the request */
-        MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
+        MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[send_req_count++]);
     }
     /**** reply to requests ****/
     int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
@@ -305,9 +304,10 @@ int main(int argc, char *argv[]) {
     for (int req = 0; req < send_req_count; ++req) {
         MPI_Waitany(nprocs, send_reqs, &p, MPI_STATUS_IGNORE);
     }*/
-    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
+    printf("[%d] Done initializing!!!\n", rank);
+    MPI_Waitall(send_req_count, send_reqs, MPI_STATUS_IGNORE);
     free(all_process_expect);
-    free(reqs);
+//    free(reqs);
 
     /* Matrix-vector multiplication for each processes */
     MPI_Barrier(MPI_COMM_WORLD);
