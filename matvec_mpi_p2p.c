@@ -173,11 +173,6 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
     for (int k = 0; k < proc_info[rank].NZ; k++) {
         y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
     }
-    printf("[%d] Results y: |", rank);
-    for (int i = 0; i < proc_info[rank].M; ++i) {
-        printf("%lf|", y[i]);
-    }
-    printf("\n");
     return y;
 }
 
@@ -263,11 +258,6 @@ int main(int argc, char *argv[]) {
         /* logistics */
         expect[p] = 1;
         /// send the request
-        printf("[%d] Rank requests to rank %d columns[%d]: ", rank, p, to_send[p]);
-        for (int col = 0; col < to_send[p]; ++col) {
-            printf("#%d col:%d, ", col, send_buf[p][col]);
-        }
-        printf("\n");
         MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
     }
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
@@ -303,16 +293,6 @@ int main(int argc, char *argv[]) {
         }
     }
     MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
-
-    for (int p = 0; p < nprocs; ++p) {
-        if(expected_col[p]<=0)
-            continue;
-        printf("[%d] Process %d requests %d columns: ", rank, p, expected_col[p]);
-        for (int col = 0; col < expected_col[p]; ++col) {
-            printf("#%d col: %d, ", col, rep_col_idx[p][col]);
-        }
-        printf("\n");
-    }
     /* Matrix-vector multiplication for each processes */
     double timer = 0, min_time = 0, max_time, avg_time;
     /// y vector for y = M*x/
