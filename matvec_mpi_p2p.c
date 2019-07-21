@@ -323,6 +323,11 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms], Max NonZero: %d, Min NonZero: %d\n",
                rank, min_time, max_time, avg_time, maxNonZero, minNonZero);
+        printf("[%d] Only Mat Mul Result: y = |");
+        for (int i = 0; i < proc_info[rank].N; ++i) {
+            printf("%d| ",res[i]);
+        }
+        printf("\n");
     }
     MPI_Barrier(MPI_COMM_WORLD);
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
@@ -331,6 +336,18 @@ int main(int argc, char *argv[]) {
     min_time = 0;
     max_time = 0;
     avg_time = 0;
+    y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
+    MPI_Barrier(MPI_COMM_WORLD);
+    t = MPI_Wtime();
+    mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, y);
+    double runTime = (MPI_Wtime() - t) * 1000.00;
+    printf("[%d] Mat Mul Result: y = |");
+    for (int i = 0; i < proc_info[rank].M; ++i) {
+        printf("%d| ",y[i]);
+    }
+    printf(" = Runtime[%d](%lf)\n", rank, runTime);
+    MPI_Barrier(MPI_COMM_WORLD);
+    free(y);
     int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
