@@ -297,7 +297,7 @@ int main(int argc, char *argv[]) {
             rep_col_idx[r_p][i] = reqs[i] - proc_info[rank].first_row;
         }
     }
-    MPI_Status *allStatus = (allStatus *) malloc_or_exit(nprocs * sizeof(allStatus));;
+    MPI_Status *allStatus = (MPI_Status *) malloc_or_exit(nprocs * sizeof(MPI_Status));;
     MPI_Waitall(nprocs, send_reqs, allStatus);
     free(all_process_expect);
     free(reqs);
