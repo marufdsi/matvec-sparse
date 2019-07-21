@@ -302,6 +302,8 @@ int main(int argc, char *argv[]) {
     MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
 
     for (int p = 0; p < nprocs; ++p) {
+        if(expected_col[p]<=0)
+            continue;
         printf("[%d] Process %d requests %d columns: ", rank, p, expected_col[p]);
         for (int col = 0; col < expected_col[p]; ++col) {
             printf("#%d col: %d, ", col, rep_col_idx[p][col]);
