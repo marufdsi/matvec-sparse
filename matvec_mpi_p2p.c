@@ -334,12 +334,13 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms], Max NonZero: %d, Min NonZero: %d\n",
                rank, min_time, max_time, avg_time, maxNonZero, minNonZero);
-        printf("[%d] Only Mat Mul Result: y = |", rank);
-        for (int i = 0; i < proc_info[rank].N; ++i) {
-            printf("%d| ",res[i]);
-        }
-        printf("\n");
     }
+    printf("[%d] Only Mat Mul Result: y = |", rank);
+    for (int i = 0; i < proc_info[rank].M; ++i) {
+        printf("%lf| ",res[i]);
+    }
+    printf("\n");
+
     MPI_Barrier(MPI_COMM_WORLD);
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     double latency;
