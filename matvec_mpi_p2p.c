@@ -310,6 +310,7 @@ int main(int argc, char *argv[]) {
     free(reqs);
 
     /* Matrix-vector multiplication for each processes */
+    printf("[%d] Done request calling.\n",rank);
     MPI_Barrier(MPI_COMM_WORLD);
     double timer = 0, min_time = 0, max_time, avg_time;
     /* allocate memory for vectors and submatrixes */
