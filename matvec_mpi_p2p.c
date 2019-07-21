@@ -207,13 +207,12 @@ int main(int argc, char *argv[]) {
             out_file = argv[2];
     }
 
-    /* initialize proc_info array */
+    /// Initialize process info array
     proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
-
-    to_send = (int *) calloc_or_exit(nprocs, sizeof(int));    /* # of req to each proc */
-    /* allocate buffers for requests sending */
+    to_send = (int *) calloc_or_exit(nprocs, sizeof(int));
+    /// Allocate buffers for requests sending
     send_buf = (int **) malloc_or_exit(nprocs * sizeof(int *));
-
+    /// Read input matrix
     if (rank_wise_read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
                               &proc_info[rank].M, &proc_info[rank].N, &proc_info[rank].NZ,
                               &proc_info[rank].first_row, &proc_info[rank].last_row, rank) != 0) {
@@ -223,7 +222,7 @@ int main(int argc, char *argv[]) {
 
     buf_x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
     vec_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
+    res = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
     for (int i = 0; i < proc_info[rank].M; i++) {
         buf_x[i] = 1;
     }
@@ -251,13 +250,22 @@ int main(int argc, char *argv[]) {
 
     /// Find the process that need data from the current rank.
     int *expect = (int *) calloc_or_exit(nprocs, sizeof(int));
+    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
+            send_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
         /* logistics */
         expect[p] = 1;
+        /// send the request
+        printf("[%d] Rank requests to rank %d columns[%d]: ", rank, p, to_send[p]);
+        for (int col = 0; col < to_send[p]; ++col) {
+            printf("#%d col:%d, ", col, send_buf[p][col]);
+        }
+        printf("\n");
+        MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
     }
     int *all_process_expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
@@ -267,19 +275,8 @@ int main(int argc, char *argv[]) {
         printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
     }
 
-    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
-    int send_req_count = 0;
-    for (int p = 0; p < nprocs; p++) {
-        /* need to send to this proc? */
-        if (p == rank || to_send[p] == 0) {
-//            send_reqs[p] = MPI_REQUEST_NULL;
-            continue;
-        }
-        /* send the request */
-        MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[send_req_count++]);
-    }
     /**** reply to requests ****/
-    int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
+    int *reqs;
     int *expected_col = (int *) calloc_or_exit(nprocs, sizeof(int));
     int **rep_col_idx = (int **) malloc_or_exit(nprocs * sizeof(int *)); /* reply blocks storage */
     MPI_Status status;
@@ -291,6 +288,7 @@ int main(int argc, char *argv[]) {
         /// reply to this proccess
         int r_p = status.MPI_SOURCE;
         rep_col_idx[r_p] = (int *) malloc_or_exit(req_count * sizeof(int));
+        reqs = (int *) malloc_or_exit(req_count * sizeof(int));
         expected_col[r_p] = req_count;
         MPI_Recv(reqs, req_count, MPI_INT, r_p, REQUEST_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         for (int i = 0; i < req_count; i++) {
@@ -301,8 +299,18 @@ int main(int argc, char *argv[]) {
             rep_col_idx[r_p][i] = reqs[i] - proc_info[rank].first_row;
         }
     }
-    MPI_Waitall(send_req_count, send_reqs, MPI_STATUS_IGNORE);
+    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
 
+    for (int p = 0; p < nprocs; ++p) {
+        printf("[%d] Process %d requests %d columns: ", rank, p, expected_col[p]);
+        for (int col = 0; col < expected_col[p]; ++col) {
+            printf("#%d col: %d, ", col, rep_col_idx[p][col]);
+        }
+        printf("\n");
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    return 0;
     /* Matrix-vector multiplication for each processes */
     double timer = 0, min_time = 0, max_time, avg_time;
     /// y vector for y = M*x/
