@@ -302,10 +302,11 @@ int main(int argc, char *argv[]) {
             rep_col_idx[r_p][i] = reqs[i] - proc_info[rank].first_row;
         }
     }
-    int p;
+    /*int p;
     for (int req = 0; req < send_req_count; ++req) {
         MPI_Waitany(nprocs, send_reqs, &p, MPI_STATUS_IGNORE);
-    }
+    }*/
+    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
     free(all_process_expect);
     free(reqs);
 
