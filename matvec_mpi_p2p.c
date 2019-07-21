@@ -85,9 +85,9 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
 
-    MPI_Status *allStatus = (MPI_Status *) malloc_or_exit(reply_count * sizeof(MPI_Status));
-    for (int i=0; i<reply_count; ++i)
-        MPI_Waitany(reply_count, send_reqs, &p, allStatus);
+    MPI_Status *allStatus = (MPI_Status *) malloc_or_exit(nprocs * sizeof(MPI_Status));
+    int send_err = MPI_Waitall(reply_count, send_reqs, allStatus);
+    int receive_err = MPI_Waitall(nprocs, recv_reqs, allStatus);
 
     for (int p = 0; p < nprocs; ++p) {
         if (rep_buf_data[p] != NULL)
