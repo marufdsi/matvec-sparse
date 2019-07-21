@@ -29,7 +29,7 @@ enum tag {
 
 void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
                               double *buf_x, int **rep_col_idx, int *expected_col, double *y) {
-    /// MPI request storage 
+    /// MPI request storage
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
 
@@ -267,12 +267,14 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
+    int req_count = 0;
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
             send_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
+        req_count++;
         /* send the request */
         MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
     }
@@ -300,8 +302,10 @@ int main(int argc, char *argv[]) {
             rep_col_idx[r_p][i] = reqs[i] - proc_info[rank].first_row;
         }
     }
-    MPI_Status *allStatus = (MPI_Status *) malloc_or_exit(nprocs * sizeof(MPI_Status));;
-    MPI_Waitall(nprocs, send_reqs, allStatus);
+    int p;
+    for (int req = 0; req < req_count; ++req) {
+        MPI_Waitany(nprocs, send_reqs, &p, MPI_STATUS_IGNORE);
+    }
     free(all_process_expect);
     free(reqs);
 
