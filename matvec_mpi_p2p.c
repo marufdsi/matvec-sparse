@@ -267,14 +267,14 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
-    int req_count = 0;
+    int send_req_count = 0;
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
             send_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
-        req_count++;
+        send_req_count++;
         /* send the request */
         MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
     }
@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
         }
     }
     int p;
-    for (int req = 0; req < req_count; ++req) {
+    for (int req = 0; req < send_req_count; ++req) {
         MPI_Waitany(nprocs, send_reqs, &p, MPI_STATUS_IGNORE);
     }
     free(all_process_expect);
