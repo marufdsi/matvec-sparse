@@ -342,6 +342,8 @@ int main(int argc, char *argv[]) {
     printf("\n");
 
     MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    return 0;
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     double latency;
     double totalTime = 0;
