@@ -29,17 +29,17 @@ enum tag {
 
 void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
                               double *buf_x, int **rep_col_idx, int *expected_col, double *y) {
-    /* MPI request storage */
+    /// MPI request storage 
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
 
-    /* receiving blocks storage */
+    /// receiving blocks storage
     double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double));
     for (int p = 0; p < nprocs; p++)
         if (to_send[p] > 0)
             recv_buf[p] = (double *) malloc_or_exit(to_send[p] * sizeof(double));
 
-    /* sending requests to processes in blocks */
+    /// sending receive requests to processes in blocks
     int req_made = 0;
     for (int p = 0; p < nprocs; p++) {
         if (p == rank || to_send[p] == 0) {
@@ -47,48 +47,51 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             continue;
         }
         req_made++;
-        /* receive the block (when it comes) */
+        /// Receive the block (when it comes)
         MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
 
-    /**** reply to requests ****/
+    /// Reply to the requests.
     double **rep_buf_data = (double **) malloc_or_exit(nprocs * sizeof(double));
     MPI_Status status;
-    int reply_count = 0;
+    int send_req_count = 0;
     for (int p = 0; p < nprocs; ++p) {
         if(expected_col[p]>0){
             rep_buf_data[p] = (double *) malloc_or_exit(expected_col[p] * sizeof(double));
             for (int i = 0; i < expected_col[p]; ++i)
                 rep_buf_data[p][i] = buf_x[rep_col_idx[p][i]];
-            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[reply_count++]);
-        }
+            send_req_count++;
+            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[p]);
+        } else
+            send_reqs[p] = MPI_REQUEST_NULL;
     }
 
-    /* Local elements multiplication */
+    /// Local elements multiplication
     for (int k = 0; k < proc_info[rank].NZ; k++)
         if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
 
     int p;
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
+    /// Wait to receive the request of the global column.
     for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
         assert(p != MPI_UNDEFINED);
 
-         ///fill x array with new elements
+         /// fill x array with new elements.
         for (int i = 0; i < to_send[p]; i++)
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
     }
 
-    /* Global elements multiplication */
+    /// Global elements multiplication
     for (int k = 0; k < proc_info[rank].NZ; k++)
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
 
-    MPI_Status *allStatus = (MPI_Status *) malloc_or_exit(nprocs * sizeof(MPI_Status));
-    int send_err = MPI_Waitall(reply_count, send_reqs, allStatus);
-    int receive_err = MPI_Waitall(nprocs, recv_reqs, allStatus);
-
+    /// Wait until send request delivered to through network.
+    for (int req = 0; req < send_req_count; ++req)
+        MPI_Waitany(nprocs, send_reqs, &p, MPI_STATUS_IGNORE);
+    /// Free the buffer.
     for (int p = 0; p < nprocs; ++p) {
         if (rep_buf_data[p] != NULL)
             free(rep_buf_data[p]);
@@ -98,8 +101,8 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
     free(rep_buf_data);
     free(recv_buf);
     free(vecFromRemotePros);
-    free(send_reqs);
-    free(recv_reqs);
+//    free(send_reqs);
+//    free(recv_reqs);
 }
 
 /*
