@@ -74,7 +74,7 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     /// Wait to receive the request of the global column.
     for (int q = 0; q < req_made; q++) {
-        MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
+        MPI_Waitany(total_req, recv_reqs, &p, MPI_STATUS_IGNORE);
         assert(p != MPI_UNDEFINED);
 
          /// fill x array with new elements.
