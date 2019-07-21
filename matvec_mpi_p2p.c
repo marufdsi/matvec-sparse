@@ -191,8 +191,7 @@ int main(int argc, char *argv[]) {
     int *buf_i_idx,     /* row index for all matrix elements */
             *buf_j_idx;     /* column index for all matrix elements */
     double *buf_values, /* value for all matrix elements */
-            *buf_x, *vec_x,      /* value for all x vector elements */
-            *res;        /* final result -> Ax */
+            *buf_x, *vec_x;      /* value for all x vector elements */
 
     /*******************************************/
 
@@ -227,7 +226,6 @@ int main(int argc, char *argv[]) {
 
     buf_x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
     vec_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    res = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
     for (int i = 0; i < proc_info[rank].M; i++) {
         buf_x[i] = 1;
     }
@@ -321,7 +319,7 @@ int main(int argc, char *argv[]) {
     double *y;
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
-    res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
+    double *res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
     timer = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -431,6 +429,7 @@ int main(int argc, char *argv[]) {
     free(y);
     free(send_buf);
     free(to_send);
+    free(res);
     free(all_process_expect);
     /* MPI: end */
     MPI_Finalize();
