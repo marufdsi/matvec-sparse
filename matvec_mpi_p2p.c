@@ -89,8 +89,9 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
 
     /// Wait until send request delivered to through network.
-    for (int req = 0; req < send_req_count; ++req)
-        MPI_Waitany(nprocs, send_reqs, &p, MPI_STATUS_IGNORE);
+    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
+    /*for (int req = 0; req < send_req_count; ++req)
+        MPI_Waitany(nprocs, send_reqs, &p, MPI_STATUS_IGNORE);*/
     /// Free the buffer.
     for (int p = 0; p < nprocs; ++p) {
         if (rep_buf_data[p] != NULL)
@@ -311,8 +312,9 @@ int main(int argc, char *argv[]) {
     free(reqs);
 
     /* Matrix-vector multiplication for each processes */
-    printf("[%d] Done request calling.\n",rank);
     MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == MASTER)
+        printf("[%d] Done request calling.\n",rank);
     double timer = 0, min_time = 0, max_time, avg_time;
     /* allocate memory for vectors and submatrixes */
     double *y;
