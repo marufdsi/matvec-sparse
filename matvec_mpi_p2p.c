@@ -310,7 +310,6 @@ int main(int argc, char *argv[]) {
 //    free(reqs);
 
     /* Matrix-vector multiplication for each processes */
-    MPI_Barrier(MPI_COMM_WORLD);
     if (rank == MASTER)
         printf("[%d] Done request calling.\n",rank);
     double timer = 0, min_time = 0, max_time, avg_time;
