@@ -8,7 +8,7 @@
 
 #undef DEBUG
 
-#define TOTAL_RUNS 1000
+#define TOTAL_RUNS 1
 
 #define MAX_RANDOM_NUM (1<<20)
 #define MASTER 0
@@ -171,10 +171,13 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
     /// Sparse Matrix Vector Multiplication without Communication
     for (int k = 0; k < proc_info[rank].NZ; k++) {
-        if((buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row]) >0)
-            printf("Greater than zero exist\n");
         y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
     }
+    printf("[%d] Results y: |");
+    for (int i = 0; i < proc_info[rank].M; ++i) {
+        printf("%lf|", y[i]);
+    }
+    printf("\n");
     return y;
 }
 
