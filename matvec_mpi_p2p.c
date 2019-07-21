@@ -223,6 +223,7 @@ int main(int argc, char *argv[]) {
 
     buf_x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
     vec_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
+    res = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     for (int i = 0; i < proc_info[rank].M; i++) {
         buf_x[i] = 1;
     }
