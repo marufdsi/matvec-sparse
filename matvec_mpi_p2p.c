@@ -28,28 +28,27 @@ enum tag {
 };
 
 void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
-                              double *buf_x, int **rep_col_idx, int *expected_col, double *y) {
+                           double *buf_x, int **rep_col_idx, int *expected_col, double *y) {
 
     /// receiving blocks storage
     double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double));
-    int total_req = 0;
     for (int p = 0; p < nprocs; p++)
-        if (to_send[p] > 0) {
+        if (to_send[p] > 0)
             recv_buf[p] = (double *) malloc_or_exit(to_send[p] * sizeof(double));
-            total_req++;
-        }
-/// MPI request storage
+
+    /// MPI request storage
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
-    MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(total_req * sizeof(MPI_Request));
+    MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     /// sending receive requests to processes in blocks
     int req_made = 0;
     for (int p = 0; p < nprocs; p++) {
         if (p == rank || to_send[p] == 0) {
-//            recv_reqs[p] = MPI_REQUEST_NULL;
+            recv_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
+        req_made++;
         /// Receive the block (when it comes)
-        MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[req_made++]);
+        MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
 
     /// Reply to the requests.
@@ -57,27 +56,28 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
     MPI_Status status;
     int send_req_count = 0;
     for (int p = 0; p < nprocs; ++p) {
-        if(expected_col[p]>0){
+        if (expected_col[p] > 0) {
             rep_buf_data[p] = (double *) malloc_or_exit(expected_col[p] * sizeof(double));
             for (int i = 0; i < expected_col[p]; ++i)
                 rep_buf_data[p][i] = buf_x[rep_col_idx[p][i]];
-            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[send_req_count++]);
+            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[p]);
         }
     }
 
     /// Local elements multiplication
     for (int k = 0; k < proc_info[rank].NZ; k++)
         if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
-            y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
+            y[buf_i_idx[k] - proc_info[rank].first_row] +=
+                    buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
 
     int p;
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     /// Wait to receive the request of the global column.
     for (int q = 0; q < req_made; q++) {
-        MPI_Waitany(total_req, recv_reqs, &p, MPI_STATUS_IGNORE);
+        MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
         assert(p != MPI_UNDEFINED);
 
-         /// fill x array with new elements.
+        /// fill x array with new elements.
         for (int i = 0; i < to_send[p]; i++)
             vecFromRemotePros[send_buf[p][i]] = recv_buf[p][i];
     }
@@ -88,20 +88,19 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
 
     /// Wait until send request delivered to through network.
-    MPI_Waitall(send_req_count, send_reqs, MPI_STATUS_IGNORE);
-    MPI_Waitall(total_req, recv_reqs, MPI_STATUS_IGNORE);
+    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
     /// Free the buffer.
     for (int p = 0; p < nprocs; ++p) {
 //        if (rep_buf_data[p] != NULL)
 //            free(rep_buf_data[p]);
-        if (recv_buf[p] != NULL)
-            free(recv_buf[p]);
+//        if (recv_buf[p] != NULL)
+//            free(recv_buf[p]);
     }
 //    free(rep_buf_data);
     free(recv_buf);
     free(vecFromRemotePros);
-    free(send_reqs);
-    free(recv_reqs);
+//    free(send_reqs);
+//    free(recv_reqs);
 }
 
 /*
@@ -248,6 +247,7 @@ int main(int argc, char *argv[]) {
 
     int *total_comm = CalculateInterProcessComm(rank, nprocs, buf_j_idx);
 
+    /// Find the process that need data from the current rank.
     int *expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
@@ -280,7 +280,6 @@ int main(int argc, char *argv[]) {
     int *reqs = (int *) malloc_or_exit(proc_info[rank].M * sizeof(int));
     int *expected_col = (int *) calloc_or_exit(nprocs, sizeof(int));
     int **rep_col_idx = (int **) malloc_or_exit(nprocs * sizeof(int *)); /* reply blocks storage */
-
     MPI_Status status;
     int req_count;
     for (int p = 0; p < all_process_expect[rank]; p++) {
@@ -300,20 +299,11 @@ int main(int argc, char *argv[]) {
             rep_col_idx[r_p][i] = reqs[i] - proc_info[rank].first_row;
         }
     }
-    /*int p;
-    for (int req = 0; req < send_req_count; ++req) {
-        MPI_Waitany(nprocs, send_reqs, &p, MPI_STATUS_IGNORE);
-    }*/
-    printf("[%d] Done initializing!!!\n", rank);
     MPI_Waitall(send_req_count, send_reqs, MPI_STATUS_IGNORE);
-    free(all_process_expect);
-//    free(reqs);
 
     /* Matrix-vector multiplication for each processes */
-    if (rank == MASTER)
-        printf("[%d] Done request calling.\n",rank);
     double timer = 0, min_time = 0, max_time, avg_time;
-    /* allocate memory for vectors and submatrixes */
+    /// y vector for y = M*x/
     double *y;
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
@@ -324,19 +314,22 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&timer, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&timer, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    int minNonZero =0, maxNonZero = 0;
+    int minNonZero = 0, maxNonZero = 0;
     MPI_Reduce(&proc_info[rank].NZ, &minNonZero, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&proc_info[rank].NZ, &maxNonZero, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
     avg_time = avg_time / nprocs;
     if (rank == MASTER) {
-        printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms], Max NonZero: %d, Min NonZero: %d\n", rank, min_time, max_time, avg_time, maxNonZero, minNonZero);
+        printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms], Max NonZero: %d, Min NonZero: %d\n",
+               rank, min_time, max_time, avg_time, maxNonZero, minNonZero);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     double stdev = 0, mean = 0, runs[TOTAL_RUNS];
     double latency;
     double totalTime = 0;
-    min_time = 0; max_time = 0; avg_time = 0;
+    min_time = 0;
+    max_time = 0;
+    avg_time = 0;
     int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
@@ -345,21 +338,23 @@ int main(int argc, char *argv[]) {
         mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, y);
         double runTime = (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
+        free(y);
         totalTime += runTime;
         count_itr++;
-        if(runTime>250){
+        if (runTime > 250) {
             printf("[%d] Iteration: %d, Time: %lf\n", rank, r, runTime);
         }
         MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
         MPI_Reduce(&runTime, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         avg_time = avg_time / nprocs;
-        if (rank == MASTER && r<10){
-            printf("[%d] Iteration Total: %lf, MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", r, totalTime, min_time, max_time, avg_time);
+        if (rank == MASTER && r < 10) {
+            printf("[%d] Iteration Total: %lf, MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", r, totalTime,
+                   min_time, max_time, avg_time);
         }
     }
     latency = totalTime / TOTAL_RUNS;
-    if(rank == MASTER){
+    if (rank == MASTER) {
         printf("[%d] Total Time: %lf, Iterations: %d, Latency: %lf\n", rank, totalTime, count_itr, latency);
     }
     MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -405,6 +400,7 @@ int main(int argc, char *argv[]) {
     free(y);
     free(send_buf);
     free(to_send);
+    free(all_process_expect);
     /* MPI: end */
     MPI_Finalize();
 
