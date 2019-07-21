@@ -60,10 +60,8 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             rep_buf_data[p] = (double *) malloc_or_exit(expected_col[p] * sizeof(double));
             for (int i = 0; i < expected_col[p]; ++i)
                 rep_buf_data[p][i] = buf_x[rep_col_idx[p][i]];
-            reply_count++;
-            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[p]);
-        } else
-            send_reqs[p] = MPI_REQUEST_NULL;
+            MPI_Isend(rep_buf_data[p], expected_col[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &send_reqs[reply_count++]);
+        }
     }
 
     /* Local elements multiplication */
@@ -73,7 +71,6 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
 
     int p;
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
-    MPI_Status *allStatus;
     for (int q = 0; q < req_made; q++) {
         MPI_Waitany(nprocs, recv_reqs, &p, MPI_STATUS_IGNORE);
         assert(p != MPI_UNDEFINED);
@@ -88,14 +85,15 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
         if (!in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
 
+    MPI_Status *allStatus = (MPI_Status *) malloc_or_exit(reply_count * sizeof(MPI_Status));
     for (int i=0; i<reply_count; ++i)
         MPI_Waitany(reply_count, send_reqs, &p, allStatus);
 
     for (int p = 0; p < nprocs; ++p) {
-//        if (rep_buf_data[p] != NULL)
-//            free(rep_buf_data[p]);
-//        if (recv_buf[p] != NULL)
-//            free(recv_buf[p]);
+        if (rep_buf_data[p] != NULL)
+            free(rep_buf_data[p]);
+        if (recv_buf[p] != NULL)
+            free(recv_buf[p]);
     }
     free(rep_buf_data);
     free(recv_buf);
@@ -299,7 +297,7 @@ int main(int argc, char *argv[]) {
             rep_col_idx[r_p][i] = reqs[i] - proc_info[rank].first_row;
         }
     }
-    MPI_Status *allStatus;
+    MPI_Status *allStatus = (allStatus *) malloc_or_exit(nprocs * sizeof(allStatus));;
     MPI_Waitall(nprocs, send_reqs, allStatus);
     free(all_process_expect);
     free(reqs);
