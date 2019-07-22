@@ -363,9 +363,9 @@ int main(int argc, char *argv[]) {
     free(buf_i_idx);
     free(buf_j_idx);
     free(buf_x);
-//    free(rep_col_idx);
-//    free(expected_col);
-//    free(expect);
+    free(rep_col_idx);
+    free(expected_col);
+    free(expect);
 //    free(y);
 //    free(send_buf);
 //    free(to_send);
