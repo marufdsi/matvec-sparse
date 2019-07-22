@@ -303,11 +303,7 @@ int main(int argc, char *argv[]) {
         MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
         y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
-        timeRequired= (MPI_Wtime() - t) * 1000.00;
-        totalTime += timeRequired;
-        if (rank == MASTER && runTime > 10.0*compareTime){
-            printf("[%d] Something wrong, time required: %lf at iteration: %d\n", rank, runTime, r);
-        }
+        totalTime += (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
     }
     latency = totalTime / TOTAL_RUNS;
@@ -321,8 +317,14 @@ int main(int argc, char *argv[]) {
     }
 
     int minNonZero = 0, maxNonZero = 0;
-    MPI_Reduce(&proc_info[rank].NZ, &minNonZero, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&proc_info[rank].NZ, &maxNonZero, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&proc_info[rank].NZ, &minNonZero, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&proc_info[rank].NZ, &maxNonZero, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+
+    int minRequests = 0, maxRequests = 0, avgRequests = 0;
+    MPI_Reduce(&all_process_expect[rank], &minRequests, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&all_process_expect[rank], &maxRequests, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&all_process_expect[rank], &avgRequests, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    avgRequests = avgRequests/nprocs;
     /// Print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time,
@@ -341,10 +343,10 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
                 exit(EXIT_FAILURE);
             }
-            fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests,MaxNonZero,MinNonZero\n");
+            fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests,MaxNonZero,MinNonZero,MinRequests,MaxRequests,AvgRequests\n");
         }
         fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS,
-                nprocs, total_comm[0], total_comm[1],maxNonZero, minNonZero);
+                nprocs, total_comm[0], total_comm[1],maxNonZero, minNonZero, minRequests, maxRequests, avgRequests);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
             exit(EXIT_FAILURE);
