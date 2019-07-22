@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     double *res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
     timer = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
-    printf("[%d] Results, y = |");
+    printf("[%d] Results, y = |", rank);
     for (int i = 0; i<proc_info[rank].M; ++i) {
         printf("%lf|", res[i]);
     }
