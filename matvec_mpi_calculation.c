@@ -44,9 +44,9 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
     /// Sparse Matrix Vector Multiplication without Communication
     for (int k = 0; k < proc_info[rank].NZ; k++) {
-        if (rank == 3){
+        /*if (rank == 3){
             printf("[%d] i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], proc_info[rank].first_row);
-        }
+        }*/
         y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
     }
     return y;
