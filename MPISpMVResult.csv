@@ -1,16 +1,10 @@
-MatrixName,ComputationTime,Stdev,TotalRun,nProcess,PartitionType,TotalExecutionTime
-input/4elt_2_original.mtx,     1.180,0.012,100,2,0,     1.263
-input/4elt_4_original.mtx,     1.043,0.033,100,4,0,     1.147
-input/4elt_8_original.mtx,     1.563,1.055,100,8,0,     1.653
-input/4elt_16_original.mtx,     1.933,0.631,100,16,0,     2.044
-input/4elt_2_original.mtx,     1.165,0.022,100,2,0,     1.254
-input/ecology1_2.mtx,   472.108,1243.226,100,2,0,   474.778
-input/ecology1_2_original.mtx,   391.465,1225.306,100,2,0,   393.945
-input/ecology1_8.mtx,    47.771,2.128,100,8,0,    50.415
-input/ecology1_4_original.mtx,    47.991,0.696,100,4,0,    53.590
-input/ecology1_8_original.mtx,    27.921,10.751,100,8,0,    30.704
-input/ecology1_18_original.mtx,    38.861,30.997,100,18,0,    41.767
-input/ecology1_16_original.mtx,    34.315,8.744,100,16,0,    37.210
-input/ecology1_4.mtx,   370.436,1241.793,100,4,0,   373.087
-input/ecology1_18.mtx,    50.228,0.979,100,18,0,    52.875
-input/ecology1_16.mtx,    78.367,0.915,100,16,0,    81.038
+MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests,MaxNonZero,MinNonZero,MinRequests,MaxRequests,AvgRequests
+input/nlpkkt160_36,    32.815,   118.064,    56.379,100,36,300,1084296,6447276,5936940
+input/nlpkkt160_72,    17.386,    60.746,    35.387,100,72,666,1471048,3223638,2937544
+input/nlpkkt240_36,   110.621,   444.699,   215.597,100,36,300,2448106,21207204,20381208
+input/nlpkkt160_18,    66.567,    78.102,    71.454,100,18,130,781672,12577962,12042820
+input/ecology1_18,     2.356,     2.567,     2.466,100,18,76,14680,222372,221605
+input/ecology1_36,     2.394,    56.930,    30.470,100,36,170,23414,111298,110595
+input/ecology1_72,     4.661,    27.801,    13.592,100,72,366,33755,55696,55222
+input/nlpkkt240_18,   215.250,   245.552,   225.844,100,18,134,1775494,41954568,41089474
+input/nlpkkt240_72,    52.502,   183.279,    89.513,100,72,698,3316162,10702260,10090914
