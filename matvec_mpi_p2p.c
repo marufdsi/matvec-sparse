@@ -378,18 +378,18 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
     }*/
-    free(buf_values);
-    free(buf_i_idx);
-    free(buf_j_idx);
-    free(buf_x);
-    free(rep_col_idx);
-    free(expected_col);
-    free(expect);
-    free(y);
-    free(send_buf);
-    free(to_send);
-    free(res);
-    free(all_process_expect);
+//    free(buf_values);
+//    free(buf_i_idx);
+//    free(buf_j_idx);
+//    free(buf_x);
+//    free(rep_col_idx);
+//    free(expected_col);
+//    free(expect);
+//    free(y);
+//    free(send_buf);
+//    free(to_send);
+//    free(res);
+//    free(all_process_expect);
     /* MPI: end */
     MPI_Finalize();
 
