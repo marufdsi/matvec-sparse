@@ -316,18 +316,21 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&latency, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = avg_time / nprocs;
     if (rank == MASTER) {
-        printf("[%d] Total Time: %lf, Total Runs: %d\n", rank, totalTime, TOTAL_RUNS);
-        printf("[%d] Min Latency: %lf, Max Latency: %lf, Avg Latency: %lf\n", rank, min_time, max_time, mean);
+        printf("[%d] Total Time: %10.3lf, Total Runs: %d\n", rank, totalTime, TOTAL_RUNS);
+        printf("[%d] Min Latency: %10.3lf, Max Latency: %10.3lf, Avg Latency: %10.3lf\n", rank, min_time, max_time, mean);
     }
 
-    /* print execution stats *//*
+    int minNonZero = 0, maxNonZero = 0;
+    MPI_Reduce(&proc_info[rank].NZ, &minNonZero, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&proc_info[rank].NZ, &maxNonZero, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    /// Print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time,
                mean);
         FILE *resultCSV;
         FILE *checkFile;
         if ((checkFile = fopen("MPISpMVResult.csv", "r")) != NULL) {
-            // file exists
+            /// file exists
             fclose(checkFile);
             if (!(resultCSV = fopen("MPISpMVResult.csv", "a"))) {
                 fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
@@ -338,16 +341,15 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
                 exit(EXIT_FAILURE);
             }
-            fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests\n");
+            fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests,MaxNonZero,MinNonZero\n");
         }
-
-        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS,
-                nprocs, total_comm[0], total_comm[1]);
+        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS,
+                nprocs, total_comm[0], total_comm[1],maxNonZero, minNonZero);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
             exit(EXIT_FAILURE);
         }
-    }*/
+    }
 
     free(buf_values);
     free(buf_i_idx);
