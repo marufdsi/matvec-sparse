@@ -293,6 +293,7 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&runTime, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&runTime, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     avg_time = avg_time / nprocs;
+    double compareTime =avg_time;
     if (rank == MASTER) {
         printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
     }
@@ -304,7 +305,7 @@ int main(int argc, char *argv[]) {
         y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
         runTime= (MPI_Wtime() - t) * 1000.00;
         totalTime += runTime;
-        if (runTime > 10*avg_time){
+        if (runTime > 10.0*compareTime){
             printf("[%d] Something wrong, time required: %lf at iteration: %d\n", rank, runTime, r);
         }
         MPI_Barrier(MPI_COMM_WORLD);
