@@ -27,11 +27,9 @@ enum tag {
     REQUEST_TAG, REPLY_TAG
 };
 
-double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
-                           double *buf_x, int **rep_col_idx, int *expected_col, int req_made) {
+void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
+                           double *buf_x, int **rep_col_idx, int *expected_col, int req_made, double *y) {
 
-    /// y vector for y = M*x/
-    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
     /// receiving blocks storage
     double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double));
     for (int p = 0; p < nprocs; p++)
@@ -88,8 +86,7 @@ double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_i
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
 
     /// Wait until send request delivered to through network.
-    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
-    return y;
+//    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
 }
 
 /*
@@ -152,6 +149,16 @@ int *CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx) {
         returnPtr[1] = total_communication;
     }
     return returnPtr;
+}
+
+double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x) {
+    /* allocate memory for vectors and submatrixes */
+    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
+    /// Sparse Matrix Vector Multiplication without Communication
+    for (int k = 0; k < proc_info[rank].NZ; k++) {
+        y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
+    }
+    return y;
 }
 
 int main(int argc, char *argv[]) {
@@ -248,14 +255,14 @@ int main(int argc, char *argv[]) {
         printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
     }
 
-    /// Receive the requests
+    /**** reply to requests ****/
     int *reqs;
     int *expected_col = (int *) calloc_or_exit(nprocs, sizeof(int));
     int **rep_col_idx = (int **) malloc_or_exit(nprocs * sizeof(int *)); /* reply blocks storage */
     MPI_Status status;
     int req_count;
     for (int p = 0; p < all_process_expect[rank]; p++) {
-        /// Wait until a request comes
+        /* Wait until a request comes */
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &req_count);
         /// reply to this proccess
@@ -273,21 +280,44 @@ int main(int argc, char *argv[]) {
         }
     }
     MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
-
     /* Matrix-vector multiplication for each processes */
-    double min_time = 0, max_time, avg_time;
+    double timer = 0, min_time = 0, max_time, avg_time;
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
-    double *y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
+    double *res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
+    timer = (MPI_Wtime() - t) * 1000.00;
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&timer, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&timer, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    int minNonZero = 0, maxNonZero = 0;
+    MPI_Reduce(&proc_info[rank].NZ, &minNonZero, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&proc_info[rank].NZ, &maxNonZero, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+    avg_time = avg_time / nprocs;
+    if (rank == MASTER) {
+        printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms], Max NonZero: %d, Min NonZero: %d\n",
+               rank, min_time, max_time, avg_time, maxNonZero, minNonZero);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double mean = 0, latency=0, totalTime = 0;
+    min_time = 0; max_time = 0; avg_time = 0;
+    /// y vector for y = M*x/
+    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
+    MPI_Barrier(MPI_COMM_WORLD);
+    t = MPI_Wtime();
+    mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made, y);
     double runTime = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
-    /// Calculate Execution Time
     MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&runTime, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&runTime, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (rank == MASTER) {
         printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
     }
+    free(y);
     /*int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
