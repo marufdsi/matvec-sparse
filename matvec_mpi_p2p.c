@@ -369,7 +369,7 @@ int main(int argc, char *argv[]) {
 //    free(y);
     free(send_buf);
     free(to_send);
-    free(all_process_expect);
+//    free(all_process_expect);
     /* MPI: end */
     MPI_Finalize();
 
