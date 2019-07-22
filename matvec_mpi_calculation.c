@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
     MPI_Allgather(&proc_info[rank], 1, proc_info_type, proc_info, 1, proc_info_type, MPI_COMM_WORLD);
 
     /* Matrix-vector multiplication for each processes */
-    double totalTime = 0, min_time = 0, max_time = 0, avg_time = 0, mean = 0;
+    double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     double *res;
     for (int r = 0; r < TOTAL_RUNS; ++r) {
         MPI_Barrier(MPI_COMM_WORLD);
@@ -109,6 +109,7 @@ int main(int argc, char *argv[]) {
         totalTime += (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
     }
+    printf("[%d] Total run time: %lf\n", rank, totalTime);
     avg_time = totalTime / TOTAL_RUNS;
     /*printf("[%d] Results, y = |", rank);
     for (int i = 0; i<proc_info[rank].M; ++i) {
