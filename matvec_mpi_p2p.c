@@ -302,7 +302,11 @@ int main(int argc, char *argv[]) {
         MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
         y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
-        totalTime += (MPI_Wtime() - t) * 1000.00;
+        runTime= (MPI_Wtime() - t) * 1000.00;
+        totalTime += runTime;
+        if (avg_time < 5*runTime){
+            printf("[%d] Something wrong, time required: %lf at iteration: %d\n", rank, runTime, r);
+        }
         MPI_Barrier(MPI_COMM_WORLD);
     }
     latency = totalTime / TOTAL_RUNS;
