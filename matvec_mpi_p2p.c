@@ -28,7 +28,7 @@ enum tag {
 };
 
 double *mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
-                           double *buf_x, int **rep_col_idx, int *expected_col, int req_made) {
+                              double *buf_x, int **rep_col_idx, int *expected_col, int req_made) {
 
     /// y vector for y = M*x/
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
@@ -285,7 +285,8 @@ int main(int argc, char *argv[]) {
     double *y;
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
-    y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
+    y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col,
+                              req_made);
     double runTime = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     /// Calculate Execution Time
@@ -295,14 +296,16 @@ int main(int argc, char *argv[]) {
     avg_time = avg_time / nprocs;
     double compareTime = avg_time;
     if (rank == MASTER) {
-        printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
+        printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time,
+               avg_time);
     }
 
     double totalTime = 0, mean = 0, latency = 0, timeRequired = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
-        y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
+        y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col,
+                                  req_made);
         totalTime += (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
     }
@@ -313,7 +316,8 @@ int main(int argc, char *argv[]) {
     mean = avg_time / nprocs;
     if (rank == MASTER) {
         printf("[%d] Total Time: %10.3lf, Total Runs: %d\n", rank, totalTime, TOTAL_RUNS);
-        printf("[%d] Min Latency: %10.3lf, Max Latency: %10.3lf, Avg Latency: %10.3lf\n", rank, min_time, max_time, mean);
+        printf("[%d] Min Latency: %10.3lf, Max Latency: %10.3lf, Avg Latency: %10.3lf\n", rank, min_time, max_time,
+               mean);
     }
 
     int minNonZero = 0, maxNonZero = 0;
@@ -324,7 +328,7 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&all_process_expect[rank], &minRequests, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&all_process_expect[rank], &maxRequests, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&all_process_expect[rank], &avgRequests, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    avgRequests = avgRequests/nprocs;
+    avgRequests = avgRequests / nprocs;
     /// Print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time,
@@ -343,10 +347,12 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "fopen: failed to open file MPISpMVResult.csv");
                 exit(EXIT_FAILURE);
             }
-            fprintf(resultCSV, "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests,MaxNonZero,MinNonZero,MinRequests,MaxRequests,AvgRequests\n");
+            fprintf(resultCSV,
+                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests,MaxNonZero,MinNonZero,MinRequests,MaxRequests,AvgRequests\n");
         }
-        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS,
-                nprocs, total_comm[0], total_comm[1],maxNonZero, minNonZero, minRequests, maxRequests, avgRequests);
+        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", in_file, min_time, max_time, mean,
+                TOTAL_RUNS,
+                nprocs, total_comm[0], total_comm[1], maxNonZero, minNonZero, minRequests, maxRequests, avgRequests);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
             exit(EXIT_FAILURE);
