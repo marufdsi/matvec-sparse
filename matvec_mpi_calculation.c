@@ -145,10 +145,10 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,MaxNonZero,MinNonZero,AvgNonZero\n");
+                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,MinNonZero,MaxNonZero,AvgNonZero\n");
         }
 
-        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS,
+        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS,
                 nprocs, minNonZero, maxNonZero, avgNonZero);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
