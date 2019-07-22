@@ -109,7 +109,6 @@ int main(int argc, char *argv[]) {
         totalTime += (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    printf("[%d] Total run time: %lf\n", rank, totalTime);
     avg_time = totalTime / TOTAL_RUNS;
     /*printf("[%d] Results, y = |", rank);
     for (int i = 0; i<proc_info[rank].M; ++i) {
