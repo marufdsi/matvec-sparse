@@ -8,7 +8,7 @@
 
 #undef DEBUG
 
-#define TOTAL_RUNS 1
+#define TOTAL_RUNS 100
 
 #define MAX_RANDOM_NUM (1<<20)
 #define MASTER 0
@@ -295,18 +295,16 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
     }
-    /*int count_itr = 0;
+    int count_itr = 0;
+    double totalTime = 0, mean = 0, latency = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
-        y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
         MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
-        mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, y);
+        y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
         double runTime = (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
-        free(y);
         totalTime += runTime;
-        count_itr++;
-        if (runTime > 250) {
+        /*if (runTime > 250) {
             printf("[%d] Iteration: %d, Time: %lf\n", rank, r, runTime);
         }
         MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -316,18 +314,18 @@ int main(int argc, char *argv[]) {
         if (rank == MASTER && r < 10) {
             printf("[%d] Iteration Total: %lf, MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", r, totalTime,
                    min_time, max_time, avg_time);
-        }
+        }*/
     }
     latency = totalTime / TOTAL_RUNS;
-    if (rank == MASTER) {
-        printf("[%d] Total Time: %lf, Iterations: %d, Latency: %lf\n", rank, totalTime, count_itr, latency);
-    }
     MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&latency, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&latency, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = avg_time / nprocs;
+    if (rank == MASTER) {
+        printf("[%d] Min Latency: %lf, Max Latency: %lf, Avg Latency: %lf\n", rank, min_time, max_time, mean);
+    }
 
-    *//* print execution stats *//*
+    /* print execution stats *//*
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time,
                mean);
@@ -355,12 +353,7 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
     }*/
-    for (int p = 0; p < nprocs; ++p) {
-        /*if (rep_col_idx[p] != NULL)
-            free(rep_col_idx[p]);
-        if (send_buf[p] != NULL)
-            free(send_buf[p]);*/
-    }
+
     free(buf_values);
     free(buf_i_idx);
     free(buf_j_idx);
@@ -371,7 +364,7 @@ int main(int argc, char *argv[]) {
     free(send_buf);
     free(to_send);
     free(all_process_expect);
-    
+
     /* MPI: end */
     MPI_Finalize();
 
