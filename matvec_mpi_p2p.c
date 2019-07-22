@@ -86,7 +86,7 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
             y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * vecFromRemotePros[buf_j_idx[k]];
 
     /// Wait until send request delivered to through network.
-    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
+//    MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
 }
 
 /*
