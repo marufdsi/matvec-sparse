@@ -371,8 +371,7 @@ int main(int argc, char *argv[]) {
     free(send_buf);
     free(to_send);
     free(all_process_expect);
-//    free(y);
-    free(proc_info);
+
     free(row_count);
     free(row_offset);
     free(total_comm);
