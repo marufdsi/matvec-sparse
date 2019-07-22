@@ -295,6 +295,7 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&runTime, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&runTime, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    avg_time = avg_time / nprocs;
     if (rank == MASTER) {
         printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
     }
@@ -358,10 +359,10 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
     }*/
-//    free(buf_values);
-//    free(buf_i_idx);
-//    free(buf_j_idx);
-//    free(buf_x);
+    free(buf_values);
+    free(buf_i_idx);
+    free(buf_j_idx);
+    free(buf_x);
 //    free(rep_col_idx);
 //    free(expected_col);
 //    free(expect);
