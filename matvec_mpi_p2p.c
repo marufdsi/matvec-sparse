@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    double mean = 0, latency=0, totalTime = 0;
+    /*double mean = 0, latency=0, totalTime = 0;
     min_time = 0;
     max_time = 0;
     avg_time = 0;
@@ -321,7 +321,7 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
     }
-    free(y);
+    free(y);*/
     /*int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
