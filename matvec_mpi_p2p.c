@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
         printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
     }
     free(y);
-    int count_itr = 0;
+    /*int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
         MPI_Barrier(MPI_COMM_WORLD);
@@ -366,7 +366,7 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&latency, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = avg_time / nprocs;
 
-    /* print execution stats */
+    *//* print execution stats *//*
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time,
                mean);
@@ -393,7 +393,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
             exit(EXIT_FAILURE);
         }
-    }
+    }*/
     free(buf_values);
     free(buf_i_idx);
     free(buf_j_idx);
