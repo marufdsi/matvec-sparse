@@ -371,15 +371,7 @@ int main(int argc, char *argv[]) {
     free(send_buf);
     free(to_send);
     free(all_process_expect);
-
-    free(row_count);
-    free(row_offset);
-    free(total_comm);
-//    free(buf_x);
-//    free(expect);
-//    free(reqs);
-//    free(expected_col);
-//    free(rep_col_idx);
+    
     /* MPI: end */
     MPI_Finalize();
 
