@@ -90,18 +90,6 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
 
     /// Wait until send request delivered to through network.
     MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
-    /// Free the buffer.
-    for (int p = 0; p < nprocs; ++p) {
-//        if (rep_buf_data[p] != NULL)
-//            free(rep_buf_data[p]);
-//        if (recv_buf[p] != NULL)
-//            free(recv_buf[p]);
-    }
-    free(rep_buf_data);
-    free(recv_buf);
-    free(vecFromRemotePros);
-//    free(send_reqs);
-//    free(recv_reqs);
 }
 
 /*
