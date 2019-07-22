@@ -100,44 +100,36 @@ int main(int argc, char *argv[]) {
     MPI_Allgather(&proc_info[rank], 1, proc_info_type, proc_info, 1, proc_info_type, MPI_COMM_WORLD);
 
     /* Matrix-vector multiplication for each processes */
-    double timer = 0, min_time = 0, max_time, avg_time;
-    MPI_Barrier(MPI_COMM_WORLD);
-    t = MPI_Wtime();
-    double *res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
-    timer = (MPI_Wtime() - t) * 1000.00;
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf("[%d] Results, y = |", rank);
+    double totalTime = 0, min_time = 0, max_time = 0, avg_time = 0, mean = 0;
+    double *res;
+    for (int r = 0; r < TOTAL_RUNS; ++r) {
+        MPI_Barrier(MPI_COMM_WORLD);
+        t = MPI_Wtime();
+        res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
+        totalTime += (MPI_Wtime() - t) * 1000.00;
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+    avg_time = totalTime / TOTAL_RUNS;
+    /*printf("[%d] Results, y = |", rank);
     for (int i = 0; i<proc_info[rank].M; ++i) {
         printf("%lf|", res[i]);
     }
-    printf("\n");
-    MPI_Reduce(&timer, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&timer, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&timer, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    printf("\n");*/
+    MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    mean = mean / nprocs;
 
     int minNonZero = 0, maxNonZero = 0, avgNonZero = 0;
     MPI_Reduce(&proc_info[rank].NZ, &minNonZero, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&proc_info[rank].NZ, &maxNonZero, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&proc_info[rank].NZ, &avgNonZero, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     avgNonZero = avgNonZero / nprocs;
-    avg_time = avg_time / nprocs;
-    if (rank == MASTER) {
-        printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms], Max NonZero: %d, Min NonZero: %d\n",
-               rank, min_time, max_time, avg_time, maxNonZero, minNonZero);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    double mean = 0, latency = 0, totalTime = 0;
-    min_time = 0;
-    max_time = 0;
-    avg_time = 0;
-    /// y vector for y = M*x/
-    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
 
     /// print execution stats
     if (rank == MASTER) {
-        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time,
-               mean);
+        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, Min NonZero: %d, Max NonZero: %d, Avg NonZero: %d\n",
+               rank, min_time, max_time, mean, minNonZero, maxNonZero, avgNonZero);
         FILE *resultCSV;
         FILE *checkFile;
         if ((checkFile = fopen("MPISpMVComputationResult.csv", "r")) != NULL) {
