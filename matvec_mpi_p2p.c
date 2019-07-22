@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
     int *buf_i_idx,     /* row index for all matrix elements */
             *buf_j_idx;     /* column index for all matrix elements */
     double *buf_values, /* value for all matrix elements */
-            *buf_x, *vec_x;      /* value for all x vector elements */
+            *buf_x;      /* value for all x vector elements */
 
     /*******************************************/
 
@@ -208,12 +208,8 @@ int main(int argc, char *argv[]) {
     }
 
     buf_x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
-    vec_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
     for (int i = 0; i < proc_info[rank].M; i++) {
         buf_x[i] = 1;
-    }
-    for (int i = 0; i < proc_info[rank].N; i++) {
-        vec_x[i] = 1;
     }
 
     /// Share process info among all the processes
@@ -359,6 +355,12 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
     }*/
+    for (int p = 0; p < nprocs; ++p) {
+        if (rep_col_idx[p] != NULL)
+            free(rep_col_idx[p]);
+        if (send_buf[p] != NULL)
+            free(send_buf[p]);
+    }
     free(buf_values);
     free(buf_i_idx);
     free(buf_j_idx);
@@ -366,10 +368,19 @@ int main(int argc, char *argv[]) {
     free(rep_col_idx);
     free(expected_col);
     free(expect);
-//    free(y);
     free(send_buf);
     free(to_send);
     free(all_process_expect);
+    free(y);
+    free(proc_info);
+    free(row_count);
+    free(row_offset);
+    free(total_comm);
+    free(buf_x);
+    free(expect);
+    free(reqs);
+    free(expected_col);
+    free(rep_col_idx);
     /* MPI: end */
     MPI_Finalize();
 
