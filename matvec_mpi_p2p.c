@@ -315,18 +315,9 @@ int main(int argc, char *argv[]) {
         printf("[%d] Only MatMul MinTime: %lf, MaxTime: %lf, AvgTime: %lf [ms], Max NonZero: %d, Min NonZero: %d\n",
                rank, min_time, max_time, avg_time, maxNonZero, minNonZero);
     }
-    printf("[%d] Only Mat Mul Result: y = |", rank);
-    for (int i = 0; i < proc_info[rank].M; ++i) {
-        printf("%lf| ",res[i]);
-    }
-    printf("\n");
 
     MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;
-    double stdev = 0, mean = 0, runs[TOTAL_RUNS];
-    double latency;
-    double totalTime = 0;
+    double mean = 0, latency=0, totalTime = 0;
     min_time = 0;
     max_time = 0;
     avg_time = 0;
@@ -335,12 +326,13 @@ int main(int argc, char *argv[]) {
     t = MPI_Wtime();
     mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, y);
     double runTime = (MPI_Wtime() - t) * 1000.00;
-    printf("[%d] Mat Mul Result: y = |", rank);
-    for (int i = 0; i < proc_info[rank].M; ++i) {
-        printf("%d| ",y[i]);
-    }
-    printf(" = Runtime[%d](%lf)\n", rank, runTime);
     MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&runTime, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&runTime, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (rank == MASTER) {
+        printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
+    }
     free(y);
     int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
