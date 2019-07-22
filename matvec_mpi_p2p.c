@@ -376,11 +376,11 @@ int main(int argc, char *argv[]) {
     free(row_count);
     free(row_offset);
     free(total_comm);
-    free(buf_x);
-    free(expect);
-    free(reqs);
-    free(expected_col);
-    free(rep_col_idx);
+//    free(buf_x);
+//    free(expect);
+//    free(reqs);
+//    free(expected_col);
+//    free(rep_col_idx);
     /* MPI: end */
     MPI_Finalize();
 
