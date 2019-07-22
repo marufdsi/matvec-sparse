@@ -28,7 +28,7 @@ enum tag {
 };
 
 void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx, double *buf_values,
-                           double *buf_x, int **rep_col_idx, int *expected_col, double *y) {
+                           double *buf_x, int **rep_col_idx, int *expected_col, int req_made, double *y) {
 
     /// receiving blocks storage
     double **recv_buf = (double **) malloc_or_exit(nprocs * sizeof(double));
@@ -40,21 +40,17 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
     /// sending receive requests to processes in blocks
-    int req_made = 0;
     for (int p = 0; p < nprocs; p++) {
         if (p == rank || to_send[p] == 0) {
             recv_reqs[p] = MPI_REQUEST_NULL;
             continue;
         }
-        req_made++;
         /// Receive the block (when it comes)
         MPI_Irecv(recv_buf[p], to_send[p], MPI_DOUBLE, p, REPLY_TAG, MPI_COMM_WORLD, &recv_reqs[p]);
     }
 
     /// Reply to the requests.
     double **rep_buf_data = (double **) malloc_or_exit(nprocs * sizeof(double));
-    MPI_Status status;
-    int send_req_count = 0;
     for (int p = 0; p < nprocs; ++p) {
         if (expected_col[p] > 0) {
             rep_buf_data[p] = (double *) malloc_or_exit(expected_col[p] * sizeof(double));
@@ -72,6 +68,7 @@ void mat_vec_mult_parallel(int rank, int nprocs, int *buf_i_idx, int *buf_j_idx,
                     buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
 
     int p;
+    /// need to update the initialization
     double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
     /// Wait to receive the request of the global column.
     for (int q = 0; q < req_made; q++) {
@@ -237,6 +234,7 @@ int main(int argc, char *argv[]) {
     /// Find the process that need data from the current rank.
     int *expect = (int *) calloc_or_exit(nprocs, sizeof(int));
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nprocs * sizeof(MPI_Request));
+    int req_made = 0;
     for (int p = 0; p < nprocs; p++) {
         /* need to send to this proc? */
         if (p == rank || to_send[p] == 0) {
@@ -244,6 +242,7 @@ int main(int argc, char *argv[]) {
             continue;
         }
         /* logistics */
+        req_made++;
         expect[p] = 1;
         /// send the request
         MPI_Isend(send_buf[p], to_send[p], MPI_INT, p, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[p]);
@@ -283,8 +282,6 @@ int main(int argc, char *argv[]) {
     MPI_Waitall(nprocs, send_reqs, MPI_STATUS_IGNORE);
     /* Matrix-vector multiplication for each processes */
     double timer = 0, min_time = 0, max_time, avg_time;
-    /// y vector for y = M*x/
-    double *y;
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
     double *res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
@@ -305,14 +302,13 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    /*double mean = 0, latency=0, totalTime = 0;
-    min_time = 0;
-    max_time = 0;
-    avg_time = 0;
-    y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
+    double mean = 0, latency=0, totalTime = 0;
+    min_time = 0; max_time = 0; avg_time = 0;
+    /// y vector for y = M*x/
+    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
-    mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, y);
+    mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made, y);
     double runTime = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -321,7 +317,7 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
     }
-    free(y);*/
+    free(y);
     /*int count_itr = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
