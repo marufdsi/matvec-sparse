@@ -356,10 +356,10 @@ int main(int argc, char *argv[]) {
         }
     }*/
     for (int p = 0; p < nprocs; ++p) {
-        if (rep_col_idx[p] != NULL)
+        /*if (rep_col_idx[p] != NULL)
             free(rep_col_idx[p]);
         if (send_buf[p] != NULL)
-            free(send_buf[p]);
+            free(send_buf[p]);*/
     }
     free(buf_values);
     free(buf_i_idx);
