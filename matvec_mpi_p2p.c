@@ -8,7 +8,7 @@
 
 #undef DEBUG
 
-#define TOTAL_RUNS 100
+#define TOTAL_RUNS 1000
 
 #define MAX_RANDOM_NUM (1<<20)
 #define MASTER 0
@@ -311,6 +311,7 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&latency, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = avg_time / nprocs;
     if (rank == MASTER) {
+        printf("[%d] Total Time: %lf, Total Runs: %d\n", rank, totalTime, TOTAL_RUNS);
         printf("[%d] Min Latency: %lf, Max Latency: %lf, Avg Latency: %lf\n", rank, min_time, max_time, mean);
     }
 
