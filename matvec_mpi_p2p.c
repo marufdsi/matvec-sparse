@@ -282,9 +282,10 @@ int main(int argc, char *argv[]) {
 
     /* Matrix-vector multiplication for each processes */
     double min_time = 0, max_time, avg_time;
+    double *y;
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
-    double *y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
+    y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
     double runTime = (MPI_Wtime() - t) * 1000.00;
     MPI_Barrier(MPI_COMM_WORLD);
     /// Calculate Execution Time
@@ -295,26 +296,14 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] First run MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time, avg_time);
     }
-    int count_itr = 0;
+
     double totalTime = 0, mean = 0, latency = 0;
     for (int r = 0; r < TOTAL_RUNS; r++) {
         MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
         y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col, req_made);
-        double runTime = (MPI_Wtime() - t) * 1000.00;
+        totalTime += (MPI_Wtime() - t) * 1000.00;
         MPI_Barrier(MPI_COMM_WORLD);
-        totalTime += runTime;
-        /*if (runTime > 250) {
-            printf("[%d] Iteration: %d, Time: %lf\n", rank, r, runTime);
-        }
-        MPI_Reduce(&runTime, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-        MPI_Reduce(&runTime, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-        MPI_Reduce(&runTime, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        avg_time = avg_time / nprocs;
-        if (rank == MASTER && r < 10) {
-            printf("[%d] Iteration Total: %lf, MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", r, totalTime,
-                   min_time, max_time, avg_time);
-        }*/
     }
     latency = totalTime / TOTAL_RUNS;
     MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
