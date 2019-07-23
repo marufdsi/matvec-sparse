@@ -301,13 +301,13 @@ int main(int argc, char *argv[]) {
     }
 
     double totalTime = 0, mean = 0, latency = 0, timeRequired = 0;
+    MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < TOTAL_RUNS; r++) {
-        MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
         y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col,
                                   req_made);
         totalTime += (MPI_Wtime() - t) * 1000.00;
-        MPI_Barrier(MPI_COMM_WORLD);
+//        MPI_Barrier(MPI_COMM_WORLD);
     }
     latency = totalTime / TOTAL_RUNS;
     MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
