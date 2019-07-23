@@ -44,10 +44,9 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
     double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
     /// Sparse Matrix Vector Multiplication without Communication
     for (int k = 0; k < proc_info[rank].NZ; k++) {
-        /*if (rank == 3){
-            printf("[%d] i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], proc_info[rank].first_row);
-        }*/
-        y[buf_i_idx[k] - proc_info[rank].first_row] += buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
+        if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
+            y[buf_i_idx[k] - proc_info[rank].first_row] +=
+                    buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
     }
     return y;
 }
@@ -110,11 +109,14 @@ int main(int argc, char *argv[]) {
         MPI_Barrier(MPI_COMM_WORLD);
     }
     avg_time = totalTime / TOTAL_RUNS;
-    /*printf("[%d] Results, y = |", rank);
-    for (int i = 0; i<proc_info[rank].M; ++i) {
-        printf("%lf|", res[i]);
+    int on_diagonal_col = 0, avg_on_diagonal_col = 0;
+    for (int k = 0; k < proc_info[rank].NZ; k++) {
+        if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
+            on_diagonal_col++;
     }
-    printf("\n");*/
+    MPI_Reduce(&on_diagonal_col, &avg_on_diagonal_col, 1, MPI_DOUBLE, MPI_INT, 0, MPI_COMM_WORLD);
+    avg_on_diagonal_col = avg_on_diagonal_col / nprocs;
+
     MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -145,11 +147,11 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,MinNonZero,MaxNonZero,AvgNonZero\n");
+                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,MinNonZero,MaxNonZero,AvgNonZero,AvgOnDiagonalColumn\n");
         }
 
-        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d\n", in_file, min_time, max_time, mean, TOTAL_RUNS,
-                nprocs, minNonZero, maxNonZero, avgNonZero);
+        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", in_file, min_time, max_time, mean,
+                TOTAL_RUNS, nprocs, minNonZero, maxNonZero, avgNonZero, avg_on_diagonal_col);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
             exit(EXIT_FAILURE);
