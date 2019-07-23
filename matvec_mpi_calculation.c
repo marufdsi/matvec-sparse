@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
         if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
             on_diagonal_col++;
     }
-    MPI_Reduce(&on_diagonal_col, &avg_on_diagonal_col, 1, MPI_DOUBLE, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&on_diagonal_col, &avg_on_diagonal_col, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     avg_on_diagonal_col = avg_on_diagonal_col / nprocs;
 
     MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
