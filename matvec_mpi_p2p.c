@@ -326,9 +326,11 @@ int main(int argc, char *argv[]) {
                mean);
     }
 
-    int minNonZero = 0, maxNonZero = 0;
+    int minNonZero = 0, maxNonZero = 0, avgNonZero;
     MPI_Reduce(&proc_info[rank].NZ, &minNonZero, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&proc_info[rank].NZ, &maxNonZero, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&proc_info[rank].NZ, &avgNonZero, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    avgNonZero = avgNonZero/nprocs;
 
     int minRequests = 0, maxRequests = 0, avgRequests = 0;
     MPI_Reduce(&all_process_expect[rank], &minRequests, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -355,10 +357,10 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,AvgSendRequests,AvgDataRequests,PerRankDataRequests,SizeOfMsg,MaxNonZero,MinNonZero,MinRequests,MaxRequests,AvgRequests\n");
+                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,AvgSendRequests,AvgDataRequests,PerRankDataRequests,SizeOfMsg,MaxNonZero,MinNonZero,AvgNonZero,MinRequests,MaxRequests,AvgRequests\n");
         }
-        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", _ptr, min_time, max_time, mean,
-                TOTAL_RUNS, nprocs, total_comm[0], total_comm[1], total_comm[2], sizeof(double), maxNonZero, minNonZero,
+        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", _ptr, min_time, max_time, mean,
+                TOTAL_RUNS, nprocs, total_comm[0], total_comm[1], total_comm[2], sizeof(double), maxNonZero, minNonZero,avgNonZero,
                 minRequests, maxRequests, avgRequests);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
