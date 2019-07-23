@@ -101,8 +101,8 @@ int main(int argc, char *argv[]) {
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     double *res;
+    MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < TOTAL_RUNS; ++r) {
-        MPI_Barrier(MPI_COMM_WORLD);
         t = MPI_Wtime();
         res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
         totalTime += (MPI_Wtime() - t) * 1000.00;
