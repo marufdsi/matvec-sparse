@@ -90,8 +90,8 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-    vec_x = (double *) malloc_or_exit(proc_info[rank].N * sizeof(double));
-    for (int i = 0; i < proc_info[rank].N; i++) {
+    vec_x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
+    for (int i = 0; i < proc_info[rank].M; i++) {
         vec_x[i] = 1;
     }
 
@@ -162,6 +162,7 @@ int main(int argc, char *argv[]) {
     free(buf_i_idx);
     free(buf_j_idx);
     free(vec_x);
+    /* MPI: end */
     MPI_Finalize();
 
     return 0;
