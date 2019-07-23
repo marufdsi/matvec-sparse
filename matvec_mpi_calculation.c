@@ -102,12 +102,12 @@ int main(int argc, char *argv[]) {
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     double *res;
     MPI_Barrier(MPI_COMM_WORLD);
+    t = MPI_Wtime();
     for (int r = 0; r < TOTAL_RUNS; ++r) {
-        t = MPI_Wtime();
         res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
-        totalTime += (MPI_Wtime() - t) * 1000.00;
-//        MPI_Barrier(MPI_COMM_WORLD);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
+    totalTime = (MPI_Wtime() - t) * 1000.00;
     avg_time = totalTime / TOTAL_RUNS;
     int on_diagonal_col = 0, avg_on_diagonal_col = 0;
     for (int k = 0; k < proc_info[rank].NZ; k++) {

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "mpi.h"
 
@@ -150,16 +151,20 @@ int *CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx) {
             interProcessCall++;
         count_communication++;
     }
-    int total_communication, totalInterProcessCall;
+    int total_communication, totalInterProcessCall, avg_communication = 0, per_rank_data_send;
+    if (interProcessCall > 0)
+        avg_communication = count_communication / interProcessCall;
     MPI_Reduce(&count_communication, &total_communication, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&interProcessCall, &totalInterProcessCall, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&per_rank_data_send, &avg_communication, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
 
     free(map);
     int *returnPtr;
     if (rank == MASTER) {
-        returnPtr = (int *) malloc_or_exit(2 * sizeof(int));
-        returnPtr[0] = totalInterProcessCall;
-        returnPtr[1] = total_communication;
+        returnPtr = (int *) malloc_or_exit(3 * sizeof(int));
+        returnPtr[0] = totalInterProcessCall / nprocs;
+        returnPtr[1] = total_communication / nprocs;
+        returnPtr[2] = per_rank_data_send / nprocs;
     }
     return returnPtr;
 }
@@ -250,8 +255,9 @@ int main(int argc, char *argv[]) {
     MPI_Allreduce(expect, all_process_expect, nprocs, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     if (rank == MASTER) {
-        printf("[%d] Total Inter Process Call=%d\n", rank, total_comm[0]);
-        printf("[%d] Total Inter Processor Communication Required: %d\n", rank, total_comm[1]);
+        printf("[%d] Average inter rank MPI send requests=%d\n", rank, total_comm[0]);
+        printf("[%d] Average Inter Rank Communication Required: %d\n", rank, total_comm[1]);
+        printf("[%d] Average data send to a rank=%d\n", rank, total_comm[2]);
     }
 
     /// Receive the requests
@@ -302,13 +308,13 @@ int main(int argc, char *argv[]) {
 
     double totalTime = 0, mean = 0, latency = 0, timeRequired = 0;
     MPI_Barrier(MPI_COMM_WORLD);
+    t = MPI_Wtime();
     for (int r = 0; r < TOTAL_RUNS; r++) {
-        t = MPI_Wtime();
         y = mat_vec_mult_parallel(rank, nprocs, buf_i_idx, buf_j_idx, buf_values, buf_x, rep_col_idx, expected_col,
                                   req_made);
-        totalTime += (MPI_Wtime() - t) * 1000.00;
-//        MPI_Barrier(MPI_COMM_WORLD);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
+    totalTime = (MPI_Wtime() - t) * 1000.00;
     latency = totalTime / TOTAL_RUNS;
     MPI_Reduce(&latency, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&latency, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
@@ -331,6 +337,7 @@ int main(int argc, char *argv[]) {
     avgRequests = avgRequests / nprocs;
     /// Print execution stats
     if (rank == MASTER) {
+        char *_ptr = strtok(in_file, "_");
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms\n", rank, min_time, max_time,
                mean);
         FILE *resultCSV;
@@ -348,11 +355,11 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,InterProcessComm,TotalRequests,MaxNonZero,MinNonZero,MinRequests,MaxRequests,AvgRequests\n");
+                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,AvgSendRequests,AvgDataRequests,PerRankDataRequests,SizeOfMsg,MaxNonZero,MinNonZero,MinRequests,MaxRequests,AvgRequests\n");
         }
-        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", in_file, min_time, max_time, mean,
-                TOTAL_RUNS,
-                nprocs, total_comm[0], total_comm[1], maxNonZero, minNonZero, minRequests, maxRequests, avgRequests);
+        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", _ptr, min_time, max_time, mean,
+                TOTAL_RUNS, nprocs, total_comm[0], total_comm[1], total_comm[2], sizeof(double), maxNonZero, minNonZero,
+                minRequests, maxRequests, avgRequests);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
             exit(EXIT_FAILURE);
