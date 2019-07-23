@@ -156,7 +156,7 @@ int *CalculateInterProcessComm(int rank, int nprocs, int *buf_j_idx) {
         avg_communication = count_communication / interProcessCall;
     MPI_Reduce(&count_communication, &total_communication, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&interProcessCall, &totalInterProcessCall, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
-    MPI_Reduce(&per_rank_data_send, &avg_communication, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&avg_communication, &per_rank_data_send, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
 
     free(map);
     int *returnPtr;
