@@ -62,8 +62,10 @@ int main(int argc, char *argv[]) {
     mat_row = mat_size/nprocs;
     mat_col = mat_size;
     if(((int)floor(sqrt(nonZero))) > mat_row) {
-        if(rank == MASTER)
-            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero, mat_row * ((int)floor(sqrt(mat_row))), nprocs);
+        if(rank == MASTER) {
+            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero,
+                   mat_row * ((int) floor(sqrt(mat_row))), nprocs);
+        }
         nonZero = mat_row * ((int)floor(sqrt(mat_row)));
     }
     first_row = rank * mat_row;
@@ -79,6 +81,8 @@ int main(int argc, char *argv[]) {
         buf_x[i] = 1;
     }
 
+    MPI_Finalize();
+    return 0;
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     double *res;
