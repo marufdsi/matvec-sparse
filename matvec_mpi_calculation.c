@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     create_mpi_datatypes(&proc_info_type);
     int mat_size = 0, nonZero = 0, total_run = 100;
 
-    if (argc < 2 || argc > 3) {
+    if (argc < 2) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
         return 0;
     } else {
