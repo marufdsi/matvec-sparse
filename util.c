@@ -30,7 +30,7 @@ int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_
             }while(checkRepeat[rand_idx]>0);
             checkRepeat[rand_idx] = 1;
             int idx = start_row + rand_idx;
-            buf_i[start_idx] = r;
+            buf_i[start_idx] = start_row + r;
             buf_j[start_idx] = idx;
             /// Fill by any random double value
             buf_val[start_idx] = (double)(1 + (idx %10));
