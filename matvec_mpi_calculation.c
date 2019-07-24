@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     }
     printf("[%d] buf x = |", rank);
     for (int j = 0; j < mat_row; ++j) {
-        printf("%d|",buf_x[j]);
+        printf("%lf|",buf_x[j]);
     }
     printf("\n");
     /*printf("[%d] row buf = |", rank);
