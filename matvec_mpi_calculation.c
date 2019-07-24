@@ -51,7 +51,6 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
 }
 
 int main(int argc, char *argv[]) {
-    char *in_file, *out_file = NULL;
 
     double t, comp_time, partition_time;
     int nprocs,     /* number of tasks/processes */
@@ -129,10 +128,10 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerBlock,AvgOnDiagonalColumn\n");
+                    "MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerBlock,AvgOnDiagonalColumn\n");
         }
 
-        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", in_file, min_time, max_time, mean,
+        fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", proc_info.N, min_time, max_time, mean,
                 TOTAL_RUNS, nprocs, proc_info.NZ, proc_info.NZ);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
