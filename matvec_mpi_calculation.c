@@ -79,12 +79,11 @@ int main(int argc, char *argv[]) {
     if(random_mat(buf_i_idx, buf_j_idx, buf_values, first_row, mat_row, nonZeroPerRow) != 1){
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }
+    printf("[%d] Matrix create done\n", rank);
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
         buf_x[i] = 1.00;
     }
-
-    printf("[%d] Matrix create done\n", rank);
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     double *res;
