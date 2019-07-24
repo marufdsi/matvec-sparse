@@ -20,7 +20,8 @@
 
 /* Partition policy selection {EQUAL_NZ, EQUAL_ROWS} */
 MPI_Datatype proc_info_type;
-proc_info_t *proc_info;
+proc_info_t proc_info;
+int first_row;
 
 /*
  * Creates two MPI derived datatypes for the respective structs
@@ -41,12 +42,10 @@ void create_mpi_datatypes(MPI_Datatype *proc_info_type) {
 
 double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double *buf_values, double *buf_x) {
     /* allocate memory for vectors and submatrixes */
-    double *y = (double *) calloc_or_exit(proc_info[rank].M, sizeof(double));
+    double *y = (double *) calloc_or_exit(proc_info.M, sizeof(double));
     /// Sparse Matrix Vector Multiplication without Communication
-    for (int k = 0; k < proc_info[rank].NZ; k++) {
-        if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
-            y[buf_i_idx[k] - proc_info[rank].first_row] +=
-                    buf_values[k] * buf_x[buf_j_idx[k] - proc_info[rank].first_row];
+    for (int k = 0; k < proc_info.NZ; k++) {
+            y[buf_i_idx[k] - first_row] += buf_values[k] * buf_x[buf_j_idx[k] - first_row];
     }
     return y;
 }
@@ -61,7 +60,7 @@ int main(int argc, char *argv[]) {
     int *buf_i_idx,     /* row index for all matrix elements */
             *buf_j_idx;     /* column index for all matrix elements */
     double *buf_values, /* value for all matrix elements */
-            *vec_x;      /* value for all x vector elements */
+            *buf_x;      /* value for all x vector elements */
 
     /*******************************************/
 
@@ -71,32 +70,27 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     create_mpi_datatypes(&proc_info_type);
+    int mat_size = 0, nonZero = 0;
 
     if (argc < 2 || argc > 3) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
         return 0;
     } else {
-        in_file = argv[1];
-        if (argc == 3)
-            out_file = argv[2];
+        mat_size = atoi(argv[1]);
+        nonZero = atoi(argv[2]);
     }
 
-    /// Initialize process info array
-    proc_info = (proc_info_t *) malloc_or_exit(nprocs * sizeof(proc_info_t));
-    /// Read input matrix
-    if (rank_wise_read_matrix(in_file, &buf_i_idx, &buf_j_idx, &buf_values,
-                              &proc_info[rank].M, &proc_info[rank].N, &proc_info[rank].NZ,
-                              &proc_info[rank].first_row, &proc_info[rank].last_row, rank) != 0) {
-        fprintf(stderr, "read_matrix: failed\n");
-        exit(EXIT_FAILURE);
+    proc_info.M = mat_size/nprocs;
+    proc_info.N = mat_size;
+    proc_info.NZ = nonZero;
+    proc_info.first_row = rank * proc_info.M;
+    proc_info.last_row = (rank + 1) * proc_info.M;
+    if(random_mat(buf_i_idx, buf_j_idx, buf_values, proc_info.first_row, proc_info.last_row, proc_info.NZ) != 1)
+    first_row = proc_info.first_row;
+    buf_x = (double *) malloc_or_exit(proc_info.M * sizeof(double));
+    for (int i = 0; i < proc_info.M; i++) {
+        buf_x[i] = 1;
     }
-    vec_x = (double *) malloc_or_exit(proc_info[rank].M * sizeof(double));
-    for (int i = 0; i < proc_info[rank].M; i++) {
-        vec_x[i] = 1;
-    }
-
-    /// Share process info among all the processes
-    MPI_Allgather(&proc_info[rank], 1, proc_info_type, proc_info, 1, proc_info_type, MPI_COMM_WORLD);
 
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
@@ -104,34 +98,22 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
     for (int r = 0; r < TOTAL_RUNS; ++r) {
-        res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, vec_x);
+        res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, buf_x);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     totalTime = (MPI_Wtime() - t) * 1000.00;
     avg_time = totalTime / TOTAL_RUNS;
-    int on_diagonal_col = 0, avg_on_diagonal_col = 0;
-    for (int k = 0; k < proc_info[rank].NZ; k++) {
-        if (in_diagonal(buf_j_idx[k], proc_info[rank].first_row, proc_info[rank].last_row))
-            on_diagonal_col++;
-    }
-    MPI_Reduce(&on_diagonal_col, &avg_on_diagonal_col, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    avg_on_diagonal_col = avg_on_diagonal_col / nprocs;
+    int on_diagonal_col = proc_info.NZ;
 
     MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nprocs;
 
-    int minNonZero = 0, maxNonZero = 0, avgNonZero = 0;
-    MPI_Reduce(&proc_info[rank].NZ, &minNonZero, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&proc_info[rank].NZ, &maxNonZero, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&proc_info[rank].NZ, &avgNonZero, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    avgNonZero = avgNonZero / nprocs;
-
     /// print execution stats
     if (rank == MASTER) {
-        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, Min NonZero: %d, Max NonZero: %d, Avg NonZero: %d\n",
-               rank, min_time, max_time, mean, minNonZero, maxNonZero, avgNonZero);
+        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
+               rank, min_time, max_time, mean, proc_info.NZ);
         FILE *resultCSV;
         FILE *checkFile;
         if ((checkFile = fopen("MPISpMVComputationResult.csv", "r")) != NULL) {
@@ -147,11 +129,11 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,MinNonZero,MaxNonZero,AvgNonZero,AvgOnDiagonalColumn\n");
+                    "MatrixName,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerBlock,AvgOnDiagonalColumn\n");
         }
 
-        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", in_file, min_time, max_time, mean,
-                TOTAL_RUNS, nprocs, minNonZero, maxNonZero, avgNonZero, avg_on_diagonal_col);
+        fprintf(resultCSV, "%s,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", in_file, min_time, max_time, mean,
+                TOTAL_RUNS, nprocs, proc_info.NZ, proc_info.NZ);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
             exit(EXIT_FAILURE);
@@ -161,7 +143,7 @@ int main(int argc, char *argv[]) {
     free(buf_values);
     free(buf_i_idx);
     free(buf_j_idx);
-    free(vec_x);
+    free(buf_x);
     /* MPI: end */
     MPI_Finalize();
 
