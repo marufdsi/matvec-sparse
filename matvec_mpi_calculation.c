@@ -24,15 +24,15 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
     double *y = (double *) calloc_or_exit(mat_row, sizeof(double));
     /// Sparse Matrix Vector Multiplication without Communication
     for (int k = 0; k < nonZero; k++) {
-        if((buf_i_idx[k] - first_row) >= mat_row){
-            printf("[%d] row Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
-        }
-        if((buf_j_idx[k] - first_row) >= mat_row){
-            printf("[%d] col Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
-        }
-        printf("[%d] first row=%d, i=%d, x=%lf, val = %lf, result=%lf\n", rank, first_row, buf_i_idx[k], buf_x[buf_i_idx[k] - first_row], buf_values[k], buf_values[k] * buf_x[buf_i_idx[k] - first_row]);
+//        if((buf_i_idx[k] - first_row) >= mat_row){
+//            printf("[%d] row Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
+//        }
+//        if((buf_j_idx[k] - first_row) >= mat_row){
+//            printf("[%d] col Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
+//        }
+//        printf("[%d] first row=%d, i=%d, x=%lf, val = %lf, result=%lf\n", rank, first_row, buf_i_idx[k], buf_x[buf_i_idx[k] - first_row], buf_values[k], buf_values[k] * buf_x[buf_i_idx[k] - first_row]);
 //        printf("[%d] i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
-//        y[buf_i_idx[k] - first_row] += buf_values[k] * buf_x[buf_j_idx[k] - first_row];
+        y[buf_i_idx[k] - first_row] += buf_values[k] * buf_x[buf_j_idx[k] - first_row];
     }
     return y;
 }
