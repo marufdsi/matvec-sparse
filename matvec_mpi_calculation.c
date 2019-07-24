@@ -30,7 +30,7 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
         if((buf_j_idx[k] - first_row) >= mat_row){
             printf("[%d] col Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
         }
-        printf("[%d] val = %lf\n", rank, buf_values[k] * buf_x[first_row]);
+        printf("[%d] x=%lf, val = %lf, result=%lf\n", rank, buf_x[first_row], buf_values[k], buf_values[k] * buf_x[first_row]);
 //        printf("[%d] i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
 //        y[buf_i_idx[k] - first_row] += buf_values[k] * buf_x[buf_j_idx[k] - first_row];
     }
@@ -91,11 +91,6 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < mat_row; i++) {
         buf_x[i] = 1.00;
     }
-    printf("[%d] buf x = |", rank);
-    for (int j = 0; j < mat_row; ++j) {
-        printf("%lf|",buf_x[j]);
-    }
-    printf("\n");
     /*printf("[%d] row buf = |", rank);
     for (int j = 0; j < nonZero; ++j) {
         printf("%d|",buf_i_idx[j]);
