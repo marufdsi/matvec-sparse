@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     create_mpi_datatypes(&proc_info_type);
-    int mat_size = 0, nonZero = 0;
+    int mat_size = 0, nonZero = 0, total_run = 100;
 
     if (argc < 2 || argc > 3) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
@@ -77,6 +77,8 @@ int main(int argc, char *argv[]) {
     } else {
         mat_size = atoi(argv[1]);
         nonZero = atoi(argv[2]);
+        if (argc > 3)
+            total_run = atoi(argv[3]);
     }
 
     proc_info.M = mat_size/nprocs;
@@ -99,12 +101,12 @@ int main(int argc, char *argv[]) {
     double *res;
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
-    for (int r = 0; r < TOTAL_RUNS; ++r) {
+    for (int r = 0; r < total_run; ++r) {
         res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, buf_x);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     totalTime = (MPI_Wtime() - t) * 1000.00;
-    avg_time = totalTime / TOTAL_RUNS;
+    avg_time = totalTime / total_run;
 
     MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
@@ -134,7 +136,7 @@ int main(int argc, char *argv[]) {
         }
 
         fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", proc_info.N, min_time, max_time, mean,
-                TOTAL_RUNS, nprocs, proc_info.NZ, proc_info.NZ);
+                total_run, nprocs, proc_info.NZ, proc_info.NZ);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file MPISpMVResult");
             exit(EXIT_FAILURE);
