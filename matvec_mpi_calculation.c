@@ -91,23 +91,6 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < mat_row; i++) {
         buf_x[i] = 1.00;
     }
-    /*printf("[%d] row buf = |", rank);
-    for (int j = 0; j < nonZero; ++j) {
-        printf("%d|",buf_i_idx[j]);
-    }
-    printf("\n");
-    printf("[%d] col buf = |", rank);
-    for (int j = 0; j < nonZero; ++j) {
-        printf("%d|",buf_j_idx[j]);
-    }
-    printf("\n");
-    printf("[%d] vlue buf = |", rank);
-    for (int j = 0; j < nonZero; ++j) {
-        printf("%lf|",buf_values[j]);
-    }
-    printf("\n");*/
-
-
 
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
@@ -118,10 +101,6 @@ int main(int argc, char *argv[]) {
         res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, buf_x, first_row, mat_row, nonZero);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-//    printf("[%d] done multiplication\n", rank);
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;
     totalTime = (MPI_Wtime() - t) * 1000.00;
     avg_time = totalTime / total_run;
 
