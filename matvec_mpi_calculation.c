@@ -27,7 +27,8 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
         if((buf_i_idx[k] - first_row) >= mat_row){
             printf("[%d] Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
         }
-            y[buf_i_idx[k] - first_row] += buf_values[k] * buf_x[buf_j_idx[k] - first_row];
+        printf("[%d] i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
+        y[buf_i_idx[k] - first_row] += buf_values[k] * buf_x[buf_j_idx[k] - first_row];
     }
     return y;
 }
