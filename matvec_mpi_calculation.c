@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     }
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
-        buf_x[i] = 1;
+        buf_x[i] = 1.00;
     }
     printf("[%d] buf x = |", rank);
     for (int j = 0; j < mat_row; ++j) {
