@@ -70,10 +70,12 @@ int main(int argc, char *argv[]) {
     if(nonZero <= 0){
         printf("[%d] Matrix can not be sized zero=%d\n", rank, nonZero);
     }
+    printf("[%d] Start program for non zero=%d and row=%d\n", rank, nonZeroPerRow, mat_row);
     first_row = rank * mat_row;
     buf_i_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_j_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_values = (double *)malloc( nonZero * sizeof(double));
+    printf("[%d] create matrix\n", rank);
     if(random_mat(buf_i_idx, buf_j_idx, buf_values, first_row, mat_row, nonZeroPerRow) != 1){
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }
