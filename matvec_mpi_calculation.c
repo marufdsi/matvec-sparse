@@ -83,10 +83,10 @@ int main(int argc, char *argv[]) {
 
     proc_info.M = mat_size/nprocs;
     proc_info.N = mat_size;
-    if(nonZero>(proc_info.M*proc_info.M)) {
+    if(((int)floor(sqrt(nonZero))) > proc_info.M) {
         if(rank == MASTER)
             printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero, (proc_info.M*proc_info.M), nprocs);
-        nonZero = proc_info.M * proc_info.M;
+        nonZero = proc_info.M * ((int)floor(sqrt(proc_info.M)));
     }
     if(nonZero == 0)
         printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero, (proc_info.M*proc_info.M), nprocs);
