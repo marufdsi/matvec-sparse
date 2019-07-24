@@ -27,7 +27,7 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
         if((buf_i_idx[k] - first_row) >= mat_row){
             printf("[%d] Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
         }
-        printf("[%d] i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
+//        printf("[%d] i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
         y[buf_i_idx[k] - first_row] += buf_values[k] * buf_x[buf_j_idx[k] - first_row];
     }
     return y;
@@ -103,9 +103,7 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");*/
 
-    /*MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;*/
+
 
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
@@ -117,6 +115,9 @@ int main(int argc, char *argv[]) {
     }
     MPI_Barrier(MPI_COMM_WORLD);
     printf("[%d] done multiplication\n", rank);
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    return 0;
     totalTime = (MPI_Wtime() - t) * 1000.00;
     avg_time = totalTime / total_run;
 
