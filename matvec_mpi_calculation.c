@@ -24,6 +24,9 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
     double *y = (double *) calloc_or_exit(mat_row, sizeof(double));
     /// Sparse Matrix Vector Multiplication without Communication
     for (int k = 0; k < nonZero; k++) {
+        if((buf_i_idx[k] - first_row) >= mat_row){
+            printf("[%d] Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
+        }
             y[buf_i_idx[k] - first_row] += buf_values[k] * buf_x[buf_j_idx[k] - first_row];
     }
     return y;
@@ -83,7 +86,7 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < mat_row; i++) {
         buf_x[i] = 1;
     }
-    printf("[%d] row buf = |", rank);
+    /*printf("[%d] row buf = |", rank);
     for (int j = 0; j < nonZero; ++j) {
         printf("%d|",buf_i_idx[j]);
     }
@@ -97,11 +100,11 @@ int main(int argc, char *argv[]) {
     for (int j = 0; j < nonZero; ++j) {
         printf("%lf|",buf_values[j]);
     }
-    printf("\n");
+    printf("\n");*/
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    /*MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
-    return 0;
+    return 0;*/
 
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
