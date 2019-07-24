@@ -22,6 +22,7 @@ int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_
     int start_idx = 0;
     for (int r = 0; r < mat_row; ++r) {
         srand(time(0));
+        printf("Row=%d, nonzero per row=%d\n", mat_row, nzPerRow);
         int *checkRepeat = (int *) calloc_or_exit(mat_row, sizeof(int));
         for (int i = 0; i < nzPerRow; i++) {
             int rand_idx;
