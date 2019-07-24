@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix can not be sized zero=%d\n", rank, nonZero);
     }
     first_row = rank * mat_row;
-    last_row = ((rank + 1) * mat_row) -1;
+//    last_row = ((rank + 1) * mat_row) -1;
     buf_i_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_j_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_values = (double *)malloc( nonZero * sizeof(double));
