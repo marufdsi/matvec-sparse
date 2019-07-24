@@ -22,13 +22,17 @@ int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_
     int start_idx = 0;
     for (int r = 0; r < mat_row; ++r) {
         srand(time(0));
-        printf("Row=%d, nonzero per row=%d\n", mat_row, nzPerRow);
         int *checkRepeat = (int *) calloc_or_exit(mat_row, sizeof(int));
         for (int i = 0; i < nzPerRow; i++) {
+            int conflict = 0;
             int rand_idx;
             do{
+                conflict++;
                 rand_idx = rand() % mat_row;
             }while(checkRepeat[rand_idx]>0);
+            if(conflict>0){
+                printf("Conflicts Happened = %d\n", conflict);
+            }
             checkRepeat[rand_idx] = 1;
             int idx = start_row + rand_idx;
             buf_i[start_idx] = start_row + r;
