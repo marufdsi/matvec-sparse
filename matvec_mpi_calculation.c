@@ -63,18 +63,21 @@ int main(int argc, char *argv[]) {
     mat_col = mat_size;
     if(nonZeroPerRow > mat_row) {
         if(rank == MASTER) {
-            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero, mat_row/2, nprocs);
+            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZeroPerRow, mat_row/2, nprocs);
         }
         nonZeroPerRow = mat_row /2;
     }
     nonZero = nonZeroPerRow * mat_row;
+    if(nonZero <= 0){
+        printf("[%d] Matrix can not be sized zero=%d\n", rank, nonZero);
+    }
     first_row = rank * mat_row;
     last_row = ((rank + 1) * mat_row) -1;
     buf_i_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_j_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_values = (double *)malloc( nonZero * sizeof(double));
     if(random_mat(buf_i_idx, buf_j_idx, buf_values, first_row, mat_row, nonZeroPerRow) != 1){
-        printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZero);
+        printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
