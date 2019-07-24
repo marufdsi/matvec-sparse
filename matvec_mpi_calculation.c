@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
         buf_x[i] = 1.00;
     }
 
+    printf("[%d] Matrix create done\n", rank);
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     double *res;
