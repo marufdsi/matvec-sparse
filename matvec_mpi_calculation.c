@@ -83,6 +83,11 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < mat_row; i++) {
         buf_x[i] = 1;
     }
+    printf("[%d] col buf = |", rank);
+    for (int j = 0; j < nonZero; ++j) {
+        printf("%d|",buf_j_idx[j]);
+    }
+    printf("\n");
 
 
     /* Matrix-vector multiplication for each processes */
