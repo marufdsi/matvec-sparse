@@ -24,7 +24,7 @@ typedef struct {
 } proc_info_t;
 
 void random_vec(double *v, int N, int limit);
-int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int end_row, int nz);
+int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_row, int nzPerRow);
 
 void * malloc_or_exit(size_t size);
 void * calloc_or_exit(size_t nmemb, size_t size);

@@ -17,20 +17,18 @@ void random_vec (double *v, int N, int limit)
     }
 }
 
-int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int end_row, int nz)
+int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_row, int nzPerRow)
 {
-    int num_row = end_row - start_row + 1;
-    int nz_per_row = nz/num_row;
     int start_idx = 0;
-    for (int r = 0; r < num_row; ++r) {
-        int limit = nz_per_row-1;
+    for (int r = 0; r < mat_row; ++r) {
         srand(time(0));
-        for (int i = 0; i < nz_per_row; i++) {
-            int idx = start_row + (rand() % num_row);
+        for (int i = 0; i < nzPerRow; i++) {
+            int idx = start_row + (rand() % mat_row);
             buf_i[start_idx] = r;
             buf_j[start_idx] = idx;
             /// Fill by any random double value
             buf_val[start_idx] = (double)(1 + (idx %10));
+            start_idx++;
         }
     }
 

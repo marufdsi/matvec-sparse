@@ -47,33 +47,33 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int mat_size = 0, nonZero = 0, total_run = 100, mat_row = 0, mat_col=0, first_row, last_row;
+    int mat_size = 0, nonZero = 0, nonZeroPerRow = 0, total_run = 100, mat_row = 0, mat_col=0, first_row, last_row;
 
     if (argc < 2) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
         return 0;
     } else {
         mat_size = atoi(argv[1]);
-        nonZero = atoi(argv[2]);
+        nonZeroPerRow = atoi(argv[2]);
         if (argc > 3)
             total_run = atoi(argv[3]);
     }
 
     mat_row = mat_size/nprocs;
     mat_col = mat_size;
-    if(((int)floor(sqrt(nonZero))) > mat_row) {
+    if(nonZeroPerRow > mat_row) {
         if(rank == MASTER) {
-            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero,
-                   mat_row * ((int) floor(sqrt(mat_row))), nprocs);
+            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero, mat_row/2, nprocs);
         }
-        nonZero = mat_row * ((int)floor(sqrt(mat_row)));
+        nonZeroPerRow = mat_row /2;
     }
+    nonZero = nonZeroPerRow * mat_row;
     first_row = rank * mat_row;
-    last_row = (rank + 1) * mat_row;
+    last_row = ((rank + 1) * mat_row) -1;
     buf_i_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_j_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_values = (double *)malloc( nonZero * sizeof(double));
-    if(random_mat(buf_i_idx, buf_j_idx, buf_values, first_row, last_row, nonZero) != 1){
+    if(random_mat(buf_i_idx, buf_j_idx, buf_values, first_row, mat_row, nonZeroPerRow) != 1){
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZero);
     }
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
@@ -81,8 +81,7 @@ int main(int argc, char *argv[]) {
         buf_x[i] = 1;
     }
 
-    MPI_Finalize();
-    return 0;
+
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     double *res;
