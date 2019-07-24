@@ -85,18 +85,18 @@ int main(int argc, char *argv[]) {
     proc_info.N = mat_size;
     if(((int)floor(sqrt(nonZero))) > proc_info.M) {
         if(rank == MASTER)
-            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero, (proc_info.M*proc_info.M), nprocs);
+            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero, proc_info.M * ((int)floor(sqrt(proc_info.M))), nprocs);
         nonZero = proc_info.M * ((int)floor(sqrt(proc_info.M)));
     }
-    if(nonZero == 0)
-        printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZero, (proc_info.M*proc_info.M), nprocs);
     proc_info.NZ = nonZero;
     proc_info.first_row = rank * proc_info.M;
     proc_info.last_row = (rank + 1) * proc_info.M;
     buf_i_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_j_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_values = (double *)malloc( nonZero * sizeof(double));
-    if(random_mat(buf_i_idx, buf_j_idx, buf_values, proc_info.first_row, proc_info.last_row, proc_info.NZ) != 1)
+    if(random_mat(buf_i_idx, buf_j_idx, buf_values, proc_info.first_row, proc_info.last_row, proc_info.NZ) != 1){
+        printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZero);
+    }
     first_row = proc_info.first_row;
     buf_x = (double *) malloc_or_exit(proc_info.M * sizeof(double));
     for (int i = 0; i < proc_info.M; i++) {
