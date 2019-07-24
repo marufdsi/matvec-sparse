@@ -84,6 +84,9 @@ int main(int argc, char *argv[]) {
     proc_info.NZ = nonZero;
     proc_info.first_row = rank * proc_info.M;
     proc_info.last_row = (rank + 1) * proc_info.M;
+    buf_i_idx = (int *)malloc( nonZero * sizeof(int) );
+    buf_j_idx = (int *)malloc( nonZero * sizeof(int) );
+    buf_values = (double *)malloc( nonZero * sizeof(double));
     if(random_mat(buf_i_idx, buf_j_idx, buf_values, proc_info.first_row, proc_info.last_row, proc_info.NZ) != 1)
     first_row = proc_info.first_row;
     buf_x = (double *) malloc_or_exit(proc_info.M * sizeof(double));
@@ -102,7 +105,6 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     totalTime = (MPI_Wtime() - t) * 1000.00;
     avg_time = totalTime / TOTAL_RUNS;
-    int on_diagonal_col = proc_info.NZ;
 
     MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
