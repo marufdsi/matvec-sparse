@@ -24,14 +24,6 @@ double *matMullComputationOnly(int rank, int *buf_i_idx, int *buf_j_idx, double 
     double *y = (double *) calloc_or_exit(mat_row, sizeof(double));
     /// Sparse Matrix Vector Multiplication without Communication
     for (int k = 0; k < nonZero; k++) {
-//        if((buf_i_idx[k] - first_row) >= mat_row){
-//            printf("[%d] row Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
-//        }
-//        if((buf_j_idx[k] - first_row) >= mat_row){
-//            printf("[%d] col Outof index for i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
-//        }
-//        printf("[%d] first row=%d, i=%d, x=%lf, val = %lf, result=%lf\n", rank, first_row, buf_i_idx[k], buf_x[buf_i_idx[k] - first_row], buf_values[k], buf_values[k] * buf_x[buf_i_idx[k] - first_row]);
-//        printf("[%d] i=%d, j=%d, val=%lf, first row=%d\n", rank, buf_i_idx[k], buf_j_idx[k], buf_values[k], first_row);
         y[buf_i_idx[k] - first_row] += buf_values[k] * buf_x[buf_j_idx[k] - first_row];
     }
     return y;
@@ -68,7 +60,6 @@ int main(int argc, char *argv[]) {
     }
 
     mat_row = mat_size/nprocs;
-    mat_col = mat_size;
     if(nonZeroPerRow > mat_row) {
         if(rank == MASTER) {
             printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZeroPerRow, mat_row/2, nprocs);
@@ -80,7 +71,6 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix can not be sized zero=%d\n", rank, nonZero);
     }
     first_row = rank * mat_row;
-//    last_row = ((rank + 1) * mat_row) -1;
     buf_i_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_j_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_values = (double *)malloc( nonZero * sizeof(double));
