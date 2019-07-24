@@ -91,6 +91,11 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < mat_row; i++) {
         buf_x[i] = 1;
     }
+    printf("[%d] buf x = |", rank);
+    for (int j = 0; j < mat_row; ++j) {
+        printf("%d|",buf_x[j]);
+    }
+    printf("\n");
     /*printf("[%d] row buf = |", rank);
     for (int j = 0; j < nonZero; ++j) {
         printf("%d|",buf_i_idx[j]);
