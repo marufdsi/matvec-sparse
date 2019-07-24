@@ -115,6 +115,7 @@ int main(int argc, char *argv[]) {
         res = matMullComputationOnly(rank, buf_i_idx, buf_j_idx, buf_values, buf_x, first_row, mat_row, nonZero);
     }
     MPI_Barrier(MPI_COMM_WORLD);
+    printf("[%d] done multiplication\n", rank);
     totalTime = (MPI_Wtime() - t) * 1000.00;
     avg_time = totalTime / total_run;
 
