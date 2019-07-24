@@ -83,6 +83,8 @@ int main(int argc, char *argv[]) {
 
     proc_info.M = mat_size/nprocs;
     proc_info.N = mat_size;
+    if(nonZero>(proc_info.M*proc_info.M))
+        nonZero = proc_info.M * proc_info.M;
     proc_info.NZ = nonZero;
     proc_info.first_row = rank * proc_info.M;
     proc_info.last_row = (rank + 1) * proc_info.M;
