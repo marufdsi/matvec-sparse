@@ -46,8 +46,7 @@ void testMap(int rank){
     }
 }
 
-double *
-matMull(int rank, proc_info_t *proc_info, int *row_ptr, int *col_ptr, double *val_ptr, double *buf_x, int mat_row) {
+double *matMull(int rank, proc_info_t *proc_info, int *row_ptr, int *col_ptr, double *val_ptr, double *buf_x, int mat_row) {
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(mat_row, sizeof(double));
 
@@ -82,6 +81,7 @@ int main(int argc, char *argv[]) {
     double *val_ptr, /* value for all matrix elements */
             *buf_x;      /* value for all x vector elements */
 
+    proc_info_t *proc_info;
     /*******************************************/
 
     /* Initialize MPI */
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 
     testMap(rank);
     MPI_Finalize();
-    return 0;
+//    return 0;
 
     int mat_size = 0, nonZero = 0, nonZeroPerRow = 0, total_run = 100, mat_row = 0, mat_col = 0;
 
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
-        res = matMull(rank, row_ptr, col_ptr, val_ptr, buf_x, mat_row);
+        res = matMull(rank, proc_info, row_ptr, col_ptr, val_ptr, buf_x, mat_row);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     totalTime = (MPI_Wtime() - t) * 1000.00;
