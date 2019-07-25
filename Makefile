@@ -29,7 +29,7 @@ matvec_mpi_calculation: matvec_mpi_calculation.c $(OBJ)
 csr_mpi_spmv: csr_mpi_spmv.c $(OBJ)
 	$(MPI_C) $(MPI_CFLAGS) $(OBJ) $< -o $@ $(LDFLAGS)
 
-csr_mpi_spmv: csr_mpi_model.c $(OBJ)
+csr_mpi_model: csr_mpi_model.c $(OBJ)
 	$(MPI_C) $(MPI_CFLAGS) $(OBJ) $< -o $@ $(LDFLAGS)
 
 %.o: %.c %.h
