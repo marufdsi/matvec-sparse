@@ -38,7 +38,8 @@ double getVal(struct Map *map, int col){
         }
         map++;
     }
-    return NULL;
+    printf("Error!!! column=%d not found\n", col);
+    return 0;
 }
 
 void testMap(int rank){
