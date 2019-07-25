@@ -61,6 +61,10 @@ int main(int argc, char *argv[]) {
 
     mat_row = mat_size/nprocs;
     nonZeroPerRow = nonZero/mat_row;
+    if (nonZeroPerRow<=0){
+        printf("[%d], There will must one non zero column in the matrix in every row\n");
+        return 0;
+    }
     if(nonZeroPerRow > mat_row) {
         if(rank == MASTER) {
             printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZeroPerRow, mat_row, nprocs);
