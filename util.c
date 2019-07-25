@@ -46,6 +46,33 @@ int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_
     return 1;
 }
 
+int csr_random_mat (int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow)
+{
+    int start_idx = 0;
+    int row_elements = 0;
+    row_ptr[0] = row_elements;
+    for (int r = 0; r < mat_row; ++r) {
+        row_elements += nzPerRow;
+        srand(time(0));
+        int *checkRepeat = (int *) calloc_or_exit(mat_row, sizeof(int));
+        for (int i = 0; i < nzPerRow; i++) {
+            int rand_idx;
+            /// escape same random column
+            do{
+                rand_idx = rand() % mat_row;
+            }while(checkRepeat[rand_idx]>0);
+            checkRepeat[rand_idx] = 1;
+            col_ptr[start_idx] = rand_idx;
+            /// Fill by any random double value
+            val_ptr[start_idx] = (double)(1 + (rand_idx %10));
+            start_idx++;
+        }
+        row_ptr[r+1] = row_elements;
+    }
+
+    return 1;
+}
+
 /*
  * Tries to malloc. Terminates on failure.
  */
