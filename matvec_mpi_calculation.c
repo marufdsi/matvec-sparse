@@ -75,7 +75,6 @@ int main(int argc, char *argv[]) {
     buf_i_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_j_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_values = (double *)malloc( nonZero * sizeof(double));
-    printf("[%d] create matrix\n", rank);
     if(random_mat(buf_i_idx, buf_j_idx, buf_values, first_row, mat_row, nonZeroPerRow) != 1){
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }
