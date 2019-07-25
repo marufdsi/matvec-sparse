@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 
     testMap(rank);
     MPI_Finalize();
-//    return 0;
+    return 0;
 
     int mat_size = 0, nonZero = 0, nonZeroPerRow = 0, total_run = 100, mat_row = 0, mat_col = 0;
 
