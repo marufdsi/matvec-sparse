@@ -31,6 +31,16 @@ struct Map {
     struct Value value;
 };
 
+double getVal(struct Map *map, int col){
+    while (map != NULL){
+        if ((*map).key.col == col){
+            return (*map).value.val;
+        }
+        map++;
+    }
+    return NULL;
+}
+
 void testMap(int rank){
     if (rank == MASTER) {
         struct Map *map;
@@ -43,6 +53,7 @@ void testMap(int rank){
         for (int k = 0; k < 10; ++k) {
             printf("[%d] Map key=%d, value=%lf\n", k, map[k].key.col, map[k].value.val);
         }
+        printf("Get value of col=%d from map=%lf\n", 10, getVal(map, 10));
     }
 }
 
