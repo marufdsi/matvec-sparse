@@ -54,23 +54,23 @@ int main(int argc, char *argv[]) {
         return 0;
     } else {
         mat_size = atoi(argv[1]);
-        nonZeroPerRow = atoi(argv[2]);
+        nonZero = atoi(argv[2]);
         if (argc > 3)
             total_run = atoi(argv[3]);
     }
 
     mat_row = mat_size/nprocs;
+    nonZeroPerRow = nonZero/mat_row;
     if(nonZeroPerRow > mat_row) {
         if(rank == MASTER) {
-            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZeroPerRow, mat_row/2, nprocs);
+            printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZeroPerRow, mat_row, nprocs);
         }
-        nonZeroPerRow = mat_row /2;
+        nonZeroPerRow = mat_row;
+        nonZero = nonZeroPerRow*mat_row;
     }
-    nonZero = nonZeroPerRow * mat_row;
     if(nonZero <= 0){
         printf("[%d] Matrix can not be sized zero=%d\n", rank, nonZero);
     }
-    printf("[%d] Start program for non zero=%d and row=%d\n", rank, nonZeroPerRow, mat_row);
     first_row = rank * mat_row;
     buf_i_idx = (int *)malloc( nonZero * sizeof(int) );
     buf_j_idx = (int *)malloc( nonZero * sizeof(int) );
@@ -79,7 +79,6 @@ int main(int argc, char *argv[]) {
     if(random_mat(buf_i_idx, buf_j_idx, buf_values, first_row, mat_row, nonZeroPerRow) != 1){
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }
-    printf("[%d] Matrix create done\n", rank);
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
         buf_x[i] = 1.00;
