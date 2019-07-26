@@ -162,7 +162,7 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
     for (int i = 0; i < procs_info[rank].NZ; i++) {
         col = col_ptr[i];
         /// Check off-diagonal nonzero elements that belongs to other ranks
-        if (in_diagonal(col, procs_info[rank].first_row, procs_info[rank].last_row) || getVal(map, col, i+1) > 0)
+        if (in_diagonal(col, procs_info[rank].first_row, procs_info[rank].last_row) || !(getVal(map, col, i+1) < 0))
             continue;
         ///search which rank has the element
         dest = -1;

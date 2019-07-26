@@ -19,8 +19,8 @@ double getVal(Map *map, int col, int limit) {
             map++;
         }
     }
-    printf("Error!!! column=%d not found\n", col);
-    return 0;
+//    printf("Error!!! column=%d not found\n", col);
+    return -1.0;
 }
 
 /*
@@ -88,7 +88,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
             /// escape same random column
             do{
                 rand_idx = rand() % range;
-            }while(getVal(map, rand_idx, i+1)>0);
+            }while(!(getVal(map, rand_idx, i+1)<0));
             if (rand_idx>= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row))
                 off_diagonal++;
             map[i].key.col = rand_idx;
