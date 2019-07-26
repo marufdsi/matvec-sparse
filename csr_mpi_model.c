@@ -177,12 +177,12 @@ void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
     MPI_Type_commit(procs_info_type);
 }
 
-void *findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *buf_j_idx, int *perRankDataRecv, int **reqColFromRank) {
+void *findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int *perRankDataRecv, int **reqColFromRank) {
     /* build sending blocks to processors */
     struct Map *map = (struct Map *) malloc_or_exit(procs_info[rank].NZ * sizeof(struct Map));
     int dest, col;
     for (int i = 0; i < procs_info[rank].NZ; i++) {
-        col = buf_j_idx[i];
+        col = col_ptr[i];
         /// Check off-diagonal nonzero elements that belongs to other ranks
         if (in_diagonal(col, procs_info[rank].first_row, procs_info[rank].last_row) || getVal(map, col) > 0)
             continue;
@@ -350,9 +350,14 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER){
         printf("[%d] Data population complete\n", rank);
     }
+
+    if(rank == 2){
+        for (int r = 0; r < nRanks; ++r) {
+            printf("[%d] expect col=%d from %d\n", rank, perRankDataRecv[r], r);
+        }
+    }
     MPI_Finalize();
     return 0;
-    
     int *perRankDataSend, **send_col_idx;
     shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
