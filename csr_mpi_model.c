@@ -339,6 +339,22 @@ int main(int argc, char *argv[]) {
     if (reqRequired>0)
         shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
+    for (int r = 0; r < nRanks; ++r) {
+        if(perRankDataRecv[r]>0) {
+            printf("[%d] receive from rank=%d |", rank, r);
+            for (int k = 0; k < perRankDataRecv[r]; ++k) {
+                printf("col=%d| ", reqColFromRank[r][k]);
+            }
+            printf("\n");
+        }
+        if(perRankDataSend[r]>0) {
+            printf("[%d] semd to rank=%d |", rank, r);
+            for (int k = 0; k < perRankDataSend[r]; ++k) {
+                printf("col=%d| ", send_col_idx[r][k]);
+            }
+            printf("\n");
+        }
+    }
     printf("[%d] Done matrix creation\n", rank);
     MPI_Finalize();
     return 0;
