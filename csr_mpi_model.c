@@ -355,7 +355,7 @@ int main(int argc, char *argv[]) {
     if (reqRequired>0)
         shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
-    printf("[%d] Done matrix creation\n", rank);
+    printf("[%d] Done matrix creation=%d\n", rank, reqRequired);
     MPI_Finalize();
     return 0;
     /// Start sparse matrix vector multiplication for each rank
