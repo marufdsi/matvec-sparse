@@ -64,12 +64,12 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
     row_ptr[0] = row_elements;
     srand(time(0));
     for (int r = 0; r < mat_row; ++r) {
-        printf("[%d] row=%d\n", rank, r);
         row_elements += nzPerRow;
         Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
         int off_diagonal = 0;
         int range = mat_col;
         int range_start = 0;
+        printf("[%d] row=%d\n", rank, r);
         for (int i = 0; i < nzPerRow; i++) {
             /*if((nzPerRow*2)/100 <= off_diagonal){
                 range = mat_row;
@@ -77,19 +77,23 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
             }*/
             int rand_idx;
             /// escape same random column
+            printf("[%d] #line 1\n", rank);
             do{
                 rand_idx = rand() % range;
             }while(getVal(map, rand_idx)>0);
+            printf("[%d] #line 2\n", rank);
             if (rand_idx>= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row))
                 off_diagonal++;
-            printf("[%d] col=%d put at\n", rank, rand_idx);
+            printf("[%d] #line 3\n", rank);
             map[i].key.col = rand_idx;
-            printf("[%d] problem with allocation\n", rank);
+            printf("[%d] #line 4\n", rank);
             map[i].value.val = 1.0;
+            printf("[%d] #line 5\n", rank);
             col_ptr[start_idx] = range_start + rand_idx;
             /// Fill by any random double value
+            printf("[%d] #line 6\n", rank);
             val_ptr[start_idx] = (double)(1 + (rand_idx %10));
-            printf("[%d] value=%lf put at %d\n", rank, val_ptr[start_idx], start_idx);
+            printf("[%d] #line 7\n", rank);
             if (start_idx>= procs_info[rank].NZ){
                 printf("[%d] out of index exception\n", rank);
             }
