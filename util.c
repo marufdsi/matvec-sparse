@@ -78,7 +78,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
         int off_diagonal = 0;
         int range = mat_col;
         int range_start = 0;
-        srand((time.Now().UnixNano())*r);
+        srand(time.Now().UnixNano());
         for (int i = 0; i < nzPerRow; i++) {
             /*if((nzPerRow*2)/100 <= off_diagonal){
                 range = mat_row;
