@@ -21,32 +21,10 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
-struct Key {
-    int col;
-};
-struct Value {
-    double val;
-};
-struct Map {
-    struct Key key;
-    struct Value value;
-};
-
-double getVal(struct Map *map, int col) {
-    while (map != NULL) {
-        if ((*map).key.col == col) {
-            return (*map).value.val;
-        }
-        map++;
-    }
-    printf("Error!!! column=%d not found\n", col);
-    return 0;
-}
-
 void testMap(int rank) {
     if (rank == MASTER) {
-        struct Map *map;
-        map = (struct Map *) malloc_or_exit(10 * sizeof(struct Map));
+        Map *map;
+        map = (Map *) malloc_or_exit(10 * sizeof(Map));
         for (int i = 0; i < 10; ++i) {
             map[i].key.col = i * 10;
             map[i].value.val = (double) (i * 500);
@@ -179,7 +157,7 @@ void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
 
 int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int *perRankDataRecv, int **reqColFromRank) {
     /* build sending blocks to processors */
-    struct Map *map = (struct Map *) malloc_or_exit(procs_info[rank].NZ * sizeof(struct Map));
+    Map *map = (Map *) malloc_or_exit(procs_info[rank].NZ * sizeof(Map));
     int dest, col, reqRequired=0;
     for (int i = 0; i < procs_info[rank].NZ; i++) {
         col = col_ptr[i];

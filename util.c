@@ -2,6 +2,17 @@
 
 #include "util.h"
 
+double getVal(Map *map, int col) {
+    while (map != NULL) {
+        if ((*map).key.col == col) {
+            return (*map).value.val;
+        }
+        map++;
+    }
+    printf("Error!!! column=%d not found\n", col);
+    return 0;
+}
+
 /*
  * Generate a random real vector of size N with
  * elements beloning to [0, limit)
@@ -54,7 +65,7 @@ int csr_random_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int m
     srand(time(NULL));
     for (int r = 0; r < mat_row; ++r) {
         row_elements += nzPerRow;
-        int *checkRepeat = (int *) calloc_or_exit(mat_row, sizeof(int));
+        Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
         int off_diagonal = 0;
         int range = mat_col;
         int range_start = 0;
@@ -67,10 +78,11 @@ int csr_random_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int m
             /// escape same random column
             do{
                 rand_idx = rand() % range;
-            }while(checkRepeat[rand_idx]>0);
+            }while(getVal(map, rand_idx)>0);
             if (rand_idx>= mat_row)
                 off_diagonal++;
-            checkRepeat[rand_idx] = 1;
+            map[i].key.col = rand_idx;
+            map[i].value.val = 1.0;
             col_ptr[start_idx] = range_start + rand_idx;
             /// Fill by any random double value
             val_ptr[start_idx] = (double)(1 + (rand_idx %10));
