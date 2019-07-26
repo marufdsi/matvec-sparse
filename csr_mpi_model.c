@@ -19,6 +19,9 @@
 #include "partition.h"
 
 MPI_Datatype proc_info_type;
+enum tag {
+    REQUEST_TAG, RECEIVE_TAG
+};
 
 struct Key {
     int col;
@@ -31,9 +34,9 @@ struct Map {
     struct Value value;
 };
 
-double getVal(struct Map *map, int col){
-    while (map != NULL){
-        if ((*map).key.col == col){
+double getVal(struct Map *map, int col) {
+    while (map != NULL) {
+        if ((*map).key.col == col) {
             return (*map).value.val;
         }
         map++;
@@ -42,7 +45,7 @@ double getVal(struct Map *map, int col){
     return 0;
 }
 
-void testMap(int rank){
+void testMap(int rank) {
     if (rank == MASTER) {
         struct Map *map;
         map = (struct Map *) malloc_or_exit(10 * sizeof(struct Map));
@@ -58,27 +61,104 @@ void testMap(int rank){
     }
 }
 
-double *matMull(int rank, proc_info_t *proc_info, int *row_ptr, int *col_ptr, double *val_ptr, double *buf_x, int mat_row) {
+int getRank(int nRanks, proc_info_t *ranks_info, int column){
+    for (int r = 0; r < nRanks; ++r) {
+        if (column >= ranks_info[r].first_row && column <= ranks_info[r].last_row)
+            return r;
+    }
+    printf("Error!! %d Column does not belong to any ranks\n", column);
+    return -1;
+}
+
+double *matMull(int rank, proc_info_t *ranks_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr, double *buf_x,
+        int mat_row, int **send_col_idx, int *perRankDataRecv, int **reqColFromRank, int *perRankDataSend, int nColRecv) {
+
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(mat_row, sizeof(double));
+/// receiving blocks storage
+    double **recv_buf = (double **) malloc_or_exit(nRanks * sizeof(double));
+    double **recvColFromRanks = (int *) malloc_or_exit(nRanks * sizeof(double));
+    for (int r = 0; r < nRanks; ++r){
+        if (perRankDataRecv[r] > 0) {
+            recv_buf[r] = (double *) malloc_or_exit(perRankDataRecv[r] * sizeof(double));
+            recvColFromRanks[r] = (double *) malloc_or_exit((ranks_info[r].last_row - ranks_info[r].first_row + 1) * sizeof(double));
+        }
+    }
+    /// MPI request storage
+    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
+    MPI_Request *recv_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
+    int reqMade = 0;
+    for (int r = 0; r < nRanks; ++r) {
+        if (r == rank || perRankDataRecv[r] == 0) {
+            recv_reqs[r] = MPI_REQUEST_NULL;
+            continue;
+        }
+        reqMade++;
+        /// Receive the block (when it comes)
+        MPI_Irecv(recv_buf[r], perRankDataRecv[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &recv_reqs[r]);
+    }
+
+    /// Reply to the requests.
+    double **send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double));
+    for (int r = 0; r < nRanks; ++r) {
+        if (perRankDataSend[r] > 0) {
+            send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
+            for (int i = 0; i < perRankDataSend[r]; ++i)
+                send_buf_data[r][i] = buf_x[send_col_idx[r][i]];
+            MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
+        } else
+            send_reqs[r] = MPI_REQUEST_NULL;
+    }
 
     /// Local elements multiplication
     for (int i = 0; i < mat_row; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
-            if (in_diagonal(col_ptr[k], proc_info[rank].first_row, proc_info[rank].last_row))
+            if (in_diagonal(col_ptr[k], ranks_info[rank].first_row, ranks_info[rank].last_row))
                 y[i] += val_ptr[k] * buf_x[col_ptr[k]];
         }
     }
 
     /// need to update the initialization
-    double *vecFromRemotePros = (double *) calloc_or_exit(proc_info[rank].N, sizeof(double));
+//    struct Map *map = (struct Map *) malloc_or_exit(nColRecv * sizeof(struct Map));
+    int r, index = 0;
+    for (int q = 0; q < reqMade; q++) {
+        MPI_Waitany(nRanks, recv_reqs, &r, MPI_STATUS_IGNORE);
+        assert(r != MPI_UNDEFINED);
+
+        /// fill x array with new elements.
+        for (int i = 0; i < perRankDataRecv[r]; i++) {
+//            map[index].key.col = reqColFromRank[r][i];
+//            map[index].value.val = recv_buf[r][i];
+//            index++;
+            recvColFromRanks[r][reqColFromRank[r][i] - ranks_info[r].first_row] = recv_buf[r][i];
+        }
+    }
+
     /// Global elements multiplication
     for (int i = 0; i < mat_row; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
-            if (!in_diagonal(col_ptr[k], proc_info[rank].first_row, proc_info[rank].last_row))
-                y[i] += val_ptr[k] * vecFromRemotePros[k];
+            if (!in_diagonal(col_ptr[k], ranks_info[rank].first_row, ranks_info[rank].last_row)) {
+                int r = getRank(nRanks, ranks_info, col_ptr[k]);
+                y[i] += val_ptr[k] * recvColFromRanks[r][col_ptr[k] - ranks_info[r].first_row];
+            }
         }
     }
+
+    /// Wait until send request delivered to through network.
+    MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
+    for (int r = 0; r < nRanks; r++) {
+        if (perRankDataRecv[r] > 0) {
+            free(recv_buf[r]);
+            free(recvColFromRanks[r]);
+        }
+        if (perRankDataSend[r] > 0)
+            free(send_buf_data[r]);
+    }
+
+    free(recv_buf);
+    free(send_buf_data);
+    free(recvColFromRanks);
+
     return y;
 }
 
