@@ -333,8 +333,9 @@ int main(int argc, char *argv[]) {
 
     /// Find the columns that belong to other ranks
     int reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank);
-
-
+    if (reqRequired<=0){
+        printf("[%d] No data need to send\n",rank);
+    }
     int *perRankDataSend, **send_col_idx;
     if (reqRequired>0)
         shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
@@ -347,7 +348,7 @@ int main(int argc, char *argv[]) {
             }
             printf("\n");
         }
-        if(perRankDataSend[r]>0) {
+        if(reqRequired>0 && perRankDataSend[r]>0) {
             printf("[%d] semd to rank=%d |", rank, r);
             for (int k = 0; k < perRankDataSend[r]; ++k) {
                 printf("col=%d| ", send_col_idx[r][k]);
