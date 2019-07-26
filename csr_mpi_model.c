@@ -316,10 +316,21 @@ int main(int argc, char *argv[]) {
     col_ptr = (int *) malloc(procs_info[rank].NZ * sizeof(int));
     val_ptr = (double *) malloc(procs_info[rank].NZ * sizeof(double));
     /// Create random CSR matrix with the given parameter
-    if (csr_random_mat(row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow) != 1) {
+    if (csr_random_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
                nonZeroPerRow);
     }
+    if(rank == MASTER){
+        for (int i = 0; i < procs_info[rank].M; ++i) {
+            printf("[%d] Row=%d |", rank, i+1);
+            for (int k = row_ptr[i]; k < row_ptr[i+1]; ++k) {
+                printf("col=%d, val=%lf|", col_ptr[k], val_ptr[k]);
+            }
+            printf("\n");
+        }
+    }
+    MPI_Finalize();
+    return 0;
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
