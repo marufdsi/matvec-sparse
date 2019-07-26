@@ -348,13 +348,13 @@ int main(int argc, char *argv[]) {
             }
             printf("\n");
         }
-        if(reqRequired>0 && perRankDataSend[r]>0) {
+        /*if(reqRequired>0 && perRankDataSend[r]>0) {
             printf("[%d] semd to rank=%d |", rank, r);
             for (int k = 0; k < perRankDataSend[r]; ++k) {
                 printf("col=%d| ", send_col_idx[r][k]);
             }
             printf("\n");
-        }
+        }*/
     }
     printf("[%d] Done matrix creation\n", rank);
     MPI_Finalize();
