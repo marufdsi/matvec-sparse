@@ -112,7 +112,7 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
     for (int i = 0; i < procs_info[rank].M; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
             if (in_diagonal(col_ptr[k], procs_info[rank].first_row, procs_info[rank].last_row))
-                y[i] += val_ptr[k] * buf_x[col_ptr[k]];
+                y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
         }
     }
 
@@ -329,8 +329,6 @@ int main(int argc, char *argv[]) {
             printf("\n");
         }
     }
-    MPI_Finalize();
-    return 0;
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
@@ -352,6 +350,11 @@ int main(int argc, char *argv[]) {
     int *perRankDataSend, **send_col_idx;
     shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
+    if (rank == MASTER){
+        printf("[%d] Data population complete\n", rank);
+    }
+    MPI_Finalize();
+    return 0;
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
