@@ -314,9 +314,6 @@ int main(int argc, char *argv[]) {
             printf("\n");
         }
 //    }
-    printf("[%d] Done matrix creation\n", rank);
-    MPI_Finalize();
-    return 0;
 
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
@@ -334,8 +331,6 @@ int main(int argc, char *argv[]) {
             reqColFromRank[i] = (int *) malloc_or_exit(procs_info[i].M * sizeof(int));
     }
 
-
-
     /// Find the columns that belong to other ranks
     int reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank);
 
@@ -344,7 +339,9 @@ int main(int argc, char *argv[]) {
     if (reqRequired>0)
         shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
-
+    printf("[%d] Done matrix creation\n", rank);
+    MPI_Finalize();
+    return 0;
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
