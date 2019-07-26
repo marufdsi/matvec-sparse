@@ -347,14 +347,15 @@ int main(int argc, char *argv[]) {
     /// Find the columns that belong to other ranks
     findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank);
 
-    int *perRankDataSend, **send_col_idx;
-    shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
-
     if (rank == MASTER){
         printf("[%d] Data population complete\n", rank);
     }
     MPI_Finalize();
     return 0;
+    
+    int *perRankDataSend, **send_col_idx;
+    shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
+
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
