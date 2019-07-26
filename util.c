@@ -64,6 +64,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
     row_ptr[0] = row_elements;
     srand(time(0));
     for (int r = 0; r < mat_row; ++r) {
+        printf("[%d] row=%d\n", rank, r);
         row_elements += nzPerRow;
         Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
         int off_diagonal = 0;
