@@ -213,11 +213,14 @@ void shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perR
     /// Send Requests
     int *expect = (int *) calloc_or_exit(nRanks, sizeof(int));
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
+    int reqMade = 0;
     for (int r = 0; r < nRanks; r++) {
         if (r == rank || perRankDataRecv[r] == 0) {
             send_reqs[r] = MPI_REQUEST_NULL;
             continue;
         }
+        printf("[%d] Request to %d number of col=%d\n", rank, r, perRankDataRecv[r]);
+        reqMade++;
         expect[r] = 1;
         /// send the request
         MPI_Isend(reqColFromRank[r], perRankDataRecv[r], MPI_INT, r, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[r]);
@@ -225,6 +228,9 @@ void shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perR
     int *all_process_expect = (int *) calloc_or_exit(nRanks, sizeof(int));
     MPI_Allreduce(expect, all_process_expect, nRanks, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
+    if (reqMade>0){
+        printf("[%d] request made = %d\n", rank, reqMade);
+    }
     /// Receive the requests
     int *reqs;
     perRankDataSend = (int *) calloc_or_exit(nRanks, sizeof(int));
@@ -232,6 +238,7 @@ void shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perR
     MPI_Status status;
     int req_count;
     for (int p = 0; p < all_process_expect[rank]; p++) {
+        printf("[%d] receive data\n", rank);
         /// Wait until a request comes
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &req_count);
@@ -250,9 +257,12 @@ void shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perR
         }
     }
     MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
-    free(reqs);
-    free(expect);
-    free(all_process_expect);
+    if(reqs != NULL)
+        free(reqs);
+    if(expect != NULL)
+        free(expect);
+    if(all_process_expect != NULL)
+        free(all_process_expect);
 }
 
 /**
@@ -356,11 +366,11 @@ int main(int argc, char *argv[]) {
         printf("[%d] expect col=%d from %d\n", rank, perRankDataRecv[r], r);
     }
 
-    MPI_Finalize();
-    return 0;
     int *perRankDataSend, **send_col_idx;
     shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
+    MPI_Finalize();
+    return 0;
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
