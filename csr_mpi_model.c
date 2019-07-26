@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
                nonZeroPerRow);
     }
 
-//    if(rank == 2){
+    /*if(rank == 2){
         for (int i = 0; i < procs_info[rank].M; ++i) {
             printf("[%d] Row=%d |", rank, i+1);
             for (int k = row_ptr[i]; k < row_ptr[i+1]; ++k) {
@@ -311,7 +311,7 @@ int main(int argc, char *argv[]) {
             }
             printf("\n");
         }
-//    }
+    }*/
 
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
@@ -338,7 +338,7 @@ int main(int argc, char *argv[]) {
     int **send_col_idx = (int **) malloc_or_exit(nRanks* sizeof(int*));
     if (reqRequired>0)
         shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
-
+/*
     for (int r = 0; r < nRanks; ++r) {
         if(perRankDataRecv[r]>0) {
             printf("[%d] receive from rank=%d |", rank, r);
@@ -354,7 +354,7 @@ int main(int argc, char *argv[]) {
             }
             printf("\n");
         }
-    }
+    }*/
     printf("[%d] Done matrix creation\n", rank);
     MPI_Finalize();
     return 0;
