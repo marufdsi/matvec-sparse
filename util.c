@@ -2,17 +2,22 @@
 
 #include "util.h"
 
-double getVal(Map *map, int col) {
-    printf("request data for %d\n", col);
-    while (map != NULL) {
-        printf("not Null\n");
-        if ((*map).key.col == col) {
-            printf("data =%lf for col=%d\n", (*map).value.val, col);
-            return (*map).value.val;
+double getVal(Map *map, int col, int limit) {
+    if(limit>0) {
+        while (map != NULL && limit>0) {
+            if ((*map).key.col == col) {
+                return (*map).value.val;
+            }
+            map++;
+            limit--;
         }
-        printf("go to next\n");
-        map++;
-        printf("next cal\n");
+    } else {
+        while (map != NULL) {
+            if ((*map).key.col == col) {
+                return (*map).value.val;
+            }
+            map++;
+        }
     }
     printf("Error!!! column=%d not found\n", col);
     return 0;
@@ -72,12 +77,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
         Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
         int off_diagonal = 0;
         int range = mat_col;
-        if (range<=0){
-            printf("[%d] Error!!!\n", rank);
-            return 0;
-        }
         int range_start = 0;
-        printf("[%d] row=%d\n", rank, r);
         srand(time(0));
         for (int i = 0; i < nzPerRow; i++) {
             /*if((nzPerRow*2)/100 <= off_diagonal){
@@ -89,7 +89,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
             printf("[%d] #line 1\n", rank);
             do{
                 rand_idx = rand() % range;
-            }while(i>0 && getVal(map, rand_idx)>0);
+            }while(getVal(map, rand_idx, i+1)>0);
             printf("[%d] #line 2\n", rank);
             if (rand_idx>= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row))
                 off_diagonal++;

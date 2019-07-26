@@ -34,7 +34,7 @@ typedef struct {
     struct Value value;
 } Map;
 
-double getVal(Map *map, int col);
+double getVal(Map *map, int col, int limit);
 
 void random_vec(double *v, int N, int limit);
 int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_row, int nzPerRow);
