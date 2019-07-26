@@ -206,8 +206,6 @@ void shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perR
     MPI_Allreduce(expect, all_process_expect, nRanks, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     /// Receive the requests
     int *reqs;
-    perRankDataSend = (int *) calloc_or_exit(nRanks, sizeof(int));
-    send_col_idx = (int **) malloc_or_exit(nRanks * sizeof(int *)); /* reply blocks storage */
     MPI_Status status;
     int req_count;
     for (int p = 0; p < all_process_expect[rank]; p++) {
@@ -336,7 +334,8 @@ int main(int argc, char *argv[]) {
     if (reqRequired<=0){
         printf("[%d] No data need to send\n",rank);
     }
-    int *perRankDataSend, **send_col_idx;
+    int *perRankDataSend = (int *) calloc_or_exit(nRanks, sizeof(int));
+    int **send_col_idx = (int **) malloc_or_exit(nRanks* sizeof(int*));
     if (reqRequired>0)
         shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
@@ -348,13 +347,13 @@ int main(int argc, char *argv[]) {
             }
             printf("\n");
         }
-        /*if(reqRequired>0 && perRankDataSend[r]>0) {
+        if(perRankDataSend[r]>0) {
             printf("[%d] semd to rank=%d |", rank, r);
             for (int k = 0; k < perRankDataSend[r]; ++k) {
                 printf("col=%d| ", send_col_idx[r][k]);
             }
             printf("\n");
-        }*/
+        }
     }
     printf("[%d] Done matrix creation\n", rank);
     MPI_Finalize();
