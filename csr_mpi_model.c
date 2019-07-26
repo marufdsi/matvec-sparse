@@ -304,9 +304,7 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
                nonZeroPerRow);
     }
-    printf("[%d] Done matrix creation\n", rank);
-    MPI_Finalize();
-    return 0;
+
 //    if(rank == 2){
         for (int i = 0; i < procs_info[rank].M; ++i) {
             printf("[%d] Row=%d |", rank, i+1);
@@ -316,6 +314,9 @@ int main(int argc, char *argv[]) {
             printf("\n");
         }
 //    }
+    printf("[%d] Done matrix creation\n", rank);
+    MPI_Finalize();
+    return 0;
 
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
