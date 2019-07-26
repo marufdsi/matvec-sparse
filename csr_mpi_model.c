@@ -320,7 +320,7 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
                nonZeroPerRow);
     }
-    if(rank == MASTER){
+    if(rank == 2){
         for (int i = 0; i < procs_info[rank].M; ++i) {
             printf("[%d] Row=%d |", rank, i+1);
             for (int k = row_ptr[i]; k < row_ptr[i+1]; ++k) {

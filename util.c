@@ -59,6 +59,10 @@ int csr_random_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int m
         int range = mat_col;
         int range_start = 0;
         for (int i = 0; i < nzPerRow; i++) {
+            if((nzPerRow*2)/100 <= off_diagonal){
+                range = mat_row;
+                range_start = rank * mat_row;
+            }
             int rand_idx;
             /// escape same random column
             do{
@@ -71,10 +75,6 @@ int csr_random_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int m
             /// Fill by any random double value
             val_ptr[start_idx] = (double)(1 + (rand_idx %10));
             start_idx++;
-            if((off_diagonal/nzPerRow)*100 > 2){
-                range = mat_row;
-                range_start = rank * mat_row;
-            }
         }
         row_ptr[r+1] = row_elements;
     }
