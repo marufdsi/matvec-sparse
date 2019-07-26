@@ -177,10 +177,10 @@ void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
     MPI_Type_commit(procs_info_type);
 }
 
-void *findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int *perRankDataRecv, int **reqColFromRank) {
+int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int *perRankDataRecv, int **reqColFromRank) {
     /* build sending blocks to processors */
     struct Map *map = (struct Map *) malloc_or_exit(procs_info[rank].NZ * sizeof(struct Map));
-    int dest, col;
+    int dest, col, reqRequired=0;
     for (int i = 0; i < procs_info[rank].NZ; i++) {
         col = col_ptr[i];
         /// Check off-diagonal nonzero elements that belongs to other ranks
@@ -195,12 +195,14 @@ void *findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col
             }
         }
         assert(dest >= 0);
+        reqRequired++;
         ///insert new request
         reqColFromRank[dest][perRankDataRecv[dest]++] = col;
         map[i].key.col = col;
         map[i].value.val = 1;
     }
     free(map);
+    return reqRequired;
 }
 
 /**
@@ -213,24 +215,17 @@ void shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perR
     /// Send Requests
     int *expect = (int *) calloc_or_exit(nRanks, sizeof(int));
     MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
-    int reqMade = 0;
     for (int r = 0; r < nRanks; r++) {
         if (r == rank || perRankDataRecv[r] == 0) {
             send_reqs[r] = MPI_REQUEST_NULL;
             continue;
         }
-        printf("[%d] Request to %d number of col=%d\n", rank, r, perRankDataRecv[r]);
-        reqMade++;
         expect[r] = 1;
         /// send the request
         MPI_Isend(reqColFromRank[r], perRankDataRecv[r], MPI_INT, r, REQUEST_TAG, MPI_COMM_WORLD, &send_reqs[r]);
     }
     int *all_process_expect = (int *) calloc_or_exit(nRanks, sizeof(int));
     MPI_Allreduce(expect, all_process_expect, nRanks, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
-    if (reqMade>0){
-        printf("[%d] request made = %d\n", rank, reqMade);
-    }
     /// Receive the requests
     int *reqs;
     perRankDataSend = (int *) calloc_or_exit(nRanks, sizeof(int));
@@ -238,7 +233,6 @@ void shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perR
     MPI_Status status;
     int req_count;
     for (int p = 0; p < all_process_expect[rank]; p++) {
-        printf("[%d] receive data\n", rank);
         /// Wait until a request comes
         MPI_Probe(MPI_ANY_SOURCE, REQUEST_TAG, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &req_count);
@@ -330,7 +324,7 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
                nonZeroPerRow);
     }
-    if(rank == 2){
+    /*if(rank == 2){
         for (int i = 0; i < procs_info[rank].M; ++i) {
             printf("[%d] Row=%d |", rank, i+1);
             for (int k = row_ptr[i]; k < row_ptr[i+1]; ++k) {
@@ -338,7 +332,7 @@ int main(int argc, char *argv[]) {
             }
             printf("\n");
         }
-    }
+    }*/
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
@@ -355,20 +349,13 @@ int main(int argc, char *argv[]) {
             reqColFromRank[i] = (int *) malloc_or_exit(procs_info[i].M * sizeof(int));
     }
     /// Find the columns that belong to other ranks
-    findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank);
-
-    if (rank == MASTER){
-        printf("[%d] Data population complete\n", rank);
-    }
-
-
-    for (int r = 0; r < nRanks; ++r) {
-        printf("[%d] expect col=%d from %d\n", rank, perRankDataRecv[r], r);
-    }
+    int reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank);
 
     int *perRankDataSend, **send_col_idx;
-    shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
+    if (reqRequired>0)
+        shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
+    printf("[%d] Done matrix creation\n", rank);
     MPI_Finalize();
     return 0;
     /// Start sparse matrix vector multiplication for each rank
