@@ -3,8 +3,10 @@
 #include "util.h"
 
 double getVal(Map *map, int col) {
+    printf("request data for %d\n", col);
     while (map != NULL) {
         if ((*map).key.col == col) {
+            printf("data =%lf for col=%d\n", (*map).value.val, col);
             return (*map).value.val;
         }
         map++;
