@@ -303,16 +303,6 @@ int main(int argc, char *argv[]) {
                nonZeroPerRow);
     }
 
-    /*if(rank == 2){
-        for (int i = 0; i < procs_info[rank].M; ++i) {
-            printf("[%d] Row=%d |", rank, i+1);
-            for (int k = row_ptr[i]; k < row_ptr[i+1]; ++k) {
-                printf("col=%d, val=%lf|", col_ptr[k], val_ptr[k]);
-            }
-            printf("\n");
-        }
-    }*/
-
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
@@ -338,26 +328,7 @@ int main(int argc, char *argv[]) {
     int **send_col_idx = (int **) malloc_or_exit(nRanks* sizeof(int*));
     if (reqRequired>0)
         shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
-/*
-    for (int r = 0; r < nRanks; ++r) {
-        if(perRankDataRecv[r]>0) {
-            printf("[%d] receive from rank=%d |", rank, r);
-            for (int k = 0; k < perRankDataRecv[r]; ++k) {
-                printf("col=%d| ", reqColFromRank[r][k]);
-            }
-            printf("\n");
-        }
-        if(perRankDataSend[r]>0) {
-            printf("[%d] semd to rank=%d |", rank, r);
-            for (int k = 0; k < perRankDataSend[r]; ++k) {
-                printf("col=%d| ", send_col_idx[r][k]);
-            }
-            printf("\n");
-        }
-    }*/
-    printf("[%d] Done matrix creation\n", rank);
-    MPI_Finalize();
-    return 0;
+
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
@@ -372,6 +343,10 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
+
+    printf("[%d] Done matrix multiplication time=%lf\n", rank, mean);
+    MPI_Finalize();
+    return 0;
 
     /// print execution stats
     if (rank == MASTER) {
