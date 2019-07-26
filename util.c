@@ -86,7 +86,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
             printf("[%d] #line 1\n", rank);
             do{
                 rand_idx = rand() % range;
-            }while(getVal(map, rand_idx)>0);
+            }while(map!=NULL && getVal(map, rand_idx)>0);
             printf("[%d] #line 2\n", rank);
             if (rand_idx>= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row))
                 off_diagonal++;
