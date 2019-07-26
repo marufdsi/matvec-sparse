@@ -51,9 +51,9 @@ int csr_random_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int m
     int start_idx = 0;
     int row_elements = 0;
     row_ptr[0] = row_elements;
+    srand(time(NULL));
     for (int r = 0; r < mat_row; ++r) {
         row_elements += nzPerRow;
-        srand(time(0));
         int *checkRepeat = (int *) calloc_or_exit(mat_row, sizeof(int));
         int off_diagonal = 0;
         int range = mat_col;
