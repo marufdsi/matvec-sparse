@@ -82,7 +82,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
             }while(getVal(map, rand_idx)>0);
             if (rand_idx>= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row))
                 off_diagonal++;
-            printf("[%d] col=%d put at %d\n", rank, rand_idx, start_idx);
+            printf("[%d] col=%d put at\n", rank, rand_idx);
             map[i].key.col = rand_idx;
             printf("[%d] problem with allocation\n", rank);
             map[i].value.val = 1.0;
