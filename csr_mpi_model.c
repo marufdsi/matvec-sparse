@@ -6,8 +6,6 @@
 
 #include "mpi.h"
 
-#undef DEBUG
-
 #define TOTAL_RUNS 100
 
 #define MAX_RANDOM_NUM (1<<20)
@@ -18,7 +16,7 @@
 #include "util.h"
 #include "partition.h"
 
-MPI_Datatype proc_info_type;
+MPI_Datatype rank_info_type;
 enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
@@ -162,6 +160,72 @@ double *matMull(int rank, proc_info_t *ranks_info, int nRanks, int *row_ptr, int
     return y;
 }
 
+/*
+ * Creates two MPI derived datatypes for the respective structs
+ */
+void create_mpi_datatypes(MPI_Datatype *rank_info_type) {
+    MPI_Datatype oldtypes[2];
+    MPI_Aint offsets[2];
+    int blockcounts[2];
+
+    /* create `proc_info_t` datatype */
+    offsets[0] = 0;
+    oldtypes[0] = MPI_INT;
+    blockcounts[0] = 9;
+
+    MPI_Type_create_struct(1, blockcounts, offsets, oldtypes, proc_info_type);
+    MPI_Type_commit(rank_info_type);
+}
+
+int *CalculateInterProcessComm(int rank, int nRanks, proc_info_t *ranks_info, int *buf_j_idx) {
+    int count_communication = 0;
+    int interProcessCall = 0;
+    /* build sending blocks to processors */
+    int *map = (int *) calloc_or_exit(ranks_info[rank].N, sizeof(int));
+    int dest, col;
+    for (int i = 0; i < ranks_info[rank].NZ; i++) {
+        col = buf_j_idx[i];
+        /// check whether I need to send a request
+        if (in_diagonal(col, ranks_info[rank].first_row, ranks_info[rank].last_row) || map[col] > 0) {
+            continue;
+        }
+
+        ///search which process has the element
+        ////* NOTE: Due to small number or processes, serial search is faster
+
+        dest = -1;
+        for (int p = 0; p < nprocs; p++) {
+            if (in_diagonal(col, ranks_info[p].first_row, ranks_info[p].last_row)) {
+                dest = p;
+                break;
+            }
+        }
+        assert(dest >= 0);
+        ///insert new request
+        send_buf[dest][to_send[dest]++] = col;
+        map[col] = 1;
+        if (to_send[dest] == 1)
+            interProcessCall++;
+        count_communication++;
+    }
+    int total_communication, totalInterProcessCall, avg_communication = 0, per_rank_data_send;
+    if (interProcessCall > 0)
+        avg_communication = count_communication / interProcessCall;
+    MPI_Reduce(&count_communication, &total_communication, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&interProcessCall, &totalInterProcessCall, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&avg_communication, &per_rank_data_send, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
+
+    free(map);
+    int *returnPtr;
+    if (rank == MASTER) {
+        returnPtr = (int *) malloc_or_exit(3 * sizeof(int));
+        returnPtr[0] = totalInterProcessCall / nprocs;
+        returnPtr[1] = total_communication / nprocs;
+        returnPtr[2] = per_rank_data_send / nprocs;
+    }
+    return returnPtr;
+}
+
 int main(int argc, char *argv[]) {
 
     double t, comp_time;
@@ -173,7 +237,7 @@ int main(int argc, char *argv[]) {
     double *val_ptr, /* value for all matrix elements */
             *buf_x;      /* value for all x vector elements */
 
-    proc_info_t *proc_info;
+    proc_info_t *rank_info;
     /*******************************************/
 
     /* Initialize MPI */
@@ -232,7 +296,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
-        res = matMull(rank, proc_info, row_ptr, col_ptr, val_ptr, buf_x, mat_row);
+//        res = matMull(rank, proc_info, row_ptr, col_ptr, val_ptr, buf_x, mat_row);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     totalTime = (MPI_Wtime() - t) * 1000.00;
