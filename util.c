@@ -92,6 +92,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
             }
             start_idx++;
         }
+        printf("[%d] Done one row\n", rank);
         row_ptr[r+1] = row_elements;
     }
 
