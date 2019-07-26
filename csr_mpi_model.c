@@ -344,37 +344,33 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
 
-    printf("[%d] Done matrix multiplication time=%lf\n", rank, mean);
-    MPI_Finalize();
-    return 0;
-
     /// print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n", rank, min_time, max_time, mean, procs_info[rank].NZ);
-        /*FILE *resultCSV;
+        FILE *resultCSV;
         FILE *checkFile;
-        if ((checkFile = fopen("CSR_MPI_SpMV.csv", "r")) != NULL) {
+        if ((checkFile = fopen("CSR_SpMV_Model.csv", "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen("CSR_MPI_SpMV.csv", "a"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_MPI_SpMV.csv");
+            if (!(resultCSV = fopen("CSR_SpMV_Model.csv", "a"))) {
+                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model.csv");
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_MPI_SpMV.csv", "w"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_MPI_SpMV.csv");
+            if (!(resultCSV = fopen("CSR_SpMV_Model.csv", "w"))) {
+                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model.csv");
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
                     "MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock\n");
         }
 
-        fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", mat_size, min_time, max_time, mean,
+        fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", procs_info[rank].N, min_time, max_time, mean,
                 total_run, nRanks, nonZeroPerRow, procs_info[rank].NZ);
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file MPISpMVResult");
+            fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model");
             exit(EXIT_FAILURE);
-        }*/
+        }
     }
 
     free(row_ptr);
