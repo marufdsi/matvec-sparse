@@ -333,8 +333,6 @@ int main(int argc, char *argv[]) {
             printf("\n");
         }
 //    }
-
-
     printf("[%d] Done matrix creation\n", rank);
     MPI_Finalize();
     return 0;
@@ -352,7 +350,9 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < nRanks; i++) {
         if (i != rank && procs_info[i].M > 0)
             reqColFromRank[i] = (int *) malloc_or_exit(procs_info[i].M * sizeof(int));
-    };
+    }
+
+
 
     /// Find the columns that belong to other ranks
     int reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank);
