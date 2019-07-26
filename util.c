@@ -86,29 +86,18 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
             }*/
             int rand_idx;
             /// escape same random column
-            printf("[%d] #line 1\n", rank);
             do{
                 rand_idx = rand() % range;
             }while(getVal(map, rand_idx, i+1)>0);
-            printf("[%d] #line 2\n", rank);
             if (rand_idx>= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row))
                 off_diagonal++;
-            printf("[%d] #line 3\n", rank);
             map[i].key.col = rand_idx;
-            printf("[%d] #line 4\n", rank);
             map[i].value.val = 1.0;
-            printf("[%d] #line 5\n", rank);
             col_ptr[start_idx] = range_start + rand_idx;
             /// Fill by any random double value
-            printf("[%d] #line 6\n", rank);
             val_ptr[start_idx] = (double)(1 + (rand_idx %10));
-            printf("[%d] #line 7\n", rank);
-            if (start_idx>= procs_info[rank].NZ){
-                printf("[%d] out of index exception\n", rank);
-            }
             start_idx++;
         }
-        printf("[%d] Done one row\n", rank);
         row_ptr[r+1] = row_elements;
     }
 
