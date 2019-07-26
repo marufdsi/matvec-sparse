@@ -57,7 +57,7 @@ int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_
     return 1;
 }
 
-int csr_random_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col, int nzPerRow)
+int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col, int nzPerRow)
 {
     int start_idx = 0;
     int row_elements = 0;
@@ -79,13 +79,16 @@ int csr_random_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int m
             do{
                 rand_idx = rand() % range;
             }while(getVal(map, rand_idx)>0);
-            if (rand_idx>= mat_row)
+            if (rand_idx>= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row))
                 off_diagonal++;
             map[i].key.col = rand_idx;
             map[i].value.val = 1.0;
             col_ptr[start_idx] = range_start + rand_idx;
             /// Fill by any random double value
             val_ptr[start_idx] = (double)(1 + (rand_idx %10));
+            if (start_idx>= procs_info[rank].NZ){
+                printf("[%d] out of index exception\n", rank);
+            }
             start_idx++;
         }
         row_ptr[r+1] = row_elements;
