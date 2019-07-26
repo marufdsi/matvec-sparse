@@ -338,7 +338,7 @@ int main(int argc, char *argv[]) {
     /// Find the columns that belong to other ranks
     findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank);
 
-    int *perRankDataSend, send_col_idx;
+    int *perRankDataSend, **send_col_idx;
     shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
     /// Start sparse matrix vector multiplication for each rank
