@@ -351,11 +351,11 @@ int main(int argc, char *argv[]) {
         printf("[%d] Data population complete\n", rank);
     }
 
-    if(rank == 2){
-        for (int r = 0; r < nRanks; ++r) {
-            printf("[%d] expect col=%d from %d\n", rank, perRankDataRecv[r], r);
-        }
+
+    for (int r = 0; r < nRanks; ++r) {
+        printf("[%d] expect col=%d from %d\n", rank, perRankDataRecv[r], r);
     }
+
     MPI_Finalize();
     return 0;
     int *perRankDataSend, **send_col_idx;
