@@ -84,10 +84,11 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
                 off_diagonal++;
             map[i].key.col = rand_idx;
             map[i].value.val = 1.0;
-            printf("[%d] col=%d put at %d\n", rank, rand_idx, i);
             col_ptr[start_idx] = range_start + rand_idx;
+            printf("[%d] col=%d put at %d\n", rank, rand_idx, start_idx);
             /// Fill by any random double value
             val_ptr[start_idx] = (double)(1 + (rand_idx %10));
+            printf("[%d] value=%lf put at %d\n", rank, val_ptr[start_idx], start_idx);
             if (start_idx>= procs_info[rank].NZ){
                 printf("[%d] out of index exception\n", rank);
             }
