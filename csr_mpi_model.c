@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
                nonZeroPerRow);
     }
-    /*if(rank == 2){
+    if(rank == 2){
         for (int i = 0; i < procs_info[rank].M; ++i) {
             printf("[%d] Row=%d |", rank, i+1);
             for (int k = row_ptr[i]; k < row_ptr[i+1]; ++k) {
@@ -332,7 +332,7 @@ int main(int argc, char *argv[]) {
             }
             printf("\n");
         }
-    }*/
+    }
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
@@ -351,13 +351,15 @@ int main(int argc, char *argv[]) {
     /// Find the columns that belong to other ranks
     int reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank);
 
+    printf("[%d] Done matrix creation=%d\n", rank, reqRequired);
+    MPI_Finalize();
+    return 0;
+    
     int *perRankDataSend, **send_col_idx;
     if (reqRequired>0)
         shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend, send_col_idx);
 
-    printf("[%d] Done matrix creation=%d\n", rank, reqRequired);
-    MPI_Finalize();
-    return 0;
+
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
