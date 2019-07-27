@@ -298,7 +298,7 @@ int main(int argc, char *argv[]) {
 
 
     /// Create random CSR matrix with the given parameter
-    if (csr_random_mat(rank, procs_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow) != 1) {
+    if (csr_random_mat(rank, procs_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, 2) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
                nonZeroPerRow);
     }

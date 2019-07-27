@@ -67,7 +67,7 @@ int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_
     return 1;
 }
 
-int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col, int nzPerRow)
+int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col, int nzPerRow, int dist)
 {
     int start_idx = 0;
     int row_elements = 0;
@@ -80,10 +80,10 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
         int range_start = 0;
         srand(time(NULL)*(r+1)*(rank+1));
         for (int i = 0; i < nzPerRow; i++) {
-            /*if((nzPerRow*2)/100 <= off_diagonal){
+            if((nzPerRow*dist)/100 <= off_diagonal){
                 range = mat_row;
                 range_start = rank * mat_row;
-            }*/
+            }
             int rand_idx;
             /// escape same random column
             do{
@@ -104,23 +104,25 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
     return 1;
 }
 
-int csr_random_diagonal_mat (int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow)
+int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow)
 {
     int start_idx = 0;
     int row_elements = 0;
     row_ptr[0] = row_elements;
+    int range_start = rank*mat_row;
     for (int r = 0; r < mat_row; ++r) {
         row_elements += nzPerRow;
-        srand(time(0));
-        int *checkRepeat = (int *) calloc_or_exit(mat_row, sizeof(int));
+        Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
+        srand(time(NULL)*(r+1)*(rank+1));
         for (int i = 0; i < nzPerRow; i++) {
             int rand_idx;
             /// escape same random column
             do{
                 rand_idx = rand() % mat_row;
-            }while(checkRepeat[rand_idx]>0);
-            checkRepeat[rand_idx] = 1;
-            col_ptr[start_idx] = rand_idx;
+            }while(!(getVal(map, rand_idx, i+1)<0));
+            map[i].key.col = rand_idx;
+            map[i].value.val = 1.0;
+            col_ptr[start_idx] = range_start + rand_idx;
             /// Fill by any random double value
             val_ptr[start_idx] = (double)(1 + (rand_idx %10));
             start_idx++;
