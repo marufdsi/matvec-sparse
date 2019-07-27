@@ -296,9 +296,9 @@ int main(int argc, char *argv[]) {
     col_ptr = (int *) malloc(procs_info[rank].NZ * sizeof(int));
     val_ptr = (double *) malloc(procs_info[rank].NZ * sizeof(double));
 
-
+    int sparsity = 2;
     /// Create random CSR matrix with the given parameter
-    if (csr_random_mat(rank, procs_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, 2) != 1) {
+    if (csr_random_mat(rank, procs_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
                nonZeroPerRow);
     }
@@ -362,11 +362,11 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock\n");
+                    "MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,Sparsity\n");
         }
 
-        fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", procs_info[rank].N, min_time, max_time, mean,
-                total_run, nRanks, nonZeroPerRow, procs_info[rank].NZ);
+        fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d\n", procs_info[rank].N, min_time, max_time, mean,
+                total_run, nRanks, nonZeroPerRow, procs_info[rank].NZ, sparsity);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model");
             exit(EXIT_FAILURE);
