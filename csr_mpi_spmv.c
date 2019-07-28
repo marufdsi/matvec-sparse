@@ -22,10 +22,11 @@
 double *matMullComputationOnly(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *buf_x, int mat_row) {
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(mat_row, sizeof(double));
+    int first_row = rank*mat_row;
     /// Sparse Matrix Vector Multiplication without Communication
     for (int i = 0; i < mat_row; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
-            y[i] += val_ptr[k] * buf_x[col_ptr[k]];
+            y[i] += val_ptr[k] * buf_x[col_ptr[k] - first_row];
         }
     }
     return y;
