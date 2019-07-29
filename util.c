@@ -122,8 +122,8 @@ int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_p
     int row_elements = 0;
     row_ptr[0] = row_elements;
     int range_start = rank*mat_row;
-    int *trackIndex = (int *) calloc_or_exit(mat_row, sizeof(int));
     for (int r = 0; r < mat_row; ++r) {
+        int *trackIndex = (int *) calloc_or_exit(mat_row, sizeof(int));
         row_elements += nzPerRow;
         Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
         srand(time(NULL)*(r+1)*(rank+1));
@@ -153,6 +153,8 @@ int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_p
             val_ptr[start_idx] = (double)(1 + (rand_idx %10));
             start_idx++;
         }
+        free(trackIndex);
+        free(map);
         row_ptr[r+1] = row_elements;
     }
 
