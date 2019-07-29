@@ -78,6 +78,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
         int off_diagonal = 0;
         int range = mat_col;
         int range_start = 0;
+        int *trackIndex = (int *) calloc_or_exit(mat_row, sizeof(int));
         srand(time(NULL)*(r+1)*(rank+1));
         for (int i = 0; i < nzPerRow; i++) {
             if((nzPerRow*dist)/100 <= off_diagonal){
@@ -85,10 +86,19 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
                 range_start = rank * mat_row;
             }
             int rand_idx;
+            int maxTry = 0;
             /// escape same random column
             do{
                 rand_idx = rand() % range;
             }while(!(getVal(map, rand_idx, i+1)<0));
+            if(maxTry>=50){
+                for (int k = 0; k < mat_row; ++k) {
+                    if(trackIndex[k] == 0){
+                        rand_idx = k;
+                        break;
+                    }
+                }
+            }
             if (rand_idx>= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row))
                 off_diagonal++;
             map[i].key.col = rand_idx;
@@ -110,16 +120,28 @@ int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_p
     int row_elements = 0;
     row_ptr[0] = row_elements;
     int range_start = rank*mat_row;
+    int *trackIndex = (int *) calloc_or_exit(mat_row, sizeof(int));
     for (int r = 0; r < mat_row; ++r) {
         row_elements += nzPerRow;
         Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
         srand(time(NULL)*(r+1)*(rank+1));
         for (int i = 0; i < nzPerRow; i++) {
             int rand_idx;
+            int maxTry = 0;
             /// escape same random column
             do{
+                maxTry++;
                 rand_idx = rand() % mat_row;
-            }while(!(getVal(map, rand_idx, i+1)<0));
+            }while(!(getVal(map, rand_idx, i+1)<0) && maxTry<50);
+            if(maxTry>=50){
+                for (int k = 0; k < mat_row; ++k) {
+                    if(trackIndex[k] == 0){
+                        rand_idx = k;
+                        break;
+                    }
+                }
+            }
+            trackIndex[rand_idx] = 1;
             map[i].key.col = rand_idx;
             map[i].value.val = 1.0;
             col_ptr[start_idx] = range_start + rand_idx;
