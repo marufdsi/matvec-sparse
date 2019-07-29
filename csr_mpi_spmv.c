@@ -52,17 +52,18 @@ int main(int argc, char *argv[]) {
 
     int mat_size = 0, nonZero = 0, nonZeroPerRow = 0, total_run = 100, mat_row = 0;
 
-    if (argc < 3) {
+    if (argc < 4) {
         printf("Usage: %s matrix_row nonZeroPerRow [Total_Runs]\n", argv[0]);
         return 0;
     } else {
         mat_row = atoi(argv[1]);
-        nonZeroPerRow = atoi(argv[2]);
+        mat_size = atoi(argv[2]);
+        nonZeroPerRow = atoi(argv[3]);
         if (argc > 3)
             total_run = atoi(argv[3]);
     }
 
-    mat_size = mat_row*nprocs;
+//    mat_size = mat_row*nprocs;
     nonZero = nonZeroPerRow*mat_row;
     if (nonZeroPerRow<=0){
         printf("[%d], There will must one non zero column in the matrix in every row\n");
