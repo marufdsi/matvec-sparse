@@ -80,6 +80,7 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
         int range_start = 0;
         int *trackIndex = (int *) calloc_or_exit(mat_row, sizeof(int));
         srand(time(NULL)*(r+1)*(rank+1));
+        int taken_idx = 0;
         for (int i = 0; i < nzPerRow; i++) {
             if((nzPerRow*dist)/100 <= off_diagonal){
                 range = mat_row;
@@ -92,9 +93,10 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
                 rand_idx = rand() % range;
             }while(!(getVal(map, rand_idx, i+1)<0));
             if(maxTry>=50){
-                for (int k = 0; k < mat_row; ++k) {
+                for (int k = taken_idx+1; k < mat_row; ++k) {
                     if(trackIndex[k] == 0){
                         rand_idx = k;
+                        taken_idx = k;
                         break;
                     }
                 }
@@ -125,6 +127,7 @@ int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_p
         row_elements += nzPerRow;
         Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
         srand(time(NULL)*(r+1)*(rank+1));
+        int taken_idx = 0;
         for (int i = 0; i < nzPerRow; i++) {
             int rand_idx;
             int maxTry = 0;
@@ -134,9 +137,10 @@ int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_p
                 rand_idx = rand() % mat_row;
             }while(!(getVal(map, rand_idx, i+1)<0) && maxTry<50);
             if(maxTry>=50){
-                for (int k = 0; k < mat_row; ++k) {
+                for (int k = taken_idx+1; k < mat_row; ++k) {
                     if(trackIndex[k] == 0){
                         rand_idx = k;
+                        taken_idx = k;
                         break;
                     }
                 }
