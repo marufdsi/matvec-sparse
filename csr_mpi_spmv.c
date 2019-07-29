@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 //    mat_size = mat_row*nprocs;
     nonZero = nonZeroPerRow*mat_row;
     if (nonZeroPerRow<=0){
-        printf("[%d], There will must one non zero column in the matrix in every row\n");
+        printf("[%d], There will must one non zero column in the matrix in every row\n", rank);
         return 0;
     }
     if(nonZeroPerRow > mat_row) {

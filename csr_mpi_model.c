@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
     procs_info[rank].first_row = rank*mat_row;
     procs_info[rank].last_row = (rank+1)*mat_row;
     if (nonZeroPerRow <= 0) {
-        printf("[%d], There will must one non zero column in the matrix in every row\n");
+        printf("[%d], There will must one non zero column in the matrix in every row\n", rank);
         return 0;
     }
     if (nonZeroPerRow > mat_row) {
