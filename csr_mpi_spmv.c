@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
         mat_row = atoi(argv[1]);
         mat_size = atoi(argv[2]);
         nonZeroPerRow = atoi(argv[3]);
-        if (argc > 3)
-            total_run = atoi(argv[3]);
+        if (argc > 4)
+            total_run = atoi(argv[4]);
     }
 
 //    mat_size = mat_row*nprocs;
