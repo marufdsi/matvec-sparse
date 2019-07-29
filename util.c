@@ -73,12 +73,12 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
     int row_elements = 0;
     row_ptr[0] = row_elements;
     for (int r = 0; r < mat_row; ++r) {
+        int *trackIndex = (int *) calloc_or_exit(mat_row, sizeof(int));
         row_elements += nzPerRow;
         Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
         int off_diagonal = 0;
         int range = mat_col;
         int range_start = 0;
-        int *trackIndex = (int *) calloc_or_exit(mat_row, sizeof(int));
         srand(time(NULL)*(r+1)*(rank+1));
         int taken_idx = 0;
         for (int i = 0; i < nzPerRow; i++) {
@@ -110,6 +110,8 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
             val_ptr[start_idx] = (double)(1 + (rand_idx %10));
             start_idx++;
         }
+        free(trackIndex);
+        free(map);
         row_ptr[r+1] = row_elements;
     }
 
