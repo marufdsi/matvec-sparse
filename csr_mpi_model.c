@@ -373,11 +373,10 @@ int main(int argc, char *argv[]) {
     }
     int *perRankDataSend = (int *) calloc_or_exit(nRanks, sizeof(int));
     int **send_col_idx = (int **) malloc_or_exit(nRanks * sizeof(int *));
-    printf("[%d] share information\n", rank);
+
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
 
-    printf("[%d] Multiplication start\n", rank);
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
