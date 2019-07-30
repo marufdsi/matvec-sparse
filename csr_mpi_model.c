@@ -262,7 +262,7 @@ int shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perRa
     }
     if (reqRequired > 0)
         MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
-    if (reqs != NULL)
+    if (all_process_expect[rank]>0 && reqs != NULL)
         free(reqs);
     if (expect != NULL)
         free(expect);
@@ -373,11 +373,11 @@ int main(int argc, char *argv[]) {
     }
     int *perRankDataSend = (int *) calloc_or_exit(nRanks, sizeof(int));
     int **send_col_idx = (int **) malloc_or_exit(nRanks * sizeof(int *));
-
+    printf("[%d] share information\n", rank);
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
 
-    printf("[%d] Multiplication star\n", rank);
+    printf("[%d] Multiplication start\n", rank);
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
