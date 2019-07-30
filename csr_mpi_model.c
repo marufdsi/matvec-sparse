@@ -266,8 +266,6 @@ int shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perRa
         free(reqs);
     if (expect != NULL)
         free(expect);
-    if (all_process_expect != NULL)
-        free(all_process_expect);
     return all_process_expect[rank];
 }
 
