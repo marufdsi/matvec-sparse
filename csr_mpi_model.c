@@ -256,6 +256,7 @@ int main(int argc, char *argv[]) {
     int nRanks, rank;
     int *row_ptr, *col_ptr;
     double *val_ptr, *buf_x, *res;
+    proc_info_t *ranks_info;
     proc_info_t *procs_info;
 
     /* Initialize MPI */
@@ -266,6 +267,7 @@ int main(int argc, char *argv[]) {
     create_mpi_datatypes(&procs_info_type);
     /// Initialize process info to share among the ranks
     procs_info = (proc_info_t *) malloc_or_exit(nRanks * sizeof(proc_info_t));
+    ranks_info = (proc_info_t *) malloc_or_exit(nRanks * sizeof(proc_info_t));
 
     if (argc < 3) {
         printf("Usage: %s matrix_row matrix_col nonZeroPerRow [Total_Runs]\n", argv[0]);
@@ -277,11 +279,11 @@ int main(int argc, char *argv[]) {
         if (argc > 3)
             total_run = atoi(argv[4]);
     }
-    procs_info[rank].M = mat_row;
-    procs_info[rank].N = mat_col;
-    procs_info[rank].NZ = nonZeroPerRow * mat_row;;
-    procs_info[rank].first_row = rank*mat_row;
-    procs_info[rank].last_row = (rank+1)*mat_row;
+    ranks_info[rank].M = mat_row;
+    ranks_info[rank].N = mat_col;
+    ranks_info[rank].NZ = nonZeroPerRow * mat_row;;
+    ranks_info[rank].first_row = rank*mat_row;
+    ranks_info[rank].last_row = (rank+1)*mat_row;
     if (nonZeroPerRow <= 0) {
         printf("[%d], There will must one non zero column in the matrix in every row\n", rank);
         return 0;
@@ -291,26 +293,26 @@ int main(int argc, char *argv[]) {
             printf("[%d] nonzero=%d, max nonzero=%d, number process=%d\n", rank, nonZeroPerRow, mat_row, nRanks);
         }
         nonZeroPerRow = mat_row;
-        procs_info[rank].NZ = nonZeroPerRow * mat_row;
+        ranks_info[rank].NZ = nonZeroPerRow * mat_row;
     }
-    if (procs_info[rank].NZ <= 0) {
-        printf("[%d] Matrix can not be sized zero=%d\n", rank, procs_info[rank].NZ);
+    if (ranks_info[rank].NZ <= 0) {
+        printf("[%d] Matrix can not be sized zero=%d\n", rank, ranks_info[rank].NZ);
         return 0;
     }
     /// Initialize CSR row, col and value pointer.
     row_ptr = (int *) malloc((mat_row + 1) * sizeof(int));
-    col_ptr = (int *) malloc(procs_info[rank].NZ * sizeof(int));
-    val_ptr = (double *) malloc(procs_info[rank].NZ * sizeof(double));
+    col_ptr = (int *) malloc(ranks_info[rank].NZ * sizeof(int));
+    val_ptr = (double *) malloc(ranks_info[rank].NZ * sizeof(double));
 
     int sparsity = 2;
     /*/// Create random CSR matrix with the given parameter
-    if (csr_random_mat(rank, procs_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity) != 1) {
-        printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
+    if (csr_random_mat(rank, ranks_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity) != 1) {
+        printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (ranks_info[rank].M*nRanks),
                nonZeroPerRow);
     }*/
     /// Create CSR Diagonal matrix with the given parameter
     if (csr_random_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
-        printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
+        printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (ranks_info[rank].M*nRanks),
                nonZeroPerRow);
     }
 
@@ -320,7 +322,7 @@ int main(int argc, char *argv[]) {
         buf_x[i] = 1.00;
     }
     /// Share process info among all the processes
-    MPI_Allgather(&procs_info[rank], 1, procs_info_type, procs_info, 1, procs_info_type, MPI_COMM_WORLD);
+    MPI_Allgather(&procs_info[rank], 1, procs_info_type, ranks_info, 1, procs_info_type, MPI_COMM_WORLD);
     int *perRankDataRecv, **reqColFromRank;
     perRankDataRecv = (int *) calloc_or_exit(nRanks, sizeof(int));
     /// Allocate buffers for requests sending
