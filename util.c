@@ -169,11 +169,12 @@ int csr_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int
     int row_elements = 0;
     row_ptr[0] = row_elements;
     int lower_nnz = nzPerRow/2;
+    int range_start = rank*mat_row;
     for (int r = 0; r < mat_row; ++r) {
         row_elements += nzPerRow;
         int start_coldIdx = (r<=lower_nnz) ? 0 : ((r - lower_nnz + nzPerRow) > mat_row ? (mat_row-nzPerRow) : (r - lower_nnz));
         for (int colIdx = start_coldIdx; colIdx < nzPerRow+start_coldIdx; ++colIdx) {
-            col_ptr[start_idx] = colIdx ;
+            col_ptr[start_idx] = range_start+colIdx ;
             /// Fill by any random double value
             val_ptr[start_idx] = (double)(1+(colIdx%10));
             start_idx++;
