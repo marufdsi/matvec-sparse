@@ -184,6 +184,7 @@ int csr_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int
     return 1;
 }
 
+
 /*
  * Tries to malloc. Terminates on failure.
  */

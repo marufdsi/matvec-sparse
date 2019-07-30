@@ -155,7 +155,10 @@ void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
     MPI_Type_commit(procs_info_type);
 }
 
-int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int *perRankDataRecv, int **reqColFromRank) {
+int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int *perRankDataRecv, int **reqColFromRank,
+                       int *count_communication, int *interProcessCall) {
+    (*count_communication) = 0;
+    (*interProcessCall) = 0;
     /* build sending blocks to processors */
     Map *map = (Map *) malloc_or_exit(procs_info[rank].NZ * sizeof(Map));
     int dest, col, reqRequired=0;
@@ -178,6 +181,9 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
         reqColFromRank[dest][perRankDataRecv[dest]++] = col;
         map[i].key.col = col;
         map[i].value.val = 1;
+        if (perRankDataRecv[dest] == 1)
+            (*interProcessCall)++;
+        (*count_communication)++;
     }
     free(map);
     return reqRequired;
@@ -297,8 +303,13 @@ int main(int argc, char *argv[]) {
     val_ptr = (double *) malloc(procs_info[rank].NZ * sizeof(double));
 
     int sparsity = 2;
-    /// Create random CSR matrix with the given parameter
+    /*/// Create random CSR matrix with the given parameter
     if (csr_random_mat(rank, procs_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity) != 1) {
+        printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
+               nonZeroPerRow);
+    }*/
+    /// Create CSR Diagonal matrix with the given parameter
+    if (csr_random_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (procs_info[rank].M*nRanks),
                nonZeroPerRow);
     }
@@ -319,10 +330,16 @@ int main(int argc, char *argv[]) {
             reqColFromRank[i] = (int *) malloc_or_exit(procs_info[i].M * sizeof(int));
     }
 
+    int count_communication = 0, interProcessCall = 0, totalInterProcessCall=0, avg_communication = 0, per_rank_data_send=0;
     /// Find the columns that belong to other ranks
-    int reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank);
+    int reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank, &count_communication, &interProcessCall);
     if (reqRequired<=0){
         printf("[%d] No data need to send\n",rank);
+    } else{
+        if (interProcessCall > 0)
+            avg_communication = count_communication / interProcessCall;
+        MPI_Reduce(&interProcessCall, &totalInterProcessCall, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
+        MPI_Reduce(&avg_communication, &per_rank_data_send, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
     }
     int *perRankDataSend = (int *) calloc_or_exit(nRanks, sizeof(int));
     int **send_col_idx = (int **) malloc_or_exit(nRanks* sizeof(int*));
@@ -362,11 +379,11 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,Sparsity\n");
+                    "MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,Sparsity,AvgCommunication,AvgInterProcessCall\n");
         }
 
-        fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d\n", procs_info[rank].N, min_time, max_time, mean,
-                total_run, nRanks, nonZeroPerRow, procs_info[rank].NZ, sparsity);
+        fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d,%d\n", procs_info[rank].N, min_time, max_time, mean,
+                total_run, nRanks, nonZeroPerRow, procs_info[rank].NZ, sparsity, (per_rank_data_send/nRanks), (totalInterProcessCall/nRanks));
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model");
             exit(EXIT_FAILURE);
