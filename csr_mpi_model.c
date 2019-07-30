@@ -322,7 +322,7 @@ int main(int argc, char *argv[]) {
         buf_x[i] = 1.00;
     }
     /// Share process info among all the processes
-    MPI_Allgather(&procs_info[rank], 1, procs_info_type, ranks_info, 1, procs_info_type, MPI_COMM_WORLD);
+    MPI_Allgather(&ranks_info[rank], 1, procs_info_type, procs_info, 1, procs_info_type, MPI_COMM_WORLD);
     int *perRankDataRecv, **reqColFromRank;
     perRankDataRecv = (int *) calloc_or_exit(nRanks, sizeof(int));
     /// Allocate buffers for requests sending
