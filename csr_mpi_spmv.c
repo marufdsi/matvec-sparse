@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     totalTime = (MPI_Wtime() - t) * 1000.00;
     avg_time = totalTime / total_run;
-    printf("[%d] Matrix Multiplication done\n", rank);
+//    printf("[%d] Matrix Multiplication done\n", rank);
 
     MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
