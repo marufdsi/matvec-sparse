@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     row_ptr = (int *)malloc( (mat_row+1) * sizeof(int) );
     col_ptr = (int *)malloc( nonZero * sizeof(int) );
     val_ptr = (double *)malloc( nonZero * sizeof(double));
-    if(csr_random_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1){
+    if(csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1){
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }
 
