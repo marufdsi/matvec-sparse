@@ -302,6 +302,7 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s matrix_row matrix_col nonZeroPerRow [Total_Runs]\n", argv[0]);
         return 0;
     } else {
+        printf("[%d] argc = %d\n", argc);
         mat_row = atoi(argv[1]);
         mat_col = atoi(argv[2]);
         nonZeroPerRow = atoi(argv[3]);
