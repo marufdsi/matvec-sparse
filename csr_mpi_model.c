@@ -340,6 +340,8 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (ranks_info[rank].M*nRanks),
                nonZeroPerRow);
     }*/
+
+    printf("[%d] Start Matrix creation\n", rank);
     /// Create CSR Diagonal matrix with the given parameter
     if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks,
