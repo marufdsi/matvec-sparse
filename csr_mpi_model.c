@@ -279,7 +279,7 @@ int shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perRa
  */
 int main(int argc, char *argv[]) {
 
-    double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
+    double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0, sparsity = 0;;
     int nonZeroPerRow = 0, total_run = 100, mat_row = 0, mat_col = 0;
     int nRanks, rank;
     int *row_ptr, *col_ptr;
@@ -306,6 +306,8 @@ int main(int argc, char *argv[]) {
         nonZeroPerRow = atoi(argv[3]);
         if (argc > 3)
             total_run = atoi(argv[4]);
+        if (argc > 4)
+            sparsity = atoi(argv[5]);
     }
     ranks_info[rank].M = mat_row;
     ranks_info[rank].N = mat_col;
@@ -331,15 +333,13 @@ int main(int argc, char *argv[]) {
     row_ptr = (int *) malloc((mat_row + 1) * sizeof(int));
     col_ptr = (int *) malloc(ranks_info[rank].NZ * sizeof(int));
     val_ptr = (double *) malloc(ranks_info[rank].NZ * sizeof(double));
-
-    int sparsity = 2;
     /*/// Create random CSR matrix with the given parameter
     if (csr_random_mat(rank, ranks_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (ranks_info[rank].M*nRanks),
                nonZeroPerRow);
     }*/
     /// Create CSR Diagonal matrix with the given parameter
-    if (csr_random_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
+    if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks,
                (ranks_info[rank].M * nRanks),
                nonZeroPerRow);
