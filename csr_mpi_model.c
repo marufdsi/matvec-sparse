@@ -345,6 +345,7 @@ int main(int argc, char *argv[]) {
                (ranks_info[rank].M * nRanks),
                nonZeroPerRow);
     }
+    printf("[%d] Matrix creation done\n", rank);
 
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
@@ -394,25 +395,25 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
 
-    char *outputFIle = (char *) malloc_or_exit(100 * sizeof(char));
+//    char *outputFIle = (char *) malloc_or_exit(100 * sizeof(char));
 //    strcpy(outputFIle, "CSR_SpMV_Model.csv");
-    strcpy(outputFIle, "CSR_SpMV_Model_Diagonal.csv");
+//    strcpy(outputFIle, "CSR_SpMV_Model_Diagonal.csv");
     /// print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n", rank,
                min_time, max_time, mean, procs_info[rank].NZ);
         FILE *resultCSV;
         FILE *checkFile;
-        if ((checkFile = fopen(outputFIle, "r")) != NULL) {
+        if ((checkFile = fopen("CSR_SpMV_Model_Diagonal.csv", "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen(outputFIle, "a"))) {
-                fprintf(stderr, strcat("fopen: failed to open file ", outputFIle));
+            if (!(resultCSV = fopen("CSR_SpMV_Model_Diagonal.csv", "a"))) {
+                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Diagonal.csv");
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen(outputFIle, "w"))) {
-                fprintf(stderr, strcat("fopen: failed to open file ", outputFIle));
+            if (!(resultCSV = fopen("CSR_SpMV_Model_Diagonal.csv", "w"))) {
+                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Diagonal.csv");
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
@@ -424,7 +425,7 @@ int main(int argc, char *argv[]) {
                 total_run, nRanks, nonZeroPerRow, procs_info[rank].NZ, sparsity, (per_rank_data_send / nRanks),
                 (totalInterProcessCall / nRanks));
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, strcat("fopen: failed to open file ", outputFIle));
+            fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Diagonal.csv");
             exit(EXIT_FAILURE);
         }
     }
