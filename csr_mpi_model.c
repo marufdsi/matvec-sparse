@@ -394,9 +394,9 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
 
-    char *outputFIle;
-//    outputFIle = "CSR_SpMV_Model.csv";
-    outputFIle = "CSR_SpMV_Model_Diagonal.csv";
+    char *outputFIle = (char *) malloc_or_exit(100 * sizeof(char));
+//    strcpy(outputFIle, "CSR_SpMV_Model.csv");
+    strcpy(outputFIle, "CSR_SpMV_Model_Diagonal.csv");
     /// print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n", rank,
