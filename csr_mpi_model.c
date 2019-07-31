@@ -302,13 +302,12 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s matrix_row matrix_col nonZeroPerRow [Total_Runs]\n", argv[0]);
         return 0;
     } else {
-        printf("[%d] argc = %d\n", rank, argc);
         mat_row = atoi(argv[1]);
         mat_col = atoi(argv[2]);
         nonZeroPerRow = atoi(argv[3]);
-        if (argc > 3)
+        if (argc > 5)
             total_run = atoi(argv[4]);
-        if (argc > 4)
+        if (argc > 6)
             sparsity = atoi(argv[5]);
     }
     ranks_info[rank].M = mat_row;
@@ -341,14 +340,12 @@ int main(int argc, char *argv[]) {
                nonZeroPerRow);
     }*/
 
-    printf("[%d] Start Matrix creation\n", rank);
     /// Create CSR Diagonal matrix with the given parameter
     if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks,
                (ranks_info[rank].M * nRanks),
                nonZeroPerRow);
     }
-    printf("[%d] Matrix creation done\n", rank);
 
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
