@@ -334,18 +334,18 @@ int main(int argc, char *argv[]) {
     row_ptr = (int *) malloc((mat_row + 1) * sizeof(int));
     col_ptr = (int *) malloc(ranks_info[rank].NZ * sizeof(int));
     val_ptr = (double *) malloc(ranks_info[rank].NZ * sizeof(double));
-    /*/// Create random CSR matrix with the given parameter
+    /// Create random CSR matrix with the given parameter
     if (csr_random_mat(rank, ranks_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (ranks_info[rank].M*nRanks),
                nonZeroPerRow);
-    }*/
+    }
 
     /// Create CSR Diagonal matrix with the given parameter
-    if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
+    /*if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks,
                (ranks_info[rank].M * nRanks),
                nonZeroPerRow);
-    }
+    }*/
 
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
@@ -404,16 +404,16 @@ int main(int argc, char *argv[]) {
                min_time, max_time, mean, procs_info[rank].NZ);
         FILE *resultCSV;
         FILE *checkFile;
-        if ((checkFile = fopen("CSR_SpMV_Model_Diagonal.csv", "r")) != NULL) {
+        if ((checkFile = fopen("CSR_SpMV_Model_Random.csv", "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen("CSR_SpMV_Model_Diagonal.csv", "a"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Diagonal.csv");
+            if (!(resultCSV = fopen("CSR_SpMV_Model_Random.csv", "a"))) {
+                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Random.csv");
                 exit(EXIT_FAILURE);
             }
         } else {
             if (!(resultCSV = fopen("CSR_SpMV_Model_Diagonal.csv", "w"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Diagonal.csv");
+                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Random.csv");
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
@@ -425,7 +425,7 @@ int main(int argc, char *argv[]) {
                 total_run, nRanks, nonZeroPerRow, procs_info[rank].NZ, sparsity, (per_rank_data_send / nRanks),
                 (totalInterProcessCall / nRanks));
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Diagonal.csv");
+            fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Random.csv");
             exit(EXIT_FAILURE);
         }
     }
