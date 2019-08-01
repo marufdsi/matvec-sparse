@@ -310,6 +310,8 @@ int main(int argc, char *argv[]) {
         if (argc > 5)
             sparsity = atoi(argv[5]);
     }
+    if(rank == MASTER)
+        printf("[%d] Sparsity=%d\n", rank, sparsity);
     ranks_info[rank].M = mat_row;
     ranks_info[rank].N = mat_col;
     ranks_info[rank].NZ = nonZeroPerRow * mat_row;;
@@ -400,8 +402,8 @@ int main(int argc, char *argv[]) {
 //    strcpy(outputFIle, "CSR_SpMV_Model_Diagonal.csv");
     /// print execution stats
     if (rank == MASTER) {
-        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n", rank,
-               min_time, max_time, mean, procs_info[rank].NZ);
+        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d, Sparsity: %d\n", rank,
+               min_time, max_time, mean, procs_info[rank].NZ, sparsity);
         FILE *resultCSV;
         FILE *checkFile;
         if ((checkFile = fopen("CSR_SpMV_Model_Random.csv", "r")) != NULL) {
