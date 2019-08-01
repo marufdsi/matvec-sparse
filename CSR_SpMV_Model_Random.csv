@@ -1,0 +1,5 @@
+MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,Sparsity,AvgCommunication,AvgInterProcessCall
+134144,     4.520,     4.521,     4.521,100,128,128,134144,16,127,4216177
+134144,     8.419,     8.419,     8.419,100,128,256,268288,40,127,4215747
+134144,    15.762,    15.763,    15.763,100,128,512,536576,78,127,4215747
+134144,    27.177,    27.178,    27.177,100,128,512,536576,78,127,4215747
