@@ -305,9 +305,9 @@ int main(int argc, char *argv[]) {
         mat_row = atoi(argv[1]);
         mat_col = atoi(argv[2]);
         nonZeroPerRow = atoi(argv[3]);
-        if (argc > 5)
+        if (argc > 4)
             total_run = atoi(argv[4]);
-        if (argc > 6)
+        if (argc > 5)
             sparsity = atoi(argv[5]);
     }
     ranks_info[rank].M = mat_row;
