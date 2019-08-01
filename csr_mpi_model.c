@@ -280,8 +280,8 @@ int shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perRa
  */
 int main(int argc, char *argv[]) {
 
-    double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0, sparsity = 0;;
-    int nonZeroPerRow = 0, total_run = 100, mat_row = 0, mat_col = 0;
+    double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
+    int nonZeroPerRow = 0, total_run = 100, mat_row = 0, mat_col = 0, sparsity = 0;
     int nRanks, rank;
     int *row_ptr, *col_ptr;
     double *val_ptr, *buf_x, *res;
