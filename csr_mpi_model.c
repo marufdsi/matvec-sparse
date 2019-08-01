@@ -412,7 +412,7 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_SpMV_Model_Diagonal.csv", "w"))) {
+            if (!(resultCSV = fopen("CSR_SpMV_Model_Random.csv", "w"))) {
                 fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_Random.csv");
                 exit(EXIT_FAILURE);
             }
