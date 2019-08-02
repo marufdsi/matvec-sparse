@@ -76,9 +76,6 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
         }
     }
 
-    /// need to update the initialization
-//    struct Map *map = (struct Map *) malloc_or_exit(nColRecv * sizeof(struct Map));
-
     int r, index = 0;
     for (int q = 0; q < reqMade; q++) {
         MPI_Waitany(nRanks, recv_reqs, &r, MPI_STATUS_IGNORE);
@@ -430,6 +427,9 @@ int main(int argc, char *argv[]) {
     free(row_ptr);
     free(col_ptr);
     free(val_ptr);
+    free(on_diagonal_row);
+    free(on_diagonal_col);
+    free(on_diagonal_val);
     free(off_diagonal_row);
     free(off_diagonal_col);
     free(off_diagonal_val);
