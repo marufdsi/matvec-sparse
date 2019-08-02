@@ -267,8 +267,7 @@ int main(int argc, char *argv[]) {
         if (argc > 5)
             sparsity = atoi(argv[5]);
     }
-    if (rank == MASTER)
-        printf("[%d] Sparsity=%d\n", rank, sparsity);
+
     ranks_info[rank].M = mat_row;
     ranks_info[rank].N = mat_col;
     ranks_info[rank].NZ = nonZeroPerRow * mat_row;;
@@ -356,7 +355,7 @@ int main(int argc, char *argv[]) {
     int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0, reqRequired = 0;
     /// Find the columns that belong to other ranks
     if (off_diag_idx > 0)
-        reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank,
+        reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
     if (reqRequired > 0) {
         if (interProcessCall > 0)
