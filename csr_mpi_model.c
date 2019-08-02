@@ -423,10 +423,6 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
     }
-
-    free(row_ptr);
-    free(col_ptr);
-    free(val_ptr);
     free(on_diagonal_row);
     free(on_diagonal_col);
     free(on_diagonal_val);
