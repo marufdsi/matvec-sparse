@@ -157,12 +157,13 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
     (*count_communication) = 0;
     (*interProcessCall) = 0;
     /* build sending blocks to processors */
-    Map *map = (Map *) malloc_or_exit(procs_info[rank].NZ * sizeof(Map));
+    int *map = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
+
     int dest, col, reqRequired = 0;
     for (int i = 0; i < procs_info[rank].NZ; i++) {
         col = col_ptr[i];
         /// Check off-diagonal nonzero elements that belongs to other ranks
-        if (in_diagonal(col, procs_info[rank].first_row, procs_info[rank].last_row) || !(getVal(map, col, i + 1) < 0))
+        if (in_diagonal(col, procs_info[rank].first_row, procs_info[rank].last_row) || map[col]>0)
             continue;
         ///search which rank has the element
         dest = -1;
@@ -176,8 +177,7 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
         reqRequired++;
         ///insert new request
         reqColFromRank[dest][perRankDataRecv[dest]++] = col;
-        map[i].key.col = col;
-        map[i].value.val = 1;
+        map[col] = 1;
         if (perRankDataRecv[dest] == 1)
             (*interProcessCall)++;
         (*count_communication)++;
