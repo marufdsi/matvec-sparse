@@ -358,7 +358,7 @@ int main(int argc, char *argv[]) {
                 off_diag_idx++;
             }
         }
-        off_diagonal_row[k+1] = off_diag_elements;
+        off_diagonal_row[k+1] = off_diagonal_row[k] + off_diag_elements;
     }
     /// Create CSR Diagonal matrix with the given parameter
     /*if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
