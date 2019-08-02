@@ -22,31 +22,6 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
-void testMap(int rank) {
-    if (rank == MASTER) {
-        Map *map;
-        map = (Map *) malloc_or_exit(10 * sizeof(Map));
-        for (int i = 0; i < 10; ++i) {
-            map[i].key.col = i * 10;
-            map[i].value.val = (double) (i * 500);
-        }
-
-        for (int k = 0; k < 10; ++k) {
-            printf("[%d] Map key=%d, value=%lf\n", k, map[k].key.col, map[k].value.val);
-        }
-        printf("Get value of col=%d from map=%lf\n", 10, getVal(map, 10, 0));
-    }
-}
-
-int getRank(int nRanks, proc_info_t *procs_info, int column) {
-    for (int r = 0; r < nRanks; ++r) {
-        if (column >= procs_info[r].first_row && column <= procs_info[r].last_row)
-            return r;
-    }
-    printf("Error!! %d Column does not belong to any ranks\n", column);
-    return -1;
-}
-
 double *
 matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr, double *buf_x,
         int **send_col_idx, int *perRankDataRecv, int **reqColFromRank, int *perRankDataSend, int reqRequired,
@@ -55,17 +30,15 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
 /// receiving blocks storage
-    double **recv_buf, **recvColFromRanks;
+    double **recv_buf, *recvColFromRanks;
     MPI_Request *send_reqs, *recv_reqs;
     int reqMade = 0;
     if (reqRequired > 0) {
         recv_buf = (double **) malloc_or_exit(nRanks * sizeof(double));
-        recvColFromRanks = (double **) malloc_or_exit(nRanks * sizeof(double));
+        recvColFromRanks = (double *) malloc_or_exit(procs_info[rank].N * sizeof(double));
         for (int r = 0; r < nRanks; ++r) {
             if (perRankDataRecv[r] > 0) {
                 recv_buf[r] = (double *) malloc_or_exit(perRankDataRecv[r] * sizeof(double));
-                recvColFromRanks[r] = (double *) malloc_or_exit(
-                        (procs_info[r].last_row - procs_info[r].first_row + 1) * sizeof(double));
             }
         }
         /// MPI request storage
@@ -100,6 +73,7 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
 
     /// need to update the initialization
 //    struct Map *map = (struct Map *) malloc_or_exit(nColRecv * sizeof(struct Map));
+
     int r, index = 0;
     for (int q = 0; q < reqMade; q++) {
         MPI_Waitany(nRanks, recv_reqs, &r, MPI_STATUS_IGNORE);
@@ -107,7 +81,7 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
 
         /// fill x array with new elements.
         for (int i = 0; i < perRankDataRecv[r]; i++) {
-            recvColFromRanks[r][reqColFromRank[r][i] - procs_info[r].first_row] = recv_buf[r][i];
+            recvColFromRanks[reqColFromRank[r][i]] = recv_buf[r][i];
         }
     }
 
@@ -118,8 +92,7 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
                 y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
             } else {
                 /// Global elements multiplication
-                int r = getRank(nRanks, procs_info, col_ptr[k]);
-                y[i] += val_ptr[k] * recvColFromRanks[r][col_ptr[k] - procs_info[r].first_row];
+                y[i] += val_ptr[k] * recvColFromRanks[col_ptr[k]];
             }
         }
     }
@@ -144,7 +117,6 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
         for (int r = 0; r < nRanks; r++) {
             if (perRankDataRecv[r] > 0) {
                 free(recv_buf[r]);
-                free(recvColFromRanks[r]);
             }
             if (perRankDataSend[r] > 0)
                 free(send_buf_data[r]);
@@ -337,13 +309,13 @@ int main(int argc, char *argv[]) {
     col_ptr = (int *) malloc(ranks_info[rank].NZ * sizeof(int));
     val_ptr = (double *) malloc(ranks_info[rank].NZ * sizeof(double));
     int offDiagonalElements = 0;
-    /// Create random CSR matrix with the given parameter
+    /*/// Create random CSR matrix with the given parameter
     if (csr_random_mat(rank, ranks_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity, &offDiagonalElements) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (ranks_info[rank].M*nRanks),
                nonZeroPerRow);
-    }
+    }*/
 
-    off_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
+    /*off_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
     offdiagonal_col_ptr = (int *) malloc(offDiagonalElements * sizeof(int));
     offdiagonal_val_ptr = (double *) malloc(offDiagonalElements * sizeof(double));
     off_diagonal_row[0] = 0;
@@ -359,13 +331,13 @@ int main(int argc, char *argv[]) {
             }
         }
         off_diagonal_row[k+1] = off_diagonal_row[k] + off_diag_elements;
-    }
+    }*/
     /// Create CSR Diagonal matrix with the given parameter
-    /*if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
+    if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks,
                (ranks_info[rank].M * nRanks),
                nonZeroPerRow);
-    }*/
+    }
 
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
