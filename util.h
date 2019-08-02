@@ -40,7 +40,7 @@ void random_vec(double *v, int N, int limit);
 
 int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_row, int nzPerRow);
 
-int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col, int nzPerRow, int dist);
+int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col, int nzPerRow, int dist, int *offDiagonalRowCount);
 
 int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow);
 

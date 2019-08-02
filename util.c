@@ -1,10 +1,11 @@
 #include <time.h>
+#include <jmorecfg.h>
 
 #include "util.h"
 
 double getVal(Map *map, int col, int limit) {
-    if(limit>0) {
-        while (map != NULL && limit>0) {
+    if (limit > 0) {
+        while (map != NULL && limit > 0) {
             if ((*map).key.col == col) {
                 return (*map).value.val;
             }
@@ -27,19 +28,17 @@ double getVal(Map *map, int col, int limit) {
  * Generate a random real vector of size N with
  * elements beloning to [0, limit)
  */
-void random_vec (double *v, int N, int limit)
-{
+void random_vec(double *v, int N, int limit) {
     /* fill v with random doubles */
     limit--;
-    srand( 410 );
+    srand(410);
     for (int i = 0; i < N; i++) {
-        v[i] = ((double)rand()) / (((double)RAND_MAX) / limit) + \
-               ((double)rand()) / ((double)RAND_MAX);
+        v[i] = ((double) rand()) / (((double) RAND_MAX) / limit) + \
+               ((double) rand()) / ((double) RAND_MAX);
     }
 }
 
-int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_row, int nzPerRow)
-{
+int random_mat(int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_row, int nzPerRow) {
     int start_idx = 0;
     for (int r = 0; r < mat_row; ++r) {
         srand(time(0));
@@ -47,10 +46,10 @@ int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_
         for (int i = 0; i < nzPerRow; i++) {
 //            int conflict = 0;
             int rand_idx;
-            do{
+            do {
 //                conflict++;
                 rand_idx = rand() % mat_row;
-            }while(checkRepeat[rand_idx]>0);
+            } while (checkRepeat[rand_idx] > 0);
             /*if(conflict>0){
                 printf("Conflicts Happened = %d\n", conflict);
             }*/
@@ -59,7 +58,7 @@ int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_
             buf_i[start_idx] = start_row + r;
             buf_j[start_idx] = idx;
             /// Fill by any random double value
-            buf_val[start_idx] = (double)(1 + (idx %10));
+            buf_val[start_idx] = (double) (1 + (idx % 10));
             start_idx++;
         }
     }
@@ -67,53 +66,56 @@ int random_mat (int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_
     return 1;
 }
 
-int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col, int nzPerRow, int dist)
-{
+int
+csr_random_mat(int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col,
+               int nzPerRow, int dist, int *offDiagonalElements) {
     int start_idx = 0;
     int row_elements = 0;
     row_ptr[0] = row_elements;
+    (*offDiagonalElements) = 0;
     for (int r = 0; r < mat_row; ++r) {
         int *trackIndex = (int *) malloc_or_exit(mat_row * sizeof(int));
         int *isIdxTaken = (int *) calloc_or_exit(mat_col, sizeof(int));
         for (int k = 0; k < mat_row; ++k) {
             trackIndex[k] = k;
         }
+        int offDiagonalExist = 0;
         int remainingRows = mat_row;
         row_elements += nzPerRow;
 //        Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
         int off_diagonal = 0;
         int range = mat_col;
         int range_start = 0;
-        srand(time(NULL)*(r+1)*(rank+1));
+        srand(time(NULL) * (r + 1) * (rank + 1));
         for (int i = 0; i < nzPerRow; i++) {
-            if((nzPerRow*dist)/100 <= off_diagonal){
+            if ((nzPerRow * dist) / 100 <= off_diagonal) {
                 range = mat_row;
                 range_start = rank * mat_row;
             }
             int rand_idx;
             int maxTry = 0;
             /// escape same random column
-            do{
+            do {
                 rand_idx = rand() % range;
-            }while(isIdxTaken[rand_idx] != 0 && maxTry<5);
-            if(maxTry>=5){
-                if (remainingRows<=0){
+            } while (isIdxTaken[rand_idx] != 0 && maxTry < 5);
+            if (maxTry >= 5) {
+                if (remainingRows <= 0) {
                     printf("[%d] Exception occurred\n", rank);
                     return 0;
                 }
                 int _idx = rand() % remainingRows;
                 rand_idx = trackIndex[_idx];
-                trackIndex[_idx] = trackIndex[remainingRows-1];
+                trackIndex[_idx] = trackIndex[remainingRows - 1];
                 remainingRows--;
             } else {
                 if (rand_idx < mat_row) {
-                    if (rand_idx == trackIndex[rand_idx]){
-                        trackIndex[rand_idx] = trackIndex[remainingRows-1];
+                    if (rand_idx == trackIndex[rand_idx]) {
+                        trackIndex[rand_idx] = trackIndex[remainingRows - 1];
                         remainingRows--;
-                    } else{
+                    } else {
                         for (int l = 0; l < remainingRows; ++l) {
-                            if (rand_idx == trackIndex[l]){
-                                trackIndex[l] = trackIndex[remainingRows-1];
+                            if (rand_idx == trackIndex[l]) {
+                                trackIndex[l] = trackIndex[remainingRows - 1];
                                 remainingRows--;
                                 break;
                             }
@@ -122,44 +124,48 @@ int csr_random_mat (int rank, proc_info_t *procs_info, int *row_ptr, int *col_pt
                 }
             }
             isIdxTaken[rand_idx] = 1;
-            if (rand_idx>= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row))
+            if (rand_idx >= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row)) {
                 off_diagonal++;
+                offDiagonalExist = 1;
+            }
             col_ptr[start_idx] = range_start + rand_idx;
             /// Fill by any random double value
-            val_ptr[start_idx] = (double)(1 + (rand_idx %10));
+            val_ptr[start_idx] = (double) (1 + (rand_idx % 10));
             start_idx++;
+        }
+        if (offDiagonalExist == 1) {
+            (*offDiagonalElements) += off_diagonal;
         }
         free(trackIndex);
         free(isIdxTaken);
-        row_ptr[r+1] = row_elements;
+        row_ptr[r + 1] = row_elements;
     }
 
     return 1;
 }
 
-int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow)
-{
+int csr_random_diagonal_mat(int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow) {
     int start_idx = 0;
     int row_elements = 0;
     row_ptr[0] = row_elements;
-    int range_start = rank*mat_row;
+    int range_start = rank * mat_row;
     for (int r = 0; r < mat_row; ++r) {
         int *trackIndex = (int *) calloc_or_exit(mat_row, sizeof(int));
         row_elements += nzPerRow;
         Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
-        srand(time(NULL)*(r+1)*(rank+1));
+        srand(time(NULL) * (r + 1) * (rank + 1));
         int taken_idx = 0;
         for (int i = 0; i < nzPerRow; i++) {
             int rand_idx;
             int maxTry = 0;
             /// escape same random column
-            do{
+            do {
                 maxTry++;
                 rand_idx = rand() % mat_row;
-            }while(!(getVal(map, rand_idx, i+1)<0) && maxTry<50);
-            if(maxTry>=50){
-                for (int k = taken_idx+1; k < mat_row; ++k) {
-                    if(trackIndex[k] == 0){
+            } while (!(getVal(map, rand_idx, i + 1) < 0) && maxTry < 50);
+            if (maxTry >= 50) {
+                for (int k = taken_idx + 1; k < mat_row; ++k) {
+                    if (trackIndex[k] == 0) {
                         rand_idx = k;
                         taken_idx = k;
                         break;
@@ -171,34 +177,34 @@ int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_p
             map[i].value.val = 1.0;
             col_ptr[start_idx] = range_start + rand_idx;
             /// Fill by any random double value
-            val_ptr[start_idx] = (double)(1 + (rand_idx %10));
+            val_ptr[start_idx] = (double) (1 + (rand_idx % 10));
             start_idx++;
         }
         free(trackIndex);
         free(map);
-        row_ptr[r+1] = row_elements;
+        row_ptr[r + 1] = row_elements;
     }
 
     return 1;
 }
 
-int csr_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow)
-{
+int csr_diagonal_mat(int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow) {
     int start_idx = 0;
     int row_elements = 0;
     row_ptr[0] = row_elements;
-    int lower_nnz = nzPerRow/2;
-    int range_start = rank*mat_row;
+    int lower_nnz = nzPerRow / 2;
+    int range_start = rank * mat_row;
     for (int r = 0; r < mat_row; ++r) {
         row_elements += nzPerRow;
-        int start_coldIdx = (r<=lower_nnz) ? 0 : ((r - lower_nnz + nzPerRow) > mat_row ? (mat_row-nzPerRow) : (r - lower_nnz));
-        for (int colIdx = start_coldIdx; colIdx < nzPerRow+start_coldIdx; ++colIdx) {
-            col_ptr[start_idx] = range_start+colIdx ;
+        int start_coldIdx = (r <= lower_nnz) ? 0 : ((r - lower_nnz + nzPerRow) > mat_row ? (mat_row - nzPerRow) : (r -
+                                                                                                                   lower_nnz));
+        for (int colIdx = start_coldIdx; colIdx < nzPerRow + start_coldIdx; ++colIdx) {
+            col_ptr[start_idx] = range_start + colIdx;
             /// Fill by any random double value
-            val_ptr[start_idx] = (double)(1+(colIdx%10));
+            val_ptr[start_idx] = (double) (1 + (colIdx % 10));
             start_idx++;
         }
-        row_ptr[r+1] = row_elements;
+        row_ptr[r + 1] = row_elements;
     }
     return 1;
 }
@@ -207,9 +213,9 @@ int csr_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int
 /*
  * Tries to malloc. Terminates on failure.
  */
-void * malloc_or_exit(size_t size) {
-    void * ptr = malloc( size );
-    if ( !ptr ) {
+void *malloc_or_exit(size_t size) {
+    void *ptr = malloc(size);
+    if (!ptr) {
         fprintf(stderr, "malloc: failed to allocate memory\n");
         exit(EXIT_FAILURE);
     }
@@ -219,9 +225,9 @@ void * malloc_or_exit(size_t size) {
 /*
  * Tries to calloc. Terminates on failure.
  */
-void * calloc_or_exit(size_t nmemb, size_t size) {
-    void * ptr = calloc(nmemb, size);
-    if ( !ptr ) {
+void *calloc_or_exit(size_t nmemb, size_t size) {
+    void *ptr = calloc(nmemb, size);
+    if (!ptr) {
         fprintf(stderr, "calloc: failed to allocate memory\n");
         exit(EXIT_FAILURE);
     }

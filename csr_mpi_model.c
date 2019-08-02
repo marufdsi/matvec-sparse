@@ -283,8 +283,8 @@ int main(int argc, char *argv[]) {
     double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     int nonZeroPerRow = 0, total_run = 100, mat_row = 0, mat_col = 0, sparsity = 0;
     int nRanks, rank;
-    int *row_ptr, *col_ptr;
-    double *val_ptr, *buf_x, *res;
+    int *row_ptr, *off_diagonal_row, *col_ptr, *offdiagonal_col_ptr;
+    double *val_ptr, *offdiagonal_val_ptr, *buf_x, *res;
     proc_info_t *ranks_info;
     proc_info_t *procs_info;
 
@@ -336,12 +336,30 @@ int main(int argc, char *argv[]) {
     row_ptr = (int *) malloc((mat_row + 1) * sizeof(int));
     col_ptr = (int *) malloc(ranks_info[rank].NZ * sizeof(int));
     val_ptr = (double *) malloc(ranks_info[rank].NZ * sizeof(double));
+    int offDiagonalElements = 0;
     /// Create random CSR matrix with the given parameter
-    if (csr_random_mat(rank, ranks_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity) != 1) {
+    if (csr_random_mat(rank, ranks_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity, &offDiagonalElements) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (ranks_info[rank].M*nRanks),
                nonZeroPerRow);
     }
 
+    off_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
+    offdiagonal_col_ptr = (int *) malloc(offDiagonalElements * sizeof(int));
+    offdiagonal_val_ptr = (double *) malloc(offDiagonalElements * sizeof(double));
+    off_diagonal_row[0] = 0;
+    int off_diag_idx = 0;
+    for (int k = 0; k < mat_row; ++k) {
+        int off_diag_elements = 0;
+        for (int l = row_ptr[k]; l < row_ptr[k+1]; ++l) {
+            if(!in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row)){
+                off_diag_elements++;
+                offdiagonal_col_ptr[off_diag_idx] = col_ptr[l];
+                offdiagonal_val_ptr[off_diag_idx] = val_ptr[l];
+                off_diag_idx++;
+            }
+        }
+        off_diagonal_row[k+1] = off_diag_elements;
+    }
     /// Create CSR Diagonal matrix with the given parameter
     /*if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks,
