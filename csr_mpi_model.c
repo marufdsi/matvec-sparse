@@ -23,9 +23,9 @@ enum tag {
 };
 
 double *
-matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr, double *buf_x,
-        int **send_col_idx, int *perRankDataRecv, int **reqColFromRank, int *perRankDataSend, int reqRequired,
-        int nRanksExpectCol) {
+matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr, int *off_row_ptr,
+        int *off_col_ptr, double *off_val_ptr, double *buf_x, int **send_col_idx, int *perRankDataRecv, int **reqColFromRank,
+        int *perRankDataSend, int reqRequired, int nRanksExpectCol) {
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
@@ -52,6 +52,11 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
             /// Receive the block (when it comes)
             MPI_Irecv(recv_buf[r], perRankDataRecv[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &recv_reqs[r]);
         }
+    }
+    /// Local elements multiplication
+    for (int i = 0; i < procs_info[rank].M; ++i) {
+        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
+            y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
     }
 
     double **send_buf_data;
@@ -85,31 +90,14 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
         }
     }
 
-    for (int i = 0; i < procs_info[rank].M; ++i) {
-        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
-            /// Local elements multiplication
-            if (in_diagonal(col_ptr[k], procs_info[rank].first_row, procs_info[rank].last_row)) {
-                y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
-            } else {
-                /// Global elements multiplication
-                y[i] += val_ptr[k] * recvColFromRanks[col_ptr[k]];
-            }
-        }
-    }
-    /*
-    if (reqRequired > 0) {
+    if (nRanksExpectCol > 0) {
         /// Global elements multiplication
         for (int i = 0; i < procs_info[rank].M; ++i) {
-            for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
-                if (!in_diagonal(col_ptr[k], procs_info[rank].first_row, procs_info[rank].last_row)) {
-                    int r = getRank(nRanks, procs_info, col_ptr[k]);
-                    y[i] += val_ptr[k] * recvColFromRanks[r][col_ptr[k] - procs_info[r].first_row];
-                }
-            }
+            for (int k = off_row_ptr[i]; k < off_row_ptr[i + 1]; ++k)
+                y[i] += off_val_ptr[k] * recvColFromRanks[off_col_ptr[k]];
         }
     }
-*/
-    if(nRanksExpectCol > 0) {
+    if (nRanksExpectCol > 0) {
         /// Wait until send request delivered to through network.
         MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
     }
@@ -163,7 +151,7 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
     for (int i = 0; i < procs_info[rank].NZ; i++) {
         col = col_ptr[i];
         /// Check off-diagonal nonzero elements that belongs to other ranks
-        if (in_diagonal(col, procs_info[rank].first_row, procs_info[rank].last_row) || map[col]>0)
+        if (in_diagonal(col, procs_info[rank].first_row, procs_info[rank].last_row) || map[col] > 0)
             continue;
         ///search which rank has the element
         dest = -1;
@@ -235,7 +223,7 @@ int shareReqColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *perRa
     }
     if (reqRequired > 0)
         MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
-    if (all_process_expect[rank]>0 && reqs != NULL)
+    if (all_process_expect[rank] > 0 && reqs != NULL)
         free(reqs);
     if (expect != NULL)
         free(expect);
@@ -255,8 +243,8 @@ int main(int argc, char *argv[]) {
     double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     int nonZeroPerRow = 0, total_run = 100, mat_row = 0, mat_col = 0, sparsity = 0;
     int nRanks, rank;
-    int *row_ptr, *off_diagonal_row, *col_ptr, *offdiagonal_col_ptr;
-    double *val_ptr, *offdiagonal_val_ptr, *buf_x, *res;
+    int *row_ptr, *on_diagonal_row, *off_diagonal_row, *col_ptr, *off_diagonal_col, *on_diagonal_col;
+    double *val_ptr, *off_diagonal_val, *on_diagonal_val, *buf_x, *res;
     proc_info_t *ranks_info;
     proc_info_t *procs_info;
 
@@ -282,7 +270,7 @@ int main(int argc, char *argv[]) {
         if (argc > 5)
             sparsity = atoi(argv[5]);
     }
-    if(rank == MASTER)
+    if (rank == MASTER)
         printf("[%d] Sparsity=%d\n", rank, sparsity);
     ranks_info[rank].M = mat_row;
     ranks_info[rank].N = mat_col;
@@ -314,24 +302,6 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (ranks_info[rank].M*nRanks),
                nonZeroPerRow);
     }*/
-
-    /*off_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
-    offdiagonal_col_ptr = (int *) malloc(offDiagonalElements * sizeof(int));
-    offdiagonal_val_ptr = (double *) malloc(offDiagonalElements * sizeof(double));
-    off_diagonal_row[0] = 0;
-    int off_diag_idx = 0;
-    for (int k = 0; k < mat_row; ++k) {
-        int off_diag_elements = 0;
-        for (int l = row_ptr[k]; l < row_ptr[k+1]; ++l) {
-            if(!in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row)){
-                off_diag_elements++;
-                offdiagonal_col_ptr[off_diag_idx] = col_ptr[l];
-                offdiagonal_val_ptr[off_diag_idx] = val_ptr[l];
-                off_diag_idx++;
-            }
-        }
-        off_diagonal_row[k+1] = off_diagonal_row[k] + off_diag_elements;
-    }*/
     /// Create CSR Diagonal matrix with the given parameter
     if (csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks,
@@ -339,6 +309,37 @@ int main(int argc, char *argv[]) {
                nonZeroPerRow);
     }
 
+    on_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
+    on_diagonal_col = (int *) malloc((ranks_info[rank].NZ - offDiagonalElements) * sizeof(int));
+    on_diagonal_val = (double *) malloc((ranks_info[rank].NZ - offDiagonalElements) * sizeof(double));
+
+    off_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
+    off_diagonal_col = (int *) malloc(offDiagonalElements * sizeof(int));
+    off_diagonal_val = (double *) malloc(offDiagonalElements * sizeof(double));
+    off_diagonal_row[0] = 0;
+    int on_diag_idx = 0, off_diag_idx = 0;
+    for (int k = 0; k < mat_row; ++k) {
+        int off_diag_elements = 0, on_diag_elements = 0;
+        for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
+            if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row)) {
+                on_diag_elements++;
+                on_diagonal_col[on_diag_idx] = col_ptr[l];
+                on_diagonal_val[on_diag_idx] = val_ptr[l];
+                on_diag_idx++;
+            } else {
+                off_diag_elements++;
+                off_diagonal_col[off_diag_idx] = col_ptr[l];
+                off_diagonal_val[off_diag_idx] = val_ptr[l];
+                off_diag_idx++;
+            }
+        }
+        on_diagonal_row[k + 1] = on_diagonal_row[k] + on_diag_elements;
+        off_diagonal_row[k + 1] = off_diagonal_row[k] + off_diag_elements;
+    }
+
+    free(row_ptr);
+    free(col_ptr);
+    free(val_ptr);
     /// Create vector x and fill with 1.0
     buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; i++) {
@@ -355,9 +356,10 @@ int main(int argc, char *argv[]) {
             reqColFromRank[i] = (int *) malloc_or_exit(procs_info[i].M * sizeof(int));
     }
 
-    int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0;
+    int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0, reqRequired = 0;
     /// Find the columns that belong to other ranks
-    int reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank,
+    if (off_diag_idx > 0)
+        reqRequired = findInterRanksComm(rank, nRanks, procs_info, col_ptr, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
     if (reqRequired > 0) {
         if (interProcessCall > 0)
@@ -375,8 +377,9 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
-        res = matMull(rank, procs_info, nRanks, row_ptr, col_ptr, val_ptr, buf_x, send_col_idx, perRankDataRecv,
-                      reqColFromRank, perRankDataSend, reqRequired, nRanksExpectCol);
+        res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
+                      off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, reqColFromRank,
+                      perRankDataSend, reqRequired, nRanksExpectCol);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
@@ -393,7 +396,8 @@ int main(int argc, char *argv[]) {
 //    strcpy(outputFIle, "CSR_SpMV_Model_Random.csv");
     /// print execution stats
     if (rank == MASTER) {
-        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d, Sparsity: %d\n", rank,
+        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d, Sparsity: %d\n",
+               rank,
                min_time, max_time, mean, procs_info[rank].NZ, sparsity);
         FILE *resultCSV;
         FILE *checkFile;
@@ -426,6 +430,9 @@ int main(int argc, char *argv[]) {
     free(row_ptr);
     free(col_ptr);
     free(val_ptr);
+    free(off_diagonal_row);
+    free(off_diagonal_col);
+    free(off_diagonal_val);
     free(buf_x);
     /* MPI: end */
     MPI_Finalize();
