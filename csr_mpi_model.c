@@ -136,7 +136,7 @@ void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
     MPI_Type_commit(procs_info_type);
 }
 
-int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int *perRankDataRecv,
+int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int offDiagonalElements, int *perRankDataRecv,
                        int **reqColFromRank,
                        int *count_communication, int *interProcessCall) {
     (*count_communication) = 0;
@@ -145,7 +145,7 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
     int *map = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
 
     int dest, col, reqRequired = 0;
-    for (int i = 0; i < procs_info[rank].NZ; i++) {
+    for (int i = 0; i < offDiagonalElements; i++) {
         col = col_ptr[i];
         /// Check off-diagonal nonzero elements that belongs to other ranks
         if (in_diagonal(col, procs_info[rank].first_row, procs_info[rank].last_row) || map[col] > 0)
@@ -325,7 +325,6 @@ int main(int argc, char *argv[]) {
                 on_diagonal_val[on_diag_idx] = val_ptr[l];
                 on_diag_idx++;
             } else {
-                printf("[%d] Diagonal matrix creation failed for row=%d, col=%d, val=%lf, first row=%d, last row=%d\n", rank, k, col_ptr[l], val_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row);
                 off_diag_elements++;
                 off_diagonal_col[off_diag_idx] = col_ptr[l];
                 off_diagonal_val[off_diag_idx] = val_ptr[l];
@@ -359,7 +358,7 @@ int main(int argc, char *argv[]) {
     int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0, reqRequired = 0;
     /// Find the columns that belong to other ranks
     if (offDiagonalElements > 0)
-        reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, perRankDataRecv, reqColFromRank,
+        reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
     if (reqRequired > 0) {
         if (interProcessCall > 0)
