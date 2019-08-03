@@ -326,7 +326,7 @@ int main(int argc, char *argv[]) {
                 on_diag_idx++;
             } else {
                 if(off_diag_idx>=off_diag_elements) {
-                    printf("[%d] Matrix has issues\n", rank);
+                    printf("[%d] Matrix has issues, col=%d, first row=%d, last row=%d\n", rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row);
                     return 0;
                 }
                 off_diag_elements++;
@@ -340,8 +340,6 @@ int main(int argc, char *argv[]) {
             off_diagonal_row[k + 1] = off_diagonal_row[k] + off_diag_elements;
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf("[%d] Matrix creation done\n", rank);
     free(row_ptr);
     free(col_ptr);
     free(val_ptr);
@@ -362,16 +360,10 @@ int main(int argc, char *argv[]) {
     }
 
     int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0, reqRequired = 0;
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (rank == MASTER)
-        printf("[%d] Matrix creation done\n", rank);
     /// Find the columns that belong to other ranks
     if (offDiagonalElements > 0)
         reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (rank == MASTER)
-        printf("[%d] Off diagonal communication calculation done %d \n", rank, reqRequired);
     if (reqRequired > 0) {
         if (interProcessCall > 0)
             avg_communication = count_communication / interProcessCall;

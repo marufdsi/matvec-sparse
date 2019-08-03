@@ -79,7 +79,6 @@ csr_random_mat(int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, do
         for (int k = 0; k < mat_row; ++k) {
             trackIndex[k] = k;
         }
-        int offDiagonalExist = 0;
         int remainingRows = mat_row;
         row_elements += nzPerRow;
 //        Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
@@ -124,18 +123,15 @@ csr_random_mat(int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, do
                 }
             }
             isIdxTaken[rand_idx] = 1;
-            if (rand_idx >= ((rank * mat_row) + mat_row) || rand_idx < (rank * mat_row)) {
+            if (rand_idx >= ((rank +1) * mat_row) || rand_idx < (rank * mat_row)) {
                 off_diagonal++;
-                offDiagonalExist = 1;
             }
             col_ptr[start_idx] = range_start + rand_idx;
             /// Fill by any random double value
             val_ptr[start_idx] = (double) (1 + (rand_idx % 10));
             start_idx++;
         }
-        if (offDiagonalExist == 1) {
-            (*offDiagonalElements) += off_diagonal;
-        }
+        (*offDiagonalElements) += off_diagonal;
         free(trackIndex);
         free(isIdxTaken);
         row_ptr[r + 1] = row_elements;
