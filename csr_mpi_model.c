@@ -309,15 +309,17 @@ int main(int argc, char *argv[]) {
     on_diagonal_col = (int *) malloc((ranks_info[rank].NZ - offDiagonalElements) * sizeof(int));
     on_diagonal_val = (double *) malloc((ranks_info[rank].NZ - offDiagonalElements) * sizeof(double));
 
-    off_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
-    off_diagonal_col = (int *) malloc(offDiagonalElements * sizeof(int));
-    off_diagonal_val = (double *) malloc(offDiagonalElements * sizeof(double));
-    off_diagonal_row[0] = 0;
+    if(offDiagonalElements>0) {
+        off_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
+        off_diagonal_col = (int *) malloc(offDiagonalElements * sizeof(int));
+        off_diagonal_val = (double *) malloc(offDiagonalElements * sizeof(double));
+        off_diagonal_row[0] = 0;
+    }
     int on_diag_idx = 0, off_diag_idx = 0;
     for (int k = 0; k < mat_row; ++k) {
         int off_diag_elements = 0, on_diag_elements = 0;
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
-            if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row)) {
+            if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row) || offDiagonalElements<=0) {
                 on_diag_elements++;
                 on_diagonal_col[on_diag_idx] = col_ptr[l];
                 on_diagonal_val[on_diag_idx] = val_ptr[l];
@@ -331,7 +333,8 @@ int main(int argc, char *argv[]) {
             }
         }
         on_diagonal_row[k + 1] = on_diagonal_row[k] + on_diag_elements;
-        off_diagonal_row[k + 1] = off_diagonal_row[k] + off_diag_elements;
+        if(offDiagonalElements>0)
+            off_diagonal_row[k + 1] = off_diagonal_row[k] + off_diag_elements;
     }
 
     free(row_ptr);
@@ -355,7 +358,7 @@ int main(int argc, char *argv[]) {
 
     int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0, reqRequired = 0;
     /// Find the columns that belong to other ranks
-    if (off_diag_idx > 0)
+    if (offDiagonalElements > 0)
         reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
     if (reqRequired > 0) {
@@ -426,9 +429,11 @@ int main(int argc, char *argv[]) {
     free(on_diagonal_row);
     free(on_diagonal_col);
     free(on_diagonal_val);
-    free(off_diagonal_row);
-    free(off_diagonal_col);
-    free(off_diagonal_val);
+    if(offDiagonalElements>0) {
+        free(off_diagonal_row);
+        free(off_diagonal_col);
+        free(off_diagonal_val);
+    }
     free(buf_x);
     /* MPI: end */
     MPI_Finalize();
