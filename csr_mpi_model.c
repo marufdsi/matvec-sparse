@@ -356,10 +356,16 @@ int main(int argc, char *argv[]) {
     }
 
     int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0, reqRequired = 0;
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == MASTER)
+        printf("[%d] Matrix creation done\n", rank);
     /// Find the columns that belong to other ranks
     if (offDiagonalElements > 0)
         reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == MASTER)
+        printf("[%d] Off diagonal communication calculation done %d \n", rank, reqRequired);
     if (reqRequired > 0) {
         if (interProcessCall > 0)
             avg_communication = count_communication / interProcessCall;
@@ -371,7 +377,9 @@ int main(int argc, char *argv[]) {
 
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
-
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == MASTER)
+        printf("[%d] Share information done %d \n", rank, nRanksExpectCol);
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
