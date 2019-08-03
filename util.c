@@ -196,7 +196,7 @@ int csr_diagonal_mat(int rank, int *row_ptr, int *col_ptr, double *val_ptr, int 
     int range_start = rank * mat_row;
     for (int r = 0; r < mat_row; ++r) {
         row_elements += nzPerRow;
-        int start_coldIdx = (r - lower_nnz + 1) < 0 ? 0 : (r - lower_nnz + 1);
+        int start_coldIdx = (r - lower_nnz + 1) < 0 ? 0 : ((r - lower_nnz + 1 + nzPerRow)> mat_row) ? (mat_row-nzPerRow) : (r - lower_nnz + 1);
         for (int colIdx = start_coldIdx; colIdx < nzPerRow + start_coldIdx; ++colIdx) {
             col_ptr[start_idx] = range_start + colIdx;
             /// Fill by any random double value

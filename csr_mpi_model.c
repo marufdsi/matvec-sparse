@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
                 on_diagonal_val[on_diag_idx] = val_ptr[l];
                 on_diag_idx++;
             } else {
-                printf("[%d] Diagonal matrix creation failed for row=%d, col=%d, val=%lf\n", rank, k, col_ptr[l], val_ptr[l]);
+                printf("[%d] Diagonal matrix creation failed for row=%d, col=%d, val=%lf, first row=%d, last row=%d\n", rank, k, col_ptr[l], val_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row);
                 off_diag_elements++;
                 off_diagonal_col[off_diag_idx] = col_ptr[l];
                 off_diagonal_val[off_diag_idx] = val_ptr[l];
