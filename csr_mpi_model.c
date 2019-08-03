@@ -272,7 +272,7 @@ int main(int argc, char *argv[]) {
     ranks_info[rank].N = mat_col;
     ranks_info[rank].NZ = nonZeroPerRow * mat_row;;
     ranks_info[rank].first_row = rank * mat_row;
-    ranks_info[rank].last_row = (rank + 1) * mat_row;
+    ranks_info[rank].last_row = (rank + 1) * mat_row-1;
     if (nonZeroPerRow <= 0) {
         printf("[%d], There will must one non zero column in the matrix in every row\n", rank);
         return 0;
