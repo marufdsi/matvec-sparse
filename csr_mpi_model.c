@@ -319,21 +319,11 @@ int main(int argc, char *argv[]) {
     int on_diag_idx = 0, off_diag_idx = 0;
     for (int k = 0; k < mat_row; ++k) {
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
-            if(on_diag_idx>=(ranks_info[rank].NZ - offDiagonalElements)) {
-                printf("[%d] Matrix has issues, col=%d, first row=%d, last row=%d, nnz=%d, offdiagonal=%d, idx=%d, on_diag_elements=%d\n",
-                       rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row, ranks_info[rank].NZ, offDiagonalElements, on_diag_idx, (ranks_info[rank].NZ - offDiagonalElements));
-                return 0;
-            }
             if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row) || offDiagonalElements<=0) {
                 on_diagonal_col[on_diag_idx] = col_ptr[l];
                 on_diagonal_val[on_diag_idx] = val_ptr[l];
                 on_diag_idx++;
             } else {
-                if(off_diag_idx>=offDiagonalElements) {
-                    printf("[%d] Matrix has issues, col=%d, first row=%d, last row=%d, idx=%d, off_diag_elements=%d\n",
-                           rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row, off_diag_idx, offDiagonalElements);
-                    return 0;
-                }
                 off_diagonal_col[off_diag_idx] = col_ptr[l];
                 off_diagonal_val[off_diag_idx] = val_ptr[l];
                 off_diag_idx++;
@@ -344,7 +334,6 @@ int main(int argc, char *argv[]) {
             off_diagonal_row[k + 1] = off_diag_idx;
     }
 
-    printf("[%d] matrix creation done\n", rank);
     free(row_ptr);
     free(col_ptr);
     free(val_ptr);
@@ -385,6 +374,7 @@ int main(int argc, char *argv[]) {
         printf("[%d] Share information done %d \n", rank, nRanksExpectCol);
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
+    return 0;
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
         res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
