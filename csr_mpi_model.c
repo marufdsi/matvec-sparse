@@ -305,23 +305,26 @@ int main(int argc, char *argv[]) {
                nonZeroPerRow);
     }*/
 
-    on_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
-    on_diagonal_col = (int *) malloc((ranks_info[rank].NZ - offDiagonalElements) * sizeof(int));
-    on_diagonal_val = (double *) malloc((ranks_info[rank].NZ - offDiagonalElements) * sizeof(double));
+    on_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
+    on_diagonal_col = (int *) malloc_or_exit((ranks_info[rank].NZ - offDiagonalElements) * sizeof(int));
+    on_diagonal_val = (double *) malloc_or_exit((ranks_info[rank].NZ - offDiagonalElements) * sizeof(double));
 
     if(offDiagonalElements>0) {
-        off_diagonal_row = (int *) malloc((mat_row + 1) * sizeof(int));
-        off_diagonal_col = (int *) malloc(offDiagonalElements * sizeof(int));
-        off_diagonal_val = (double *) malloc(offDiagonalElements * sizeof(double));
+        off_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
+        off_diagonal_col = (int *) malloc_or_exit(offDiagonalElements * sizeof(int));
+        off_diagonal_val = (double *) malloc_or_exit(offDiagonalElements * sizeof(double));
         off_diagonal_row[0] = 0;
     }
     on_diagonal_row[0] = 0;
     int on_diag_idx = 0, off_diag_idx = 0;
     for (int k = 0; k < mat_row; ++k) {
-        int off_diag_row_elements =0,on_diag_row_elements = 0;
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
+            if(on_diag_idx>=(ranks_info[rank].NZ - offDiagonalElements)) {
+                printf("[%d] Matrix has issues, col=%d, first row=%d, last row=%d, idx=%d, on_diag_elements=%d\n",
+                       rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row, off_diag_idx, (ranks_info[rank].NZ - offDiagonalElements));
+                return 0;
+            }
             if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row) || offDiagonalElements<=0) {
-                on_diag_row_elements++;
                 on_diagonal_col[on_diag_idx] = col_ptr[l];
                 on_diagonal_val[on_diag_idx] = val_ptr[l];
                 on_diag_idx++;
@@ -336,9 +339,9 @@ int main(int argc, char *argv[]) {
                 off_diag_idx++;
             }
         }
-        on_diagonal_row[k + 1] = on_diagonal_row[k] + on_diag_row_elements;
+        on_diagonal_row[k + 1] = on_diag_idx;
         if(offDiagonalElements>0)
-            off_diagonal_row[k + 1] = off_diagonal_row[k] + off_diag_row_elements;
+            off_diagonal_row[k + 1] = off_diag_idx;
     }
 
     printf("[%d] matrix creation done\n", rank);
