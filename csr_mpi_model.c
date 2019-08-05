@@ -340,6 +340,7 @@ int main(int argc, char *argv[]) {
             off_diagonal_row[k + 1] = off_diagonal_row[k] + off_diag_row_elements;
     }
 
+    printf("[%d] matrix creation done\n", rank);
     free(row_ptr);
     free(col_ptr);
     free(val_ptr);
