@@ -305,6 +305,9 @@ int main(int argc, char *argv[]) {
                nonZeroPerRow);
     }*/
 
+    if(rank == MASTER){
+        printf("[%d] Off diagonal elements:%d\n", rank, offDiagonalElements);
+    }
     on_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
     on_diagonal_col = (int *) malloc_or_exit((ranks_info[rank].NZ - offDiagonalElements) * sizeof(int));
     on_diagonal_val = (double *) malloc_or_exit((ranks_info[rank].NZ - offDiagonalElements) * sizeof(double));
