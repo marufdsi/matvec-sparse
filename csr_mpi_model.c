@@ -317,28 +317,27 @@ int main(int argc, char *argv[]) {
     }
     int on_diag_idx = 0, off_diag_idx = 0;
     for (int k = 0; k < mat_row; ++k) {
-        int off_diag_elements = 0, on_diag_elements = 0;
+        int off_diag_row_elements =0,on_diag_row_elements = 0;
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
             if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row) || offDiagonalElements<=0) {
-                on_diag_elements++;
+                on_diag_row_elements++;
                 on_diagonal_col[on_diag_idx] = col_ptr[l];
                 on_diagonal_val[on_diag_idx] = val_ptr[l];
                 on_diag_idx++;
             } else {
-                if(off_diag_idx>=off_diag_elements) {
+                if(off_diag_idx>=offDiagonalElements) {
                     printf("[%d] Matrix has issues, col=%d, first row=%d, last row=%d, idx=%d, off_diag_elements=%d\n",
-                           rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row, off_diag_idx, off_diag_elements);
+                           rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row, off_diag_idx, offDiagonalElements);
                     return 0;
                 }
-                off_diag_elements++;
                 off_diagonal_col[off_diag_idx] = col_ptr[l];
                 off_diagonal_val[off_diag_idx] = val_ptr[l];
                 off_diag_idx++;
             }
         }
-        on_diagonal_row[k + 1] = on_diagonal_row[k] + on_diag_elements;
+        on_diagonal_row[k + 1] = on_diagonal_row[k] + on_diag_row_elements;
         if(offDiagonalElements>0)
-            off_diagonal_row[k + 1] = off_diagonal_row[k] + off_diag_elements;
+            off_diagonal_row[k + 1] = off_diagonal_row[k] + off_diag_row_elements;
     }
 
     free(row_ptr);
