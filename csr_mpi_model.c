@@ -315,6 +315,7 @@ int main(int argc, char *argv[]) {
         off_diagonal_val = (double *) malloc(offDiagonalElements * sizeof(double));
         off_diagonal_row[0] = 0;
     }
+    on_diagonal_row[0] = 0;
     int on_diag_idx = 0, off_diag_idx = 0;
     for (int k = 0; k < mat_row; ++k) {
         int off_diag_row_elements =0,on_diag_row_elements = 0;
