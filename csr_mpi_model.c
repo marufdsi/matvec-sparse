@@ -374,7 +374,6 @@ int main(int argc, char *argv[]) {
         printf("[%d] Share information done %d \n", rank, nRanksExpectCol);
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
-    return 0;
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
         res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,

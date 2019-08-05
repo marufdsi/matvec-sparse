@@ -73,9 +73,6 @@ csr_random_mat(int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, do
     int row_elements = 0;
     row_ptr[0] = row_elements;
     (*offDiagonalElements) = 0;
-    if(rank == 0){
-        printf("Distribution=%d\n",(nzPerRow * dist)/100);
-    }
     for (int r = 0; r < mat_row; ++r) {
         int *trackIndex = (int *) malloc_or_exit(mat_row * sizeof(int));
         int *isIdxTaken = (int *) calloc_or_exit(mat_col, sizeof(int));
