@@ -320,8 +320,8 @@ int main(int argc, char *argv[]) {
     for (int k = 0; k < mat_row; ++k) {
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
             if(on_diag_idx>=(ranks_info[rank].NZ - offDiagonalElements)) {
-                printf("[%d] Matrix has issues, col=%d, first row=%d, last row=%d, idx=%d, on_diag_elements=%d\n",
-                       rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row, off_diag_idx, (ranks_info[rank].NZ - offDiagonalElements));
+                printf("[%d] Matrix has issues, col=%d, first row=%d, last row=%d, nnz=%d, offdiagonal=%d, idx=%d, on_diag_elements=%d\n",
+                       rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row, ranks_info[rank].NZ, offDiagonalElements, on_diag_idx, (ranks_info[rank].NZ - offDiagonalElements));
                 return 0;
             }
             if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row) || offDiagonalElements<=0) {
