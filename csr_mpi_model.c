@@ -326,7 +326,8 @@ int main(int argc, char *argv[]) {
                 on_diag_idx++;
             } else {
                 if(off_diag_idx>=off_diag_elements) {
-                    printf("[%d] Matrix has issues, col=%d, first row=%d, last row=%d\n", rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row);
+                    printf("[%d] Matrix has issues, col=%d, first row=%d, last row=%d, idx=%d, off_diag_elements=%d\n",
+                           rank, col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row, off_diag_idx, off_diag_elements);
                     return 0;
                 }
                 off_diag_elements++;
