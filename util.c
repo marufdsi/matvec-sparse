@@ -73,6 +73,9 @@ csr_random_mat(int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, do
     int row_elements = 0;
     row_ptr[0] = row_elements;
     (*offDiagonalElements) = 0;
+    if(rank == 0){
+        printf("Distribution=%d\n",(nzPerRow * dist)/100);
+    }
     for (int r = 0; r < mat_row; ++r) {
         int *trackIndex = (int *) malloc_or_exit(mat_row * sizeof(int));
         int *isIdxTaken = (int *) calloc_or_exit(mat_col, sizeof(int));
@@ -123,7 +126,7 @@ csr_random_mat(int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, do
                 }
             }
             isIdxTaken[rand_idx] = 1;
-            if (rand_idx >= ((rank +1) * mat_row) || rand_idx < (rank * mat_row)) {
+            if (!in_diagonal((range_start + rand_idx), rank * mat_row, ((rank+1) * mat_row) - 1)) {
                 off_diagonal++;
             }
             col_ptr[start_idx] = range_start + rand_idx;
