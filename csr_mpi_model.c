@@ -55,6 +55,7 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
             y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
     }
 
+    printf("[%d] Local multiplication done\n", rank);
     double **send_buf_data;
     if (nRanksExpectCol > 0) {
         send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
