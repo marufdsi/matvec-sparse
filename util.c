@@ -66,75 +66,74 @@ int random_mat(int *buf_i, int *buf_j, double *buf_val, int start_row, int mat_r
     return 1;
 }
 
-int
-csr_random_mat(int rank, proc_info_t *procs_info, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col,
-               int nzPerRow, int dist, int *offDiagonalElements) {
-    int start_idx = 0;
-    int row_elements = 0;
-    row_ptr[0] = row_elements;
-    (*offDiagonalElements) = 0;
+int csr_random_mat(int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int mat_col, int nzPerRow,
+                   int dist, int *non_diagonal_elements) {
+    int col_idx = 0;
+    int row_idx = 0;
+    row_ptr[0] = row_idx;
+    (*non_diagonal_elements) = 0;
     for (int r = 0; r < mat_row; ++r) {
         int *trackIndex = (int *) malloc_or_exit(mat_row * sizeof(int));
-        int *isIdxTaken = (int *) calloc_or_exit(mat_col, sizeof(int));
+        int *isIdTaken = (int *) calloc_or_exit(mat_col, sizeof(int));
         for (int k = 0; k < mat_row; ++k) {
             trackIndex[k] = k;
         }
-        int remainingRows = mat_row;
-        row_elements += nzPerRow;
-//        Map *map = (Map *) malloc_or_exit(nzPerRow * sizeof(Map));
-        int off_diagonal = 0;
-        int range = mat_col;
-        int range_start = 0;
+        int idx_not_taken = mat_row;
+        row_idx += nzPerRow;
+        int non_diagonal = 0;
+        int id_range = mat_col;
+        int start_id = 0;
         srand(time(NULL) * (r + 1) * (rank + 1));
         for (int i = 0; i < nzPerRow; i++) {
-            if ((nzPerRow * dist) / 100 <= off_diagonal) {
-                range = mat_row;
-                range_start = rank * mat_row;
+            if ((nzPerRow * dist) / 100 <= non_diagonal) {
+                id_range = mat_row;
+                start_id = rank * mat_row;
             }
-            int rand_idx;
+            int rand_id;
             int maxTry = 0;
             /// escape same random column
             do {
-                rand_idx = rand() % range;
-            } while (isIdxTaken[rand_idx] != 0 && maxTry < 5);
-            if (maxTry >= 5) {
-                if (remainingRows <= 0) {
+                rand_id = rand() % id_range;
+                maxTry++;
+            } while (isIdTaken[rand_id] != 0 && maxTry < 5);
+            if (maxTry >= 5 && isIdTaken[rand_id] != 0) {
+                if (idx_not_taken <= 0) {
                     printf("[%d] Exception occurred\n", rank);
                     return 0;
                 }
-                int _idx = rand() % remainingRows;
-                rand_idx = trackIndex[_idx];
-                trackIndex[_idx] = trackIndex[remainingRows - 1];
-                remainingRows--;
+                int _idx = rand() % idx_not_taken;
+                rand_id = trackIndex[_idx];
+                trackIndex[_idx] = trackIndex[idx_not_taken - 1];
+                idx_not_taken--;
             } else {
-                if (rand_idx < mat_row) {
-                    if (rand_idx == trackIndex[rand_idx]) {
-                        trackIndex[rand_idx] = trackIndex[remainingRows - 1];
-                        remainingRows--;
+                if (rand_id < mat_row) {
+                    if (rand_id == trackIndex[rand_id]) {
+                        trackIndex[rand_id] = trackIndex[idx_not_taken - 1];
+                        idx_not_taken--;
                     } else {
-                        for (int l = 0; l < remainingRows; ++l) {
-                            if (rand_idx == trackIndex[l]) {
-                                trackIndex[l] = trackIndex[remainingRows - 1];
-                                remainingRows--;
+                        for (int l = 0; l < idx_not_taken; ++l) {
+                            if (rand_id == trackIndex[l]) {
+                                trackIndex[l] = trackIndex[idx_not_taken - 1];
+                                idx_not_taken--;
                                 break;
                             }
                         }
                     }
                 }
             }
-            isIdxTaken[rand_idx] = 1;
-            if (!in_diagonal((range_start + rand_idx), rank * mat_row, ((rank+1) * mat_row) - 1)) {
-                off_diagonal++;
+            isIdTaken[rand_id] = 1;
+            if (!in_diagonal((start_id + rand_id), rank * mat_row, ((rank+1) * mat_row) - 1)) {
+                non_diagonal++;
             }
-            col_ptr[start_idx] = range_start + rand_idx;
+            col_ptr[col_idx] = start_id + rand_id;
             /// Fill by any random double value
-            val_ptr[start_idx] = (double) (1 + (rand_idx % 10));
-            start_idx++;
+            val_ptr[col_idx] = (double) (1 + (rand_id % 10));
+            col_idx++;
         }
-        (*offDiagonalElements) += off_diagonal;
+        (*non_diagonal_elements) += non_diagonal;
         free(trackIndex);
-        free(isIdxTaken);
-        row_ptr[r + 1] = row_elements;
+        free(isIdTaken);
+        row_ptr[r + 1] = row_idx;
     }
 
     return 1;

@@ -44,9 +44,9 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
                 continue;
             }
             recv_buf[r] = (double *) malloc_or_exit(perRankDataRecv[r] * sizeof(double));
-            reqMade++;
             /// Receive the block (when it comes)
             MPI_Irecv(recv_buf[r], perRankDataRecv[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &recv_reqs[r]);
+            reqMade++;
         }
     }
     /// Local elements multiplication
@@ -61,19 +61,19 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
         /// Reply to the requests.
         send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double));
         for (int r = 0; r < nRanks; ++r) {
-            if (perRankDataSend[r] > 0) {
-                send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
-                for (int i = 0; i < perRankDataSend[r]; ++i) {
-                    if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
-                        printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
-                        return 0;
-                    }
-                    send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
-                }
-                MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD,
-                          &send_reqs[r]);
-            } else
+            if (perRankDataSend[r] <= 0){
                 send_reqs[r] = MPI_REQUEST_NULL;
+                continue;
+            }
+            send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
+            for (int i = 0; i < perRankDataSend[r]; ++i) {
+                if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
+                    printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
+                    return 0;
+                }
+                send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
+            }
+            MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
         }
     }
 
@@ -81,20 +81,18 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
     for (int q = 0; q < reqMade; q++) {
         MPI_Waitany(nRanks, recv_reqs, &r, MPI_STATUS_IGNORE);
         assert(r != MPI_UNDEFINED);
-
         /// fill x array with new elements.
         for (int i = 0; i < perRankDataRecv[r]; i++) {
-            if (reqColFromRank[r][i] >= procs_info[rank].N){
+            if (reqColFromRank[r][i]<0 || reqColFromRank[r][i] >= procs_info[rank].N){
                 printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
                 return 0;
             }
             recvColFromRanks[reqColFromRank[r][i]] = recv_buf[r][i];
         }
     }
-
     printf("[%d] Global data received\n", rank);
 
-    if (nRanksExpectCol > 0) {
+    if (reqRequired > 0) {
         /// Global elements multiplication
         for (int i = 0; i < procs_info[rank].M; ++i) {
             for (int k = off_row_ptr[i]; k < off_row_ptr[i + 1]; ++k)
@@ -145,18 +143,16 @@ void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
 }
 
 int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int offDiagonalElements, int *perRankDataRecv,
-                       int **reqColFromRank,
-                       int *count_communication, int *interProcessCall) {
+                       int **reqColFromRank, int *count_communication, int *interProcessCall) {
     (*count_communication) = 0;
     (*interProcessCall) = 0;
     /* build sending blocks to processors */
-    int *map = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
-
     int dest, col, reqRequired = 0;
+    int *map = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     for (int i = 0; i < offDiagonalElements; i++) {
         col = col_ptr[i];
-        /// Check off-diagonal nonzero elements that belongs to other ranks
-        if (in_diagonal(col, procs_info[rank].first_row, procs_info[rank].last_row) || map[col] > 0)
+        /// Check is already calculated
+        if (map[col] > 0)
             continue;
         ///search which rank has the element
         dest = -1;
@@ -302,7 +298,7 @@ int main(int argc, char *argv[]) {
     val_ptr = (double *) malloc(ranks_info[rank].NZ * sizeof(double));
     int offDiagonalElements = 0;
     /// Create random CSR matrix with the given parameter
-    if (csr_random_mat(rank, ranks_info, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity, &offDiagonalElements) != 1) {
+    if (csr_random_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, mat_col, nonZeroPerRow, sparsity, &offDiagonalElements) != 1) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nRanks, (ranks_info[rank].M*nRanks),
                nonZeroPerRow);
     }
@@ -313,21 +309,23 @@ int main(int argc, char *argv[]) {
                nonZeroPerRow);
     }*/
 
-    on_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
-    on_diagonal_col = (int *) malloc_or_exit((ranks_info[rank].NZ - offDiagonalElements) * sizeof(int));
-    on_diagonal_val = (double *) malloc_or_exit((ranks_info[rank].NZ - offDiagonalElements) * sizeof(double));
-
+    int diagonal_elements = ranks_info[rank].NZ - offDiagonalElements;
+    if(diagonal_elements>0) {
+        on_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
+        on_diagonal_col = (int *) malloc_or_exit(diagonal_elements * sizeof(int));
+        on_diagonal_val = (double *) malloc_or_exit(diagonal_elements * sizeof(double));
+        on_diagonal_row[0] = 0;
+    }
     if(offDiagonalElements>0) {
         off_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
         off_diagonal_col = (int *) malloc_or_exit(offDiagonalElements * sizeof(int));
         off_diagonal_val = (double *) malloc_or_exit(offDiagonalElements * sizeof(double));
         off_diagonal_row[0] = 0;
     }
-    on_diagonal_row[0] = 0;
     int on_diag_idx = 0, off_diag_idx = 0;
     for (int k = 0; k < mat_row; ++k) {
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
-            if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row) || offDiagonalElements<=0) {
+            if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row)) {
                 on_diagonal_col[on_diag_idx] = col_ptr[l];
                 on_diagonal_val[on_diag_idx] = val_ptr[l];
                 on_diag_idx++;
@@ -337,7 +335,9 @@ int main(int argc, char *argv[]) {
                 off_diag_idx++;
             }
         }
-        on_diagonal_row[k + 1] = on_diag_idx;
+        if(diagonal_elements>0)
+            on_diagonal_row[k + 1] = on_diag_idx;
+
         if(offDiagonalElements>0)
             off_diagonal_row[k + 1] = off_diag_idx;
     }
@@ -379,7 +379,6 @@ int main(int argc, char *argv[]) {
                                              send_col_idx, reqRequired);
     MPI_Barrier(MPI_COMM_WORLD);
     /// Start sparse matrix vector multiplication for each rank
-    MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
         res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
