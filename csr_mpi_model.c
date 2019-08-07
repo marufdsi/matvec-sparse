@@ -367,6 +367,15 @@ int main(int argc, char *argv[]) {
     if (offDiagonalElements > 0)
         reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
+    for(int r=0; r<nRanks; ++r) {
+        for (int i = 0; i < perRankDataRecv[r]; i++) {
+            if (reqColFromRank[r][i] < 0 || reqColFromRank[r][i] >= procs_info[rank].N) {
+                printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
+                return 0;
+            }
+        }
+    }
+    printf("[%d] data has no issues\n", rank);
     if (reqRequired > 0) {
         if (interProcessCall > 0)
             avg_communication = count_communication / interProcessCall;
