@@ -67,7 +67,6 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
                 continue;
             }
             send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
-            printf("[%d] start sending\n", rank);
             if (send_col_idx[r] == NULL){
                 printf("[%d] Sending column not found for=%d\n", rank, r);
             }
@@ -392,7 +391,37 @@ int main(int argc, char *argv[]) {
 
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
+
+
+    /**
+     * start
+     */
+    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
+    /// Reply to the requests.
+    double **send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double *));
+    for (int r = 0; r < nRanks; ++r) {
+        if (r == rank || perRankDataSend[r] <= 0){
+            send_reqs[r] = MPI_REQUEST_NULL;
+            continue;
+        }
+        send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
+        if (send_col_idx[r] == NULL){
+            printf("[%d] Sending column not found for=%d\n", rank, r);
+        }
+        for (int i = 0; i < perRankDataSend[r]; ++i) {
+            if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
+                printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
+                return 0;
+            }
+            send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
+        }
+        MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
+    }
+    /**
+     * end
+     */
     MPI_Barrier(MPI_COMM_WORLD);
+    return 0;
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
