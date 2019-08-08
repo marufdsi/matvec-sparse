@@ -417,6 +417,7 @@ int main(int argc, char *argv[]) {
         }
         MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
     }
+    printf("[%d] Done!! no problem...", rank);
     /**
      * end
      */
