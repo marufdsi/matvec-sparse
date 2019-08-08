@@ -24,6 +24,7 @@ enum tag {
 
 double *
 matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr,
+        int *off_row_ptr, int *off_col_ptr, double *off_val_ptr,
         double *buf_x, int **send_col_idx, int *perRankDataRecv, int **reqColFromRank,
         int *perRankDataSend, int reqRequired, int nRanksExpectCol) {
 

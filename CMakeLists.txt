@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.9)
 project(matvec_sparse C)
 
 set(CMAKE_C_STANDARD 11)
@@ -21,4 +21,5 @@ add_executable(matvec_sparse
         util.c
         util.h
         csr_mpi_spmv.c
-        csr_mpi_model.c)
+        csr_mpi_model.c
+        csr_spmv.c)
