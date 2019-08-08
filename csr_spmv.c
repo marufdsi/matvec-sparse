@@ -67,6 +67,7 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
                 continue;
             }
             send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
+            printf("[%d] start sending", rank);
             if (send_col_idx[r] == NULL){
                 printf("[%d] Sending column not found for=%d\n", rank, r);
             }
