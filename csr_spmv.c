@@ -35,7 +35,7 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
     MPI_Request *send_reqs, *recv_reqs;
     int reqMade = 0;
     if (reqRequired > 0) {
-        recv_buf = (double **) malloc_or_exit(nRanks * sizeof(double));
+        recv_buf = (double **) malloc_or_exit(nRanks * sizeof(double *));
         recvColFromRanks = (double *) malloc_or_exit(procs_info[rank].N * sizeof(double));
         /// MPI request storage
         recv_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
@@ -56,13 +56,11 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
             y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
     }
 
-    printf("[%d] Local Multiplicaton done\n", rank);
-    return y;
     double **send_buf_data;
     if (nRanksExpectCol > 0) {
         send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
         /// Reply to the requests.
-        send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double));
+        send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double *));
         for (int r = 0; r < nRanks; ++r) {
             if (r == rank || perRankDataSend[r] <= 0){
                 send_reqs[r] = MPI_REQUEST_NULL;
@@ -73,6 +71,9 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
                 if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
                     printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
                     return 0;
+                }
+                if (send_col_idx[r][i] == NULL){
+                    printf("[%d] Sending column not found for=%d\n", rank, r);
                 }
                 send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
             }
