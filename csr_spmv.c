@@ -67,13 +67,13 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
                 continue;
             }
             send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
+            if (send_col_idx[r] == NULL){
+                printf("[%d] Sending column not found for=%d\n", rank, r);
+            }
             for (int i = 0; i < perRankDataSend[r]; ++i) {
                 if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
                     printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
                     return 0;
-                }
-                if (send_col_idx[r][i] == NULL){
-                    printf("[%d] Sending column not found for=%d\n", rank, r);
                 }
                 send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
             }
