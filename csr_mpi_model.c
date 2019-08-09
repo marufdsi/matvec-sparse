@@ -268,7 +268,6 @@ int main(int argc, char *argv[]) {
             out_file = argv[2];
     }
     int offDiagonalElements = 0;
-    printf("[%d] start matrix\n", rank);
     if (rank_wise_read_matrix_csr(in_file, row_ptr, col_ptr, val_ptr,
                               ranks_info, rank, &offDiagonalElements) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
@@ -280,9 +279,6 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    printf("[%d] matrix creation done\n", rank);
-    MPI_Barrier(MPI_COMM_WORLD);
-    return 0;
     int diagonal_elements = ranks_info[rank].NZ - offDiagonalElements;
     if(diagonal_elements>0) {
         on_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
