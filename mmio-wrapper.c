@@ -183,8 +183,6 @@ int rank_wise_read_matrix_csr (const char * filename, int *row_ptr, int *col_ptr
                 filename, errorcode);
         return 1;
     }
-
-/********************************* Start **********************************/
     ranks_info[rank].M = nrows;
     ranks_info[rank].N = ncols;
     ranks_info[rank].NZ = nz_elements;
@@ -193,7 +191,6 @@ int rank_wise_read_matrix_csr (const char * filename, int *row_ptr, int *col_ptr
     row_ptr = (int *) calloc_or_exit((nrows + 1), sizeof(int));
     col_ptr = (int *) malloc_or_exit(ranks_info[rank].NZ * sizeof(int));
     val_ptr = (double *) malloc_or_exit(ranks_info[rank].NZ * sizeof(double));
-    /******************************** End ***************************/
 
     start_row = ncols;
     row_ptr[0] = 0;
@@ -212,6 +209,9 @@ int rank_wise_read_matrix_csr (const char * filename, int *row_ptr, int *col_ptr
     ranks_info[rank].first_row = start_row;
     ranks_info[rank].last_row = end_row;
     for (int i = 0; i < ranks_info[rank].NZ; i++) {
+        if((i_idx[i]-start_row) >= nrows || (i_idx[i]-start_row)<0){
+            printf("[%d] Index out of bound for row=%d, start row=%d, end row=%d\n", rank, i_idx[i], start_row, end_row);
+        }
         row_ptr[i_idx[i]-start_row]++;
     }
 
@@ -223,7 +223,10 @@ int rank_wise_read_matrix_csr (const char * filename, int *row_ptr, int *col_ptr
     row_ptr[nrows] = nz_elements;
 
     for(int n = 0; n < nz_elements; n++){
-        int row  = i_idx[n];
+        int row  = i_idx[n]-start_row;
+        if(row<0 || row>= nrows){
+            printf("[%d] out of bound for row=%d, start row=%d, end row=%d\n", rank, row, start_row, end_row);
+        }
         int dest = row_ptr[row];
         if(!in_diagonal(j_idx[n], start_row, end_row)){
             (*offDiagonalElements)++;
