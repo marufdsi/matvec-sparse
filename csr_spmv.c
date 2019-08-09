@@ -413,9 +413,14 @@ int main(int argc, char *argv[]) {
                 printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
                 return 0;
             }
+            if((send_col_idx[r][i] - procs_info[r].first_row)>= mat_row || (send_col_idx[r][i] - procs_info[r].first_row)<0){
+                printf("[%d] Index out of bound for r=%d, col=%d\n", rank, r, send_col_idx[r][i]);
+            }
             double col_val = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
             send_buf_data[r][i] = (double) 120.0;
-            printf("[%d] col value=%lf", rank, col_val);
+            if(col_val != 1.0) {
+                printf("[%d] col value=%lf", rank, col_val);
+            }
 //            send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
         }
 //        MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
