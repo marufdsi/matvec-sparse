@@ -312,6 +312,7 @@ int main(int argc, char *argv[]) {
             off_diagonal_row[k + 1] = off_diag_idx;
     }
 
+    printf("[%d] find inter rank comm\n", rank);
     free(row_ptr);
     free(col_ptr);
     free(val_ptr);
@@ -331,7 +332,6 @@ int main(int argc, char *argv[]) {
             reqColFromRank[i] = (int *) malloc_or_exit(procs_info[i].M * sizeof(int));
     }
 
-    printf("[%d] find inter rank comm\n", rank);
     int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0, reqRequired = 0;
     /// Find the columns that belong to other ranks
     if (offDiagonalElements > 0)
