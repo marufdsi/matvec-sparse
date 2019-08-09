@@ -102,7 +102,6 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
                 y[i] += off_val_ptr[k] * recvColFromRanks[off_col_ptr[k]];
         }
     }
-    printf("[%d] Global multiplication done\n", rank);
     if (nRanksExpectCol > 0) {
         /// Wait until send request delivered to through network.
         MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
