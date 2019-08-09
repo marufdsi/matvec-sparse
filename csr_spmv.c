@@ -398,13 +398,13 @@ int main(int argc, char *argv[]) {
      */
 //    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
     /// Reply to the requests.
-    double **send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double *));
+//    double **send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double *));
     for (int r = 0; r < nRanks; ++r) {
         if (r == rank || perRankDataSend[r] <= 0){
 //            send_reqs[r] = MPI_REQUEST_NULL;
             continue;
         }
-        send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
+//        send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
         if (send_col_idx[r] == NULL){
             printf("[%d] Sending column not found for=%d\n", rank, r);
         }
@@ -413,7 +413,8 @@ int main(int argc, char *argv[]) {
                 printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
                 return 0;
             }
-            send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
+//            send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
+            double col_val = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
         }
 //        MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
     }
