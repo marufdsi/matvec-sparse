@@ -396,12 +396,12 @@ int main(int argc, char *argv[]) {
     /**
      * start
      */
-    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
+//    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
     /// Reply to the requests.
     double **send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double *));
     for (int r = 0; r < nRanks; ++r) {
         if (r == rank || perRankDataSend[r] <= 0){
-            send_reqs[r] = MPI_REQUEST_NULL;
+//            send_reqs[r] = MPI_REQUEST_NULL;
             continue;
         }
         send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
