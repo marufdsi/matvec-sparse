@@ -413,7 +413,7 @@ int main(int argc, char *argv[]) {
                 printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
                 return 0;
             }
-//            send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
+            send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
             double col_val = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
         }
 //        MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
