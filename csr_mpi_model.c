@@ -331,19 +331,20 @@ int main(int argc, char *argv[]) {
             reqColFromRank[i] = (int *) malloc_or_exit(procs_info[i].M * sizeof(int));
     }
 
+    printf("[%d] find inter rank comm\n", rank);
     int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0, reqRequired = 0;
     /// Find the columns that belong to other ranks
     if (offDiagonalElements > 0)
         reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
-    for(int r=0; r<nRanks; ++r) {
+    /*for(int r=0; r<nRanks; ++r) {
         for (int i = 0; i < perRankDataRecv[r]; i++) {
             if (reqColFromRank[r][i] < 0 || reqColFromRank[r][i] >= procs_info[rank].N) {
                 printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
                 return 0;
             }
         }
-    }
+    }*/
     printf("[%d] data has no issues\n", rank);
     if (reqRequired > 0) {
         if (interProcessCall > 0)
