@@ -72,17 +72,15 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
             }
             for (int i = 0; i < perRankDataSend[r]; ++i) {
                 if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
-                    printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
+                    printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], rank);
                     return 0;
                 }
-                send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
+                send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[rank].first_row];
             }
             MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
         }
     }
 
-    printf("[%d] Request send done\n", rank);
-    return y;
     int r;
     for (int q = 0; q < reqMade; q++) {
         MPI_Waitany(nRanks, recv_reqs, &r, MPI_STATUS_IGNORE);
@@ -96,7 +94,6 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
             recvColFromRanks[reqColFromRank[r][i]] = recv_buf[r][i];
         }
     }
-    printf("[%d] Global data received\n", rank);
 
     if (reqRequired > 0) {
         /// Global elements multiplication
@@ -391,46 +388,7 @@ int main(int argc, char *argv[]) {
 
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
-
-
-    /**
-     * start
-     */
-//    MPI_Request *send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
-    /// Reply to the requests.
-    double **send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double *));
-    for (int r = 0; r < nRanks; ++r) {
-        if (r == rank || perRankDataSend[r] <= 0){
-//            send_reqs[r] = MPI_REQUEST_NULL;
-            continue;
-        }
-        send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
-        if (send_col_idx[r] == NULL){
-            printf("[%d] Sending column not found for=%d\n", rank, r);
-        }
-        for (int i = 0; i < perRankDataSend[r]; ++i) {
-            if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
-                printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
-                return 0;
-            }
-            if((send_col_idx[r][i] - procs_info[r].first_row)>= mat_row || (send_col_idx[r][i] - procs_info[r].first_row)<0){
-                printf("[%d] Index out of bound for r=%d, col=%d\n", rank, r, send_col_idx[r][i]);
-            }
-            double col_val = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
-            send_buf_data[r][i] = (double) 120.0;
-            if(col_val != 1.0) {
-                printf("[%d] col value=%lf", rank, col_val);
-            }
-//            send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
-        }
-//        MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
-    }
-    printf("[%d] Done!! no problem...", rank);
-    /**
-     * end
-     */
     MPI_Barrier(MPI_COMM_WORLD);
-    return 0;
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
