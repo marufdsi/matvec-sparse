@@ -268,8 +268,8 @@ int main(int argc, char *argv[]) {
             out_file = argv[2];
     }
     int offDiagonalElements = 0;
-    if (rank_wise_read_matrix_csr(in_file, row_ptr, col_ptr, val_ptr,
-                              ranks_info, rank, &offDiagonalElements) != 0) {
+    if (rank_wise_read_matrix_csr(in_file, &row_ptr, &col_ptr, &val_ptr,
+                              &ranks_info, rank, &offDiagonalElements) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
@@ -311,8 +311,6 @@ int main(int argc, char *argv[]) {
         if(offDiagonalElements>0)
             off_diagonal_row[k + 1] = off_diag_idx;
     }
-
-    printf("[%d] find inter rank comm\n", rank);
     free(row_ptr);
     free(col_ptr);
     free(val_ptr);
