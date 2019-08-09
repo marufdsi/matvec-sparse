@@ -280,7 +280,8 @@ int main(int argc, char *argv[]) {
     }
 
     printf("[%d], matrix creation done", rank);
-
+    MPI_Barrier(MPI_COMM_WORLD);
+    return 0;
     int diagonal_elements = ranks_info[rank].NZ - offDiagonalElements;
     if(diagonal_elements>0) {
         on_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
