@@ -414,7 +414,7 @@ int main(int argc, char *argv[]) {
                 return 0;
             }
             double col_val = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
-            send_buf_data[r][i] = 1.0;
+            send_buf_data[r][i] = col_val;
 //            send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[r].first_row];
         }
 //        MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
