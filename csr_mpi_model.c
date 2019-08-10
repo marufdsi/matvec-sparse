@@ -34,7 +34,7 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
     MPI_Request *send_reqs, *recv_reqs;
     int reqMade = 0;
     if (reqRequired > 0) {
-        recv_buf = (double **) malloc_or_exit(nRanks * sizeof(double));
+        recv_buf = (double **) malloc_or_exit(nRanks * sizeof(double *));
         recvColFromRanks = (double *) malloc_or_exit(procs_info[rank].N * sizeof(double));
         /// MPI request storage
         recv_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
@@ -59,16 +59,19 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
     if (nRanksExpectCol > 0) {
         send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
         /// Reply to the requests.
-        send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double));
+        send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double *));
         for (int r = 0; r < nRanks; ++r) {
-            if (perRankDataSend[r] <= 0){
+            if (r == rank || perRankDataSend[r] <= 0){
                 send_reqs[r] = MPI_REQUEST_NULL;
                 continue;
             }
             send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
+            if (send_col_idx[r] == NULL){
+                printf("[%d] Sending column not found for=%d\n", rank, r);
+            }
             for (int i = 0; i < perRankDataSend[r]; ++i) {
                 if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
-                    printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], r);
+                    printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], rank);
                     return 0;
                 }
                 send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[rank].first_row];
@@ -77,7 +80,6 @@ matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_pt
         }
     }
 
-    printf("[%d] Request send done\n", rank);
     int r;
     for (int q = 0; q < reqMade; q++) {
         MPI_Waitany(nRanks, recv_reqs, &r, MPI_STATUS_IGNORE);
@@ -335,15 +337,15 @@ int main(int argc, char *argv[]) {
     if (offDiagonalElements > 0)
         reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
-    /*for(int r=0; r<nRanks; ++r) {
+    for(int r=0; r<nRanks; ++r) {
         for (int i = 0; i < perRankDataRecv[r]; i++) {
             if (reqColFromRank[r][i] < 0 || reqColFromRank[r][i] >= procs_info[rank].N) {
                 printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
                 return 0;
             }
         }
-    }*/
-//    printf("[%d] data has no issues\n", rank);
+    }
+    printf("[%d] data has no issues\n", rank);
     if (reqRequired > 0) {
         if (interProcessCall > 0)
             avg_communication = count_communication / interProcessCall;
@@ -355,7 +357,7 @@ int main(int argc, char *argv[]) {
 
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
-    
+
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
