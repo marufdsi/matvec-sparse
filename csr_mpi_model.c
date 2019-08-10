@@ -349,14 +349,6 @@ int main(int argc, char *argv[]) {
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
 
-    /******/
-    res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
-                  off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, reqColFromRank,
-                  perRankDataSend, reqRequired, nRanksExpectCol);
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf("[%d] multiplication done\n", rank);
-    return 0;
-    /******/
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
     MPI_Barrier(MPI_COMM_WORLD);
