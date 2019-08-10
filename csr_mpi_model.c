@@ -390,12 +390,12 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "Name,MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall\n");
+                    "Name,MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall,SizeOfData\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", _ptr,procs_info[rank].N, min_time, max_time,
+        fprintf(resultCSV, "%s,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d,%d\n", _ptr,procs_info[rank].N, min_time, max_time,
                 mean, total_run, nRanks, (procs_info[rank].NZ/procs_info[rank].M), procs_info[rank].NZ, (per_rank_data_send / nRanks),
-                (totalInterProcessCall / nRanks));
+                (totalInterProcessCall / nRanks), sizeof(double));
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI.csv");
             exit(EXIT_FAILURE);
