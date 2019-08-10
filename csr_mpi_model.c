@@ -244,8 +244,7 @@ int main(int argc, char *argv[]) {
 
     char *in_file, *out_file = NULL;
     double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
-    int nonZeroPerRow = 0, total_run = 100, mat_row = 0, mat_col = 0, sparsity = 0;
-    int nRanks, rank;
+    int total_run = 100, nRanks, rank;
     int *row_ptr, *on_diagonal_row, *off_diagonal_row, *col_ptr, *off_diagonal_col, *on_diagonal_col;
     double *val_ptr, *off_diagonal_val, *on_diagonal_val, *buf_x, *res;
     proc_info_t *ranks_info;
@@ -270,8 +269,8 @@ int main(int argc, char *argv[]) {
             out_file = argv[2];
     }
     int offDiagonalElements = 0;
-    if (rank_wise_read_matrix_csr(in_file, &row_ptr, &col_ptr, &val_ptr,
-                              &ranks_info, rank, &offDiagonalElements) != 0) {
+    if (rank_wise_read_matrix_csr(in_file, &row_ptr, &col_ptr, &val_ptr, &ranks_info, rank,
+                                  &offDiagonalElements) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
@@ -283,19 +282,19 @@ int main(int argc, char *argv[]) {
 
     int diagonal_elements = ranks_info[rank].NZ - offDiagonalElements;
     if(diagonal_elements>0) {
-        on_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
+        on_diagonal_row = (int *) malloc_or_exit((ranks_info[rank].M + 1) * sizeof(int));
         on_diagonal_col = (int *) malloc_or_exit(diagonal_elements * sizeof(int));
         on_diagonal_val = (double *) malloc_or_exit(diagonal_elements * sizeof(double));
         on_diagonal_row[0] = 0;
     }
     if(offDiagonalElements>0) {
-        off_diagonal_row = (int *) malloc_or_exit((mat_row + 1) * sizeof(int));
+        off_diagonal_row = (int *) malloc_or_exit((ranks_info[rank].M + 1) * sizeof(int));
         off_diagonal_col = (int *) malloc_or_exit(offDiagonalElements * sizeof(int));
         off_diagonal_val = (double *) malloc_or_exit(offDiagonalElements * sizeof(double));
         off_diagonal_row[0] = 0;
     }
     int on_diag_idx = 0, off_diag_idx = 0;
-    for (int k = 0; k < mat_row; ++k) {
+    for (int k = 0; k < ranks_info[rank].M; ++k) {
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
             if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row)) {
                 on_diagonal_col[on_diag_idx] = col_ptr[l];
@@ -317,8 +316,8 @@ int main(int argc, char *argv[]) {
     free(col_ptr);
     free(val_ptr);
     /// Create vector x and fill with 1.0
-    buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
-    for (int i = 0; i < mat_row; i++) {
+    buf_x = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
+    for (int i = 0; i < ranks_info[rank].M; i++) {
         buf_x[i] = 1.00;
     }
     /// Share process info among all the processes
@@ -354,7 +353,7 @@ int main(int argc, char *argv[]) {
     res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
                   off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, reqColFromRank,
                   perRankDataSend, reqRequired, nRanksExpectCol);
-    MPI_Barrier(MPI_COMM_WORLD);\
+    MPI_Barrier(MPI_COMM_WORLD);
     printf("[%d] multiplication done\n", rank);
     return 0;
     /******/
@@ -381,8 +380,8 @@ int main(int argc, char *argv[]) {
 //    strcpy(outputFIle, "CSR_SpMV_Model_Random.csv");
     /// print execution stats
     if (rank == MASTER) {
-        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d, Sparsity: %d\n",
-               rank, min_time, max_time, mean, procs_info[rank].NZ, sparsity);
+        printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
+               rank, min_time, max_time, mean, procs_info[rank].NZ);
         char *_ptr = strtok(in_file, "_");
         FILE *resultCSV;
         FILE *checkFile;
@@ -399,20 +398,22 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "Name,MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,Sparsity,AvgCommunication,AvgInterProcessCall\n");
+                    "Name,MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d,%d\n", _ptr,procs_info[rank].N, min_time, max_time,
-                mean, total_run, nRanks, (procs_info[rank].NZ/procs_info[rank].M), procs_info[rank].NZ, sparsity, (per_rank_data_send / nRanks),
+        fprintf(resultCSV, "%s,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", _ptr,procs_info[rank].N, min_time, max_time,
+                mean, total_run, nRanks, (procs_info[rank].NZ/procs_info[rank].M), procs_info[rank].NZ, (per_rank_data_send / nRanks),
                 (totalInterProcessCall / nRanks));
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI.csv");
             exit(EXIT_FAILURE);
         }
     }
-    free(on_diagonal_row);
-    free(on_diagonal_col);
-    free(on_diagonal_val);
+    if(diagonal_elements>0) {
+        free(on_diagonal_row);
+        free(on_diagonal_col);
+        free(on_diagonal_val);
+    }
     if(offDiagonalElements>0) {
         free(off_diagonal_row);
         free(off_diagonal_col);
