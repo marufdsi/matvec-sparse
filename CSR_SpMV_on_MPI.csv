@@ -1,0 +1,2 @@
+Name,MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall
+input/nlpkkt160,8345600,    20.219,    20.225,    20.222,100,128,26,1663254,1503,10
