@@ -337,15 +337,7 @@ int main(int argc, char *argv[]) {
     if (offDiagonalElements > 0)
         reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements, perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
-    for(int r=0; r<nRanks; ++r) {
-        for (int i = 0; i < perRankDataRecv[r]; i++) {
-            if (reqColFromRank[r][i] < 0 || reqColFromRank[r][i] >= procs_info[rank].N) {
-                printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
-                return 0;
-            }
-        }
-    }
-    printf("[%d] data has no issues\n", rank);
+
     if (reqRequired > 0) {
         if (interProcessCall > 0)
             avg_communication = count_communication / interProcessCall;
@@ -358,8 +350,17 @@ int main(int argc, char *argv[]) {
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
 
+    /******/
+    res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
+                  off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, reqColFromRank,
+                  perRankDataSend, reqRequired, nRanksExpectCol);
+    MPI_Barrier(MPI_COMM_WORLD);\
+    printf("[%d] multiplication done\n", rank);
+    return 0;
+    /******/
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
         res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
                       off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, reqColFromRank,
