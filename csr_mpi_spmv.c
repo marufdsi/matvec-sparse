@@ -121,16 +121,16 @@ int main(int argc, char *argv[]) {
         FILE *resultCSV;
         FILE *checkFile;
         /// File Name CSR_MPI_SpMV.csv
-        if ((checkFile = fopen("CSR_SpMV_Model.csv", "r")) != NULL) {
+        if ((checkFile = fopen("MPI_SpMV_Model.csv", "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen("CSR_SpMV_Model.csv", "a"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_MPI_SpMV.csv");
+            if (!(resultCSV = fopen("MPI_SpMV_Model.csv", "a"))) {
+                fprintf(stderr, "fopen: failed to open file MPI_SpMV_Model.csv");
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_SpMV_Model.csv", "w"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_MPI_SpMV.csv");
+            if (!(resultCSV = fopen("MPI_SpMV_Model.csv", "w"))) {
+                fprintf(stderr, "fopen: failed to open file MPI_SpMV_Model.csv");
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
         fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", mat_size, min_time, max_time, mean,
                 total_run, nprocs, nonZeroPerRow, nonZero, bandwidth, gap);
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model");
+            fprintf(stderr, "fopen: failed to open file MPI_SpMV_Model");
             exit(EXIT_FAILURE);
         }
     }
