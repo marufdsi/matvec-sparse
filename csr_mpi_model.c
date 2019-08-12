@@ -366,6 +366,11 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
 
+    int max_nnz = 0;
+    double max_nnz_per_row = 0.0, nnz_per_row = procs_info[rank].NZ/procs_info[rank].M;
+    MPI_Reduce(&procs_info[rank].NZ, &max_nnz, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&nnz_per_row, &max_nnz_per_row, 1, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
+
 //    char *outputFIle = (char *) malloc_or_exit(100 * sizeof(char));
 //    strcpy(outputFIle, "CSR_SpMV_Model.csv");
 //    strcpy(outputFIle, "CSR_SpMV_Model_Diagonal.csv");
@@ -394,8 +399,8 @@ int main(int argc, char *argv[]) {
         }
 
         fprintf(resultCSV, "%s,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d,%10.3lf,%10.3lf,%d\n", _ptr,procs_info[rank].N, min_time, max_time,
-                mean, total_run, nRanks, ((double)procs_info[rank].NZ/procs_info[rank].M), procs_info[rank].NZ, (per_rank_data_send / nRanks),
-                (totalInterProcessCall / nRanks), sizeof(double));
+                mean, total_run, nRanks, max_nnz_per_row, max_nnz, ((double)per_rank_data_send / nRanks),
+                ((double)totalInterProcessCall / nRanks), sizeof(double));
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI.csv");
             exit(EXIT_FAILURE);
