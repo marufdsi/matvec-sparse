@@ -196,7 +196,7 @@ int rank_wise_read_matrix_csr (const char * filename, int **row_ptr, int **col_p
     (*row_ptr)[0] = 0;
     int *i_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
     int *j_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
-    int *values = (double *) malloc_or_exit(nz_elements * sizeof(double));
+    double *values = (double *) malloc_or_exit(nz_elements * sizeof(double));
     /* read actual matrix */
     for (int i = 0; i < nz_elements; i++) {
         fscanf(f, "%d %d %lf", &(i_idx[i]), &(j_idx[i]), &(values[i]));
