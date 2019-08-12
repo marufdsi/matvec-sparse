@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int mat_size = 0, nonZero = 0, nonZeroPerRow = 0, total_run = 100, mat_row = 0;
+    int mat_size = 0, nonZero = 0, nonZeroPerRow = 0, total_run = 100, mat_row = 0, bandwidth=0, gap = 1;
 
     if (argc < 4) {
         printf("Usage: %s matrix_row nonZeroPerRow [Total_Runs]\n", argv[0]);
@@ -60,7 +60,9 @@ int main(int argc, char *argv[]) {
         mat_size = atoi(argv[2]);
         nonZeroPerRow = atoi(argv[3]);
         if (argc > 4)
-            total_run = atoi(argv[4]);
+            gap = atoi(argv[4]);
+        if (argc > 5)
+            total_run = atoi(argv[5]);
     }
 
 //    mat_size = mat_row*nprocs;
@@ -83,7 +85,10 @@ int main(int argc, char *argv[]) {
     row_ptr = (int *)malloc( (mat_row+1) * sizeof(int) );
     col_ptr = (int *)malloc( nonZero * sizeof(int) );
     val_ptr = (double *)malloc( nonZero * sizeof(double));
-    if(csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1){
+    /*if(csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1){
+        printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
+    }*/
+    if(csr_diagonal_mat_with_bandwidth(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow, gap, bandwidth) != 1){
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }
 
@@ -115,26 +120,27 @@ int main(int argc, char *argv[]) {
                rank, min_time, max_time, mean, nonZero);
         FILE *resultCSV;
         FILE *checkFile;
-        if ((checkFile = fopen("CSR_MPI_SpMV.csv", "r")) != NULL) {
+        /// File Name CSR_MPI_SpMV.csv
+        if ((checkFile = fopen("CSR_SpMV_Model.csv", "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen("CSR_MPI_SpMV.csv", "a"))) {
+            if (!(resultCSV = fopen("CSR_SpMV_Model.csv", "a"))) {
                 fprintf(stderr, "fopen: failed to open file CSR_MPI_SpMV.csv");
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_MPI_SpMV.csv", "w"))) {
+            if (!(resultCSV = fopen("CSR_SpMV_Model.csv", "w"))) {
                 fprintf(stderr, "fopen: failed to open file CSR_MPI_SpMV.csv");
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock\n");
+                    "MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,Bandwidth,Gap\n");
         }
 
-        fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d\n", mat_size, min_time, max_time, mean,
-                total_run, nprocs, nonZeroPerRow, nonZero);
+        fprintf(resultCSV, "%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%d,%d,%d,%d\n", mat_size, min_time, max_time, mean,
+                total_run, nprocs, nonZeroPerRow, nonZero, bandwidth, gap);
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file MPISpMVResult");
+            fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model");
             exit(EXIT_FAILURE);
         }
     }

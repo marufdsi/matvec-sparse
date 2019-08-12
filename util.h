@@ -46,6 +46,8 @@ int csr_random_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_p
 
 int csr_diagonal_mat (int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow);
 
+int csr_diagonal_mat_with_bandwidth(int rank, int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nzPerRow, int gap, int *bandwidth);
+
 void * malloc_or_exit(size_t size);
 
 void * calloc_or_exit(size_t nmemb, size_t size);
