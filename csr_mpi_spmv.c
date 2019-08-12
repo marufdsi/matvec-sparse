@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
     /*if(csr_diagonal_mat(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow) != 1){
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }*/
-    if(csr_diagonal_mat_with_bandwidth(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow, gap, bandwidth) != 1){
+    if(csr_diagonal_mat_with_bandwidth(rank, row_ptr, col_ptr, val_ptr, mat_row, nonZeroPerRow, gap, &bandwidth) != 1){
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }
 
