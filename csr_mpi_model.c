@@ -294,17 +294,28 @@ int main(int argc, char *argv[]) {
         off_diagonal_row[0] = 0;
     }
     int on_diag_idx = 0, off_diag_idx = 0;
+    int in_diagonal_bandwidth = 0;
     for (int k = 0; k < ranks_info[rank].M; ++k) {
+        int l_col =ranks_info[rank].last_row, h_col=ranks_info[rank].first_row;
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
             if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row)) {
                 on_diagonal_col[on_diag_idx] = col_ptr[l];
                 on_diagonal_val[on_diag_idx] = val_ptr[l];
                 on_diag_idx++;
+                if(col_ptr[l]<l_col){
+                    l_col = col_ptr[l];
+                }
+                if(col_ptr[l]>h_col){
+                    h_col = col_ptr[l];
+                }
             } else {
                 off_diagonal_col[off_diag_idx] = col_ptr[l];
                 off_diagonal_val[off_diag_idx] = val_ptr[l];
                 off_diag_idx++;
             }
+        }
+        if(in_diagonal_bandwidth < (h_col - l_col + 1)){
+            in_diagonal_bandwidth = (h_col - l_col + 1);
         }
         if(diagonal_elements>0)
             on_diagonal_row[k + 1] = on_diag_idx;
@@ -366,9 +377,11 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
 
-    int max_nnz = 0;
+    int max_nnz = 0, max_row = 0, max_band_width = 0;
     double max_nnz_per_row = 0.0, nnz_per_row = procs_info[rank].NZ/procs_info[rank].M;
     MPI_Reduce(&procs_info[rank].NZ, &max_nnz, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&procs_info[rank].M, &max_row, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&in_diagonal_bandwidth, &max_band_width, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&nnz_per_row, &max_nnz_per_row, 1, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
 
 //    char *outputFIle = (char *) malloc_or_exit(100 * sizeof(char));
@@ -395,12 +408,12 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "Name,MatrixSize,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall,SizeOfData\n");
+                    "Name,MatrixSize,MaxRow,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall,SizeOfData,InDiagonalBandwidth\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d,%10.3lf,%10.3lf,%d\n", _ptr,procs_info[rank].N, min_time, max_time,
+        fprintf(resultCSV, "%s,%d,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d,%10.3lf,%10.3lf,%d,%d\n", _ptr,procs_info[rank].N, max_row, min_time, max_time,
                 mean, total_run, nRanks, max_nnz_per_row, max_nnz, ((double)per_rank_data_send / nRanks),
-                ((double)totalInterProcessCall / nRanks), sizeof(double));
+                ((double)totalInterProcessCall / nRanks), sizeof(double), max_band_width);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI.csv");
             exit(EXIT_FAILURE);
