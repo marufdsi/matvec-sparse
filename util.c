@@ -207,7 +207,7 @@ int csr_diagonal_mat_with_bandwidth(int rank, int *row_ptr, int *col_ptr, double
     int start_idx = 0;
     int row_elements = 0;
     row_ptr[0] = row_elements;
-    (*bandwidth) = nzPerRow + (nzPerRow-1)*gap;
+    (*bandwidth) = nzPerRow + (nzPerRow-1)*(gap-1);
     int lower_nnz = (*bandwidth) - ((*bandwidth) / 2);
     int range_start = rank * mat_row;
     for (int r = 0; r < mat_row; ++r) {
