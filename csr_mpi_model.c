@@ -146,7 +146,7 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
 /// receiving blocks storage
-   /* double **recv_buf, *recvColFromRanks;
+    double **recv_buf, *recvColFromRanks;
     MPI_Request *send_reqs, *recv_reqs;
     int reqMade = 0;
     if (reqRequired > 0) {
@@ -164,14 +164,14 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
             MPI_Irecv(recv_buf[r], perRankDataRecv[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &recv_reqs[r]);
             reqMade++;
         }
-    }*/
+    }
     /// Local elements multiplication
     for (int i = 0; i < procs_info[rank].M; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
             y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
     }
 
-   /* double **send_buf_data;
+    double **send_buf_data;
     if (nRanksExpectCol > 0) {
         send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
         /// Reply to the requests.
@@ -210,13 +210,13 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
         }
     }
 
-    if (reqRequired > 0) {
+    /*if (reqRequired > 0) {
         /// Global elements multiplication
         for (int i = 0; i < procs_info[rank].M; ++i) {
             for (int k = off_row_ptr[i]; k < off_row_ptr[i + 1]; ++k)
                 y[i] += off_val_ptr[k] * recvColFromRanks[off_col_ptr[k]];
         }
-    }
+    }*/
     if (nRanksExpectCol > 0) {
         /// Wait until send request delivered to through network.
         MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
@@ -237,7 +237,7 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
     }
     if (reqRequired > 0) {
         free(send_buf_data);
-    }*/
+    }
 
     return y;
 }
@@ -480,7 +480,7 @@ int main(int argc, char *argv[]) {
     double start_time = MPI_Wtime();
     MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
-        res = mpiMatMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
+        res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
                       off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, reqColFromRank,
                       perRankDataSend, reqRequired, nRanksExpectCol);
     }
