@@ -480,7 +480,7 @@ int main(int argc, char *argv[]) {
     double start_time = MPI_Wtime();
     MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
-        res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
+        res = mpiMatMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
                       off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, reqColFromRank,
                       perRankDataSend, reqRequired, nRanksExpectCol);
     }
