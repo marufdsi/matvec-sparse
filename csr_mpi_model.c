@@ -299,9 +299,7 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
             reqColFromRank[i] = (int *) malloc_or_exit(procs_info[i].M * sizeof(int));
         }
     }
-    (*count_communication) = 0;
-    (*interProcessCall) = 0;
-    /* build sending blocks to processors */
+    /// build sending blocks to processors
     int dest, col, reqRequired = 0;
     int *map = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     int *colCount = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
@@ -328,9 +326,6 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
         ///insert new request
         reqColFromRank[dest][perRankDataRecv[dest]++] = col;
         map[col] = 1;
-        if (perRankDataRecv[dest] == 1)
-            (*interProcessCall)++;
-        (*count_communication)++;
     }
     for (int r = 0; r < nRanks; ++r) {
         reqRowCol[r] = (int **) malloc_or_exit(perRankDataRecv[r] * sizeof(int *));
@@ -538,9 +533,11 @@ int main(int argc, char *argv[]) {
         reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
                                          perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
+        printf("[%d] star new process\n", rank);
         getRemoteColumnInfo(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
                                          perRankDataRecv, reqRowCol,
                                          &count_communication, &interProcessCall);
+        printf("[%d] end new process\n", rank);
     }
 
     if (reqRequired > 0) {
