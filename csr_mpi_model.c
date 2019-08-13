@@ -308,6 +308,10 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
     int *perColCount = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     for (int i = 0; i < offDiagonalElements; i++) {
         col = col_ptr[i];
+        colCount[col] +=1;
+        if(map[col]>0){
+            continue;
+        }
         ///search which rank has the element
         dest = -1;
         for (int r = 0; r < nRanks; r++) {
@@ -317,11 +321,7 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
             }
         }
         assert(dest >= 0);
-        colCount[col] +=1;
         colWiseRank[col] = dest;
-        if(map[col]>0){
-            continue;
-        }
         reqRequired++;
         ///insert new request
         reqColFromRank[dest][perRankDataRecv[dest]++] = col;
@@ -516,8 +516,9 @@ int main(int argc, char *argv[]) {
     }
     /// Share process info among all the processes
     MPI_Allgather(&ranks_info[rank], 1, procs_info_type, procs_info, 1, procs_info_type, MPI_COMM_WORLD);
-    int *perRankDataRecv, **reqColFromRank, ***reqRowCol;
+    int *perRankDataRecv, **reqColFromRank, *recvDataFromRank, ***reqRowCol;
     perRankDataRecv = (int *) calloc_or_exit(nRanks, sizeof(int));
+    recvDataFromRank = (int *) calloc_or_exit(nRanks, sizeof(int));
     /// Allocate buffers for requests sending
     reqColFromRank = (int **) malloc_or_exit(nRanks * sizeof(int *));
     reqRowCol = (int ***) malloc_or_exit(nRanks * sizeof(int **));
@@ -533,10 +534,9 @@ int main(int argc, char *argv[]) {
         reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
                                          perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);
-        printf("[%d] star new process\n", rank);
+
         getRemoteColumnInfo(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
-                                         perRankDataRecv, reqRowCol,
-                                         &count_communication, &interProcessCall);
+                            recvDataFromRank, reqRowCol, &count_communication, &interProcessCall);
         printf("[%d] end new process\n", rank);
     }
 
