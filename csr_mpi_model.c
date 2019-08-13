@@ -302,6 +302,7 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
     /// build sending blocks to processors
     int dest, col, reqRequired = 0;
     int *map = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
+    int *trackColIdx = (int *) malloc_or_exit(procs_info[rank].N * sizeof(int));
     int *colCount = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     int *colWiseRank = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     int *perRankColCount = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
@@ -309,6 +310,7 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
     for (int i = 0; i < offDiagonalElements; i++) {
         col = col_ptr[i];
         colCount[col] +=1;
+        trackColIdx[col] = -1;
         if(map[col]>0){
             continue;
         }
@@ -333,16 +335,22 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
             reqRowCol[r][i] = (int *) malloc_or_exit((1 + colCount[reqColFromRank[r][i]]) * sizeof(int));
         }
     }
+
     for (int i = 0; i < offDiagonalElements; i++) {
         col = col_ptr[i];
         dest = colWiseRank[col];
-        if(perColCount[col] == 0){
-            reqRowCol[dest][perRankColCount[dest]++][perColCount[col]++] = col;
+        if(trackColIdx[col] < 0){
+            trackColIdx[col] = perRankColCount[dest]++;
         }
-        reqRowCol[dest][perRankColCount[dest]++][perColCount[col]++] = i;
+        if(perColCount[col] == 0){
+            reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = col;
+        }
+        reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = i;
     }
     if(rank==MASTER) {
         for (int r = 0; r < nRanks; ++r) {
+            if(r == rank)
+                continue;
             for (int i = 0; i < perRankDataRecv[r]; ++i) {
                 if (reqColFromRank[r][i] != reqRowCol[r][i][0]) {
                     printf("[%d] Data %d is not same to %d\n", r, reqColFromRank[r][i], reqRowCol[r][i][0]);
