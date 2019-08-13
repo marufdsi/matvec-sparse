@@ -205,10 +205,10 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
             if (reqColFromRank[r][i]<0 || reqColFromRank[r][i] >= procs_info[rank].N){
                 printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
                 return 0;
-            }
+            }/*
             for (int j = 1; j < (1 + (2 * colCount[reqColFromRank[r][i]])); j+=2) {
                 y[reqRowCol[r][i][j]] += off_val_ptr[reqRowCol[r][i][j+1]] * recv_buf[r][i];
-            }
+            }*/
 //            recvColFromRanks[reqColFromRank[r][i]] = recv_buf[r][i];
         }
     }
@@ -561,7 +561,6 @@ int main(int argc, char *argv[]) {
 
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
-    printf("[%d] start multiplication\n", rank);
 
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
@@ -572,6 +571,7 @@ int main(int argc, char *argv[]) {
                       perRankDataSend, reqRequired, nRanksExpectCol);
     }
     MPI_Barrier(MPI_COMM_WORLD);
+    printf("[%d] End multiplication\n", rank);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
     avg_time = comp_time / total_run;
 
