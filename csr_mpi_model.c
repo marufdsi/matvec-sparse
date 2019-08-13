@@ -292,7 +292,7 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
     return reqRequired;
 }
 
-int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int offDiagonalElements, int *perRankDataRecv, int *colCount,
+int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_ptr, int *col_ptr, int offDiagonalElements, int *perRankDataRecv, int *colCount,
                         int **reqColFromRank, int ***reqRowCol, int *count_communication, int *interProcessCall) {
     (*count_communication) = 0;
     (*interProcessCall) = 0;
@@ -331,20 +331,23 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
     for (int r = 0; r < nRanks; ++r) {
         reqRowCol[r] = (int **) malloc_or_exit(perRankDataRecv[r] * sizeof(int *));
         for (int i = 0; i < perRankDataRecv[r]; ++i) {
-            reqRowCol[r][i] = (int *) malloc_or_exit((1 + colCount[reqColFromRank[r][i]]) * sizeof(int));
+            reqRowCol[r][i] = (int *) malloc_or_exit((1 + (2*colCount[reqColFromRank[r][i]])) * sizeof(int));
         }
     }
 
-    for (int i = 0; i < offDiagonalElements; i++) {
-        col = col_ptr[i];
-        dest = colWiseRank[col];
-        if(trackColIdx[col] < 0){
-            trackColIdx[col] = perRankColCount[dest]++;
+    for (int i = 0; i < procs_info[rank].M; ++i) {
+        for (int k = row_ptr[i]; k < row_ptr[i+1]; ++k) {
+            col = col_ptr[k];
+            dest = colWiseRank[col];
+            if(trackColIdx[col] < 0){
+                trackColIdx[col] = perRankColCount[dest]++;
+            }
+            if(perColCount[col] == 0){
+                reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = col;
+            }
+            reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = i;
+            reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = k;
         }
-        if(perColCount[col] == 0){
-            reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = col;
-        }
-        reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = i;
     }
     for (int r = 0; r < nRanks; ++r) {
         if(r == rank)
