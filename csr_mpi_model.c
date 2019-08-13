@@ -140,8 +140,8 @@ double *mpiMatMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, 
 }
 
 double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr, int *off_row_ptr,
-        int *off_col_ptr, double *off_val_ptr, double *buf_x, int **send_col_idx, int *perRankDataRecv, int **reqColFromRank,
-        int *perRankDataSend, int reqRequired, int nRanksExpectCol) {
+        int *off_col_ptr, double *off_val_ptr, double *buf_x, int **send_col_idx, int *perRankDataRecv, int *colCount, int **reqColFromRank,
+        int ***reRowCol, int *perRankDataSend, int reqRequired, int nRanksExpectCol) {
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
@@ -561,7 +561,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
         res = matMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
-                      off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, reqColFromRank,
+                      off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, colCount, reqColFromRank, reqRowCol,
                       perRankDataSend, reqRequired, nRanksExpectCol);
     }
     MPI_Barrier(MPI_COMM_WORLD);
