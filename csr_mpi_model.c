@@ -291,19 +291,15 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
     free(map);
     return reqRequired;
 }
-int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int offDiagonalElements, int *perRankDataRecv,
-                       int ***reqRowCol, int *count_communication, int *interProcessCall) {
-    int **reqColFromRank = (int **) malloc_or_exit(nRanks * sizeof(int *));
-    for (int i = 0; i < nRanks; i++) {
-        if (i != rank && procs_info[i].M > 0) {
-            reqColFromRank[i] = (int *) malloc_or_exit(procs_info[i].M * sizeof(int));
-        }
-    }
+
+int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int offDiagonalElements, int *perRankDataRecv, int *colCount,
+                        int **reqColFromRank, int ***reqRowCol, int *count_communication, int *interProcessCall) {
+    (*count_communication) = 0;
+    (*interProcessCall) = 0;
     /// build sending blocks to processors
     int dest, col, reqRequired = 0;
     int *map = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     int *trackColIdx = (int *) malloc_or_exit(procs_info[rank].N * sizeof(int));
-    int *colCount = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     int *colWiseRank = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     int *perRankColCount = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     int *perColCount = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
@@ -328,6 +324,9 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
         ///insert new request
         reqColFromRank[dest][perRankDataRecv[dest]++] = col;
         map[col] = 1;
+        if (perRankDataRecv[dest] == 1)
+            (*interProcessCall)++;
+        (*count_communication)++;
     }
     for (int r = 0; r < nRanks; ++r) {
         reqRowCol[r] = (int **) malloc_or_exit(perRankDataRecv[r] * sizeof(int *));
@@ -347,22 +346,26 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
         }
         reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = i;
     }
-    if(rank==MASTER) {
-        for (int r = 0; r < nRanks; ++r) {
-            if(r == rank)
-                continue;
-            for (int i = 0; i < perRankDataRecv[r]; ++i) {
-                if (reqColFromRank[r][i] != reqRowCol[r][i][0]) {
-                    printf("[%d] Data %d is not same to %d\n", r, reqColFromRank[r][i], reqRowCol[r][i][0]);
-                }
+    for (int r = 0; r < nRanks; ++r) {
+        if(r == rank)
+            continue;
+        for (int i = 0; i < perRankDataRecv[r]; ++i) {
+            if (reqColFromRank[r][i] != reqRowCol[r][i][0]) {
+                printf("[%d] Data %d is not same to %d\n", r, reqColFromRank[r][i], reqRowCol[r][i][0]);
             }
         }
     }
+
     free(map);
     free(colCount);
     free(colWiseRank);
     free(perRankColCount);
     free(perColCount);
+    for (int i = 0; i < nRanks; i++) {
+        if (i != rank && procs_info[i].M > 0) {
+            free(reqColFromRank[i]);
+        }
+    }
     free(reqColFromRank);
     return reqRequired;
 }
@@ -524,9 +527,9 @@ int main(int argc, char *argv[]) {
     }
     /// Share process info among all the processes
     MPI_Allgather(&ranks_info[rank], 1, procs_info_type, procs_info, 1, procs_info_type, MPI_COMM_WORLD);
-    int *perRankDataRecv, **reqColFromRank, *recvDataFromRank, ***reqRowCol;
+    int *perRankDataRecv, **reqColFromRank, ***reqRowCol;
+    int *colCount = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     perRankDataRecv = (int *) calloc_or_exit(nRanks, sizeof(int));
-    recvDataFromRank = (int *) calloc_or_exit(nRanks, sizeof(int));
     /// Allocate buffers for requests sending
     reqColFromRank = (int **) malloc_or_exit(nRanks * sizeof(int *));
     reqRowCol = (int ***) malloc_or_exit(nRanks * sizeof(int **));
@@ -539,12 +542,12 @@ int main(int argc, char *argv[]) {
     int count_communication = 0, interProcessCall = 0, totalInterProcessCall = 0, avg_communication = 0, per_rank_data_send = 0, reqRequired = 0;
     /// Find the columns that belong to other ranks
     if (offDiagonalElements > 0) {
-        reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
+        /*reqRequired = findInterRanksComm(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
                                          perRankDataRecv, reqColFromRank,
-                                         &count_communication, &interProcessCall);
+                                         &count_communication, &interProcessCall);*/
 
-        getRemoteColumnInfo(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
-                            recvDataFromRank, reqRowCol, &count_communication, &interProcessCall);
+        reqRequired = getRemoteColumnInfo(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
+                                          perRankDataRecv, colCount, reqColFromRank, reqRowCol, &count_communication, &interProcessCall);
     }
 
     if (reqRequired > 0) {
