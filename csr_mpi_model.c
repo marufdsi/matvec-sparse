@@ -545,7 +545,6 @@ int main(int argc, char *argv[]) {
 
         getRemoteColumnInfo(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
                             recvDataFromRank, reqRowCol, &count_communication, &interProcessCall);
-        printf("[%d] end new process\n", rank);
     }
 
     if (reqRequired > 0) {
