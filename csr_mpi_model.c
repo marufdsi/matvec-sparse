@@ -361,12 +361,6 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
     free(colWiseRank);
     free(perRankColCount);
     free(perColCount);
-    for (int i = 0; i < nRanks; i++) {
-        if (i != rank && procs_info[i].M > 0) {
-            free(reqColFromRank[i]);
-        }
-    }
-    free(reqColFromRank);
     return reqRequired;
 }
 
