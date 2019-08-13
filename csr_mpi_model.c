@@ -45,7 +45,7 @@ double *mpiMatMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, 
     int reqMade = 0;
     if (reqRequired > 0) {
         recv_buf = (double **) malloc_or_exit(nRanks * sizeof(double *));
-        recvColFromRanks = (double *) malloc_or_exit(nRanks * sizeof(double));
+        recvColFromRanks = (double **) malloc_or_exit(nRanks * sizeof(double*));
         /// MPI request storage
         recv_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
         for (int r = 0; r < nRanks; ++r) {
