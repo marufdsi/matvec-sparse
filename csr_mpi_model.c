@@ -543,7 +543,7 @@ int main(int argc, char *argv[]) {
                                          perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);*/
 
-        reqRequired = getRemoteColumnInfo(rank, nRanks, procs_info, off_diagonal_col, offDiagonalElements,
+        reqRequired = getRemoteColumnInfo(rank, nRanks, procs_info, off_diagonal_row, off_diagonal_col, offDiagonalElements,
                                           perRankDataRecv, colCount, reqColFromRank, reqRowCol, &count_communication, &interProcessCall);
     }
 
