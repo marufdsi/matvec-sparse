@@ -141,7 +141,7 @@ double *mpiMatMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, 
 
 double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr, int *off_row_ptr,
         int *off_col_ptr, double *off_val_ptr, double *buf_x, int **send_col_idx, int *perRankDataRecv, int *colCount, int **reqColFromRank,
-        int ***reRowCol, int *perRankDataSend, int reqRequired, int nRanksExpectCol) {
+        int ***reqRowCol, int *perRankDataSend, int reqRequired, int nRanksExpectCol) {
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
@@ -206,7 +206,10 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
                 printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
                 return 0;
             }
-            recvColFromRanks[reqColFromRank[r][i]] = recv_buf[r][i];
+            for (int j = 1; j < (1 + (2 * colCount[reqColFromRank[r][i]])); j+=2) {
+                y[reqRowCol[r][i][j]] += off_val_ptr[reqRowCol[r][i][j+1]] * recv_buf[r][i];
+            }
+//            recvColFromRanks[reqColFromRank[r][i]] = recv_buf[r][i];
         }
     }
 
