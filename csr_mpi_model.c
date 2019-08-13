@@ -268,6 +268,9 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
     int *map = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     for (int i = 0; i < offDiagonalElements; i++) {
         col = col_ptr[i];
+        if(map[col]>0){
+            continue;
+        }
         ///search which rank has the element
         dest = -1;
         for (int r = 0; r < nRanks; r++) {
@@ -318,6 +321,9 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
         assert(dest >= 0);
         colCount[col] +=1;
         colWiseRank[col] = dest;
+        if(map[col]>0){
+            continue;
+        }
         reqRequired++;
         ///insert new request
         reqColFromRank[dest][perRankDataRecv[dest]++] = col;
@@ -344,7 +350,7 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *col_
         for (int r = 0; r < nRanks; ++r) {
             for (int i = 0; i < perRankDataRecv[r]; ++i) {
                 if (reqColFromRank[r][i] != reqRowCol[r][i][0]) {
-                    printf("[%d] Data %d is not same to %d\n", rank, reqColFromRank[r][i], reqRowCol[r][i][0]);
+                    printf("[%d] Data %d is not same to %d\n", r, reqColFromRank[r][i], reqRowCol[r][i][0]);
                 }
             }
         }
