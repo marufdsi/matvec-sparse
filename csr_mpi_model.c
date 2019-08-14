@@ -22,123 +22,6 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
-
-int getRank(int nRanks, proc_info_t *procs_info, int col){
-    for (int r = 0; r < nRanks; ++r) {
-        if (in_diagonal(col, procs_info[r].first_row, procs_info[r].last_row)){
-            return r;
-        }
-    }
-    printf("Column=%d doesn't belong to any of %d rank\n", col, nRanks);
-    return -1;
-}
-double *mpiMatMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr,
-                   int *off_row_ptr, int *off_col_ptr, double *off_val_ptr,
-                   double *buf_x, int **send_col_idx, int *perRankDataRecv, int **reqColFromRank,
-                   int *perRankDataSend, int reqRequired, int nRanksExpectCol) {
-
-    /* allocate memory for vectors and submatrixes */
-    double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
-
-    double **recv_buf, **recvColFromRanks;
-    MPI_Request *send_reqs, *recv_reqs;
-    int reqMade = 0;
-    if (reqRequired > 0) {
-        recv_buf = (double **) malloc_or_exit(nRanks * sizeof(double *));
-        recvColFromRanks = (double **) malloc_or_exit(nRanks * sizeof(double*));
-        /// MPI request storage
-        recv_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
-        for (int r = 0; r < nRanks; ++r) {
-            if (r == rank || perRankDataRecv[r] <= 0) {
-                recv_reqs[r] = MPI_REQUEST_NULL;
-                continue;
-            }
-            recv_buf[r] = (double *) malloc_or_exit(perRankDataRecv[r] * sizeof(double));
-            recvColFromRanks[r] = (double *) malloc_or_exit(procs_info[r].M * sizeof(double));
-            /// Receive the block (when it comes)
-            MPI_Irecv(recv_buf[r], perRankDataRecv[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &recv_reqs[r]);
-            reqMade++;
-        }
-    }
-    /// Local elements multiplication
-    for (int i = 0; i < procs_info[rank].M; ++i) {
-        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
-            y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
-    }
-
-    double **send_buf_data;
-    if (nRanksExpectCol > 0) {
-        send_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
-        /// Reply to the requests.
-        send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double *));
-        for (int r = 0; r < nRanks; ++r) {
-            if (r == rank || perRankDataSend[r] <= 0){
-                send_reqs[r] = MPI_REQUEST_NULL;
-                continue;
-            }
-            send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
-            if (send_col_idx[r] == NULL){
-                printf("[%d] Sending column not found for=%d\n", rank, r);
-            }
-            for (int i = 0; i < perRankDataSend[r]; ++i) {
-                if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
-                    printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], rank);
-                    return 0;
-                }
-                send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[rank].first_row];
-            }
-            MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
-        }
-    }
-
-    int r;
-    for (int q = 0; q < reqMade; q++) {
-        MPI_Waitany(nRanks, recv_reqs, &r, MPI_STATUS_IGNORE);
-        assert(r != MPI_UNDEFINED);
-        /// fill x array with new elements.
-        for (int i = 0; i < perRankDataRecv[r]; i++) {
-            if (reqColFromRank[r][i]<0 || reqColFromRank[r][i] >= procs_info[rank].N){
-                printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
-                return 0;
-            }
-            recvColFromRanks[r][reqColFromRank[r][i] - procs_info[r].first_row] = recv_buf[r][i];
-        }
-    }
-
-    if (reqRequired > 0) {
-        /// Global elements multiplication
-        for (int i = 0; i < procs_info[rank].M; ++i) {
-            for (int k = off_row_ptr[i]; k < off_row_ptr[i + 1]; ++k) {
-                int r = getRank(nRanks, procs_info, off_col_ptr[k]);
-                y[i] += off_val_ptr[k] * recvColFromRanks[r][off_col_ptr[k]-procs_info[r].first_row];
-            }
-        }
-    }
-    if (nRanksExpectCol > 0) {
-        /// Wait until send request delivered to through network.
-        MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
-    }
-    if (reqRequired > 0 || nRanksExpectCol > 0) {
-        for (int r = 0; r < nRanks; r++) {
-            if (perRankDataRecv[r] > 0) {
-                free(recv_buf[r]);
-            }
-            if (perRankDataSend[r] > 0)
-                free(send_buf_data[r]);
-        }
-    }
-
-    if (reqRequired > 0) {
-        free(recv_buf);
-        free(recvColFromRanks);
-    }
-    if (reqRequired > 0) {
-        free(send_buf_data);
-    }
-
-    return y;
-}
-
 double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr, int *off_row_ptr,
         int *off_col_ptr, double *off_val_ptr, double *buf_x, int **send_col_idx, int *perRankDataRecv, int *colCount, int **reqColFromRank,
         int ***reqRowCol, int *perRankDataSend, int reqRequired, int nRanksExpectCol) {
@@ -146,12 +29,11 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
 /// receiving blocks storage
-    double **recv_buf, *recvColFromRanks;
+    double **recv_buf;
     MPI_Request *send_reqs, *recv_reqs;
     int reqMade = 0;
     if (reqRequired > 0) {
         recv_buf = (double **) malloc_or_exit(nRanks * sizeof(double *));
-        recvColFromRanks = (double *) malloc_or_exit(procs_info[rank].N * sizeof(double));
         /// MPI request storage
         recv_reqs = (MPI_Request *) malloc_or_exit(nRanks * sizeof(MPI_Request));
         for (int r = 0; r < nRanks; ++r) {
@@ -182,14 +64,7 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
                 continue;
             }
             send_buf_data[r] = (double *) malloc_or_exit(perRankDataSend[r] * sizeof(double));
-            if (send_col_idx[r] == NULL){
-                printf("[%d] Sending column not found for=%d\n", rank, r);
-            }
             for (int i = 0; i < perRankDataSend[r]; ++i) {
-                if (send_col_idx[r][i] < procs_info[rank].first_row || send_col_idx[r][i] > procs_info[rank].last_row) {
-                    printf("Wrong index %d looking at process %d\n", send_col_idx[r][i], rank);
-                    return 0;
-                }
                 send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[rank].first_row];
             }
             MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
@@ -202,24 +77,12 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
         assert(r != MPI_UNDEFINED);
         /// fill x array with new elements.
         for (int i = 0; i < perRankDataRecv[r]; i++) {
-            if (reqColFromRank[r][i]<0 || reqColFromRank[r][i] >= procs_info[rank].N){
-                printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
-                return 0;
-            }
             for (int j = 1; j < (1 + (2 * colCount[reqColFromRank[r][i]])); j+=2) {
                 y[reqRowCol[r][i][j]] += off_val_ptr[reqRowCol[r][i][j+1]] * recv_buf[r][i];
             }
-//            recvColFromRanks[reqColFromRank[r][i]] = recv_buf[r][i];
         }
     }
 
-    /*if (reqRequired > 0) {
-        /// Global elements multiplication
-        for (int i = 0; i < procs_info[rank].M; ++i) {
-            for (int k = off_row_ptr[i]; k < off_row_ptr[i + 1]; ++k)
-                y[i] += off_val_ptr[k] * recvColFromRanks[off_col_ptr[k]];
-        }
-    }*/
     if (nRanksExpectCol > 0) {
         /// Wait until send request delivered to through network.
         MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
@@ -236,7 +99,6 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
 
     if (reqRequired > 0) {
         free(recv_buf);
-        free(recvColFromRanks);
     }
     if (reqRequired > 0) {
         free(send_buf_data);
@@ -261,12 +123,12 @@ void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
     MPI_Type_create_struct(1, blockcounts, offsets, oldtypes, procs_info_type);
     MPI_Type_commit(procs_info_type);
 }
-
+/*
 int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_ptr, int offDiagonalElements, int *perRankDataRecv,
                        int **reqColFromRank, int *count_communication, int *interProcessCall) {
     (*count_communication) = 0;
     (*interProcessCall) = 0;
-    /* build sending blocks to processors */
+    *//* build sending blocks to processors *//*
     int dest, col, reqRequired = 0;
     int *map = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     for (int i = 0; i < offDiagonalElements; i++) {
@@ -293,7 +155,7 @@ int findInterRanksComm(int rank, int nRanks, proc_info_t *procs_info, int *col_p
     }
     free(map);
     return reqRequired;
-}
+}*/
 
 int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_ptr, int *col_ptr, int offDiagonalElements, int *perRankDataRecv, int *colCount,
                         int **reqColFromRank, int ***reqRowCol, int *count_communication, int *interProcessCall) {
@@ -363,7 +225,6 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_
     }
 
     free(map);
-//    free(colCount);
     free(colWiseRank);
     free(perRankColCount);
     free(perColCount);
@@ -632,6 +493,7 @@ int main(int argc, char *argv[]) {
         free(off_diagonal_val);
     }
     free(buf_x);
+    free(colCount);
     /* MPI: end */
     MPI_Finalize();
 
