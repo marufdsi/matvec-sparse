@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
 
     char *in_file, *out_file = NULL;
     double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
-    int total_run = 1000, nRanks, rank;
+    int total_run = 100, nRanks, rank;
     int *row_ptr, *on_diagonal_row, *off_diagonal_row, *col_ptr, *off_diagonal_col, *on_diagonal_col;
     double *val_ptr, *off_diagonal_val, *on_diagonal_val, *buf_x, *res;
     proc_info_t *ranks_info;
