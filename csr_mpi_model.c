@@ -205,10 +205,10 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
             if (reqColFromRank[r][i]<0 || reqColFromRank[r][i] >= procs_info[rank].N){
                 printf("[%d] Column=%d out of range\n", rank, reqColFromRank[r][i]);
                 return 0;
-            }/*
+            }
             for (int j = 1; j < (1 + (2 * colCount[reqColFromRank[r][i]])); j+=2) {
                 y[reqRowCol[r][i][j]] += off_val_ptr[reqRowCol[r][i][j+1]] * recv_buf[r][i];
-            }*/
+            }
 //            recvColFromRanks[reqColFromRank[r][i]] = recv_buf[r][i];
         }
     }
@@ -363,7 +363,7 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_
     }
 
     free(map);
-    free(colCount);
+//    free(colCount);
     free(colWiseRank);
     free(perRankColCount);
     free(perColCount);
