@@ -7,7 +7,7 @@
 
 #include "mpi.h"
 
-#define TOTAL_RUNS 1000
+#define TOTAL_RUNS 100
 
 #define MAX_RANDOM_NUM (1<<20)
 #define MASTER 0
