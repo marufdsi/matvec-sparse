@@ -47,11 +47,6 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
             reqMade++;
         }
     }
-    /// Local elements multiplication
-    for (int i = 0; i < procs_info[rank].M; ++i) {
-        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
-            y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
-    }
 
     double **send_buf_data;
     if (nRanksExpectCol > 0) {
@@ -69,6 +64,12 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
             }
             MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
         }
+    }
+
+    /// Local elements multiplication
+    for (int i = 0; i < procs_info[rank].M; ++i) {
+        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
+            y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
     }
 
     int r;
