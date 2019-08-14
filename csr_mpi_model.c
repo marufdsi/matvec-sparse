@@ -571,7 +571,6 @@ int main(int argc, char *argv[]) {
                       perRankDataSend, reqRequired, nRanksExpectCol);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    printf("[%d] End multiplication\n", rank);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
     avg_time = comp_time / total_run;
 
