@@ -79,11 +79,6 @@ int main(int argc, char *argv[]) {
     ranks_info = (proc_info_t *) malloc_or_exit(nRanks * sizeof(proc_info_t));
     procs_info = (proc_info_t *) malloc_or_exit(nRanks * sizeof(proc_info_t));
 
-    /// Create vector x and fill with 1.0
-    buf_x = (double *) malloc_or_exit(ranks_info[rank].N * sizeof(double));
-    for (int i = 0; i < ranks_info[rank].N; i++) {
-        buf_x[i] = 1.00;
-    }
 
     if (argc < 2) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
@@ -98,6 +93,12 @@ int main(int argc, char *argv[]) {
                                   &offDiagonalElements) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
+    }
+
+    /// Create vector x and fill with 1.0
+    buf_x = (double *) malloc_or_exit(ranks_info[rank].N * sizeof(double));
+    for (int i = 0; i < ranks_info[rank].N; i++) {
+        buf_x[i] = 1.00;
     }
 
     if (ranks_info[rank].NZ <= 0) {
@@ -134,7 +135,7 @@ int main(int argc, char *argv[]) {
         if (v_required[k] >= 0)
             buf_x_reorder[v_required[k]] = buf_x[k];
     }
-    printf("[%d] Empty column find out\n", rank);
+    
     for (int k = 0; k < ranks_info[rank].NZ; ++k) {
         int col = col_ptr[k];
         if (v_required[col] < 0)
