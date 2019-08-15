@@ -124,7 +124,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("[%d] Empty column find out\n", rank);
     int reducedVectorSized = (ranks_info[rank].N-counter);
     buf_x_reorder = (double *) malloc_or_exit(reducedVectorSized * sizeof(double));
     for (int k = 0; k < ranks_info[rank].N; ++k) {
@@ -135,6 +134,7 @@ int main(int argc, char *argv[]) {
         if (v_required[k] >= 0)
             buf_x_reorder[v_required[k]] = buf_x[k];
     }
+    printf("[%d] Empty column find out\n", rank);
     for (int k = 0; k < ranks_info[rank].NZ; ++k) {
         int col = col_ptr[k];
         if (v_required[col] < 0)
