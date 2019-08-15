@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
             continue;
         col_ptr[k] = v_required[col];
     }
+    printf("[%d] Reduction done\n", rank);
 
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
