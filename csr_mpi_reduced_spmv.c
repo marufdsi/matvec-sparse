@@ -400,7 +400,7 @@ int main(int argc, char *argv[]) {
         }
     }
     if(counter>0){
-        printf("[%d] Reduced number of column=%d, off digonal elements=%d, diagonal elements=%d\n", rank, counter, offDiagonalElements, diagonal_elements);
+        printf("[%d] Reduced number of column=%d, block size=%d, off digonal elements=%d, diagonal elements=%d\n", rank, counter, ranks_info[rank].M, offDiagonalElements, diagonal_elements);
     }
 
     free(row_ptr);
