@@ -384,14 +384,24 @@ int main(int argc, char *argv[]) {
         if(offDiagonalElements>0)
             off_diagonal_row[k + 1] = off_diag_idx;
     }
+
+    free(row_ptr);
+    free(col_ptr);
+    free(val_ptr);
+    /// Create vector x and fill with 1.0
+    buf_x = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
+    for (int i = 0; i < ranks_info[rank].M; i++) {
+        buf_x[i] = 1.00;
+    }
+
     /// Reduce the vector row corresponding matrix column that doesn't have any nonzero elements.
-    int *v_required = (int *) calloc_or_exit(ranks_info[rank].N, sizeof(int));
+    int *v_required = (int *) calloc_or_exit(ranks_info[rank].M, sizeof(int));
     for (int k = 0; k < diagonal_elements; ++k) {
-        int col = on_diagonal_col[k];
+        int col = on_diagonal_col[k] - ranks_info[rank].first_row;
         v_required[col]++;
     }
     int counter = 0;
-    for (int k = 0; k < ranks_info[rank].N; ++k) {
+    for (int k = 0; k < ranks_info[rank].M; ++k) {
         if(v_required[k]<=0){
             counter++;
             v_required[k] = -1;
@@ -401,15 +411,6 @@ int main(int argc, char *argv[]) {
     }
     if(counter>0){
         printf("[%d] Reduced number of column=%d, block size=%d, off digonal elements=%d, diagonal elements=%d\n", rank, counter, ranks_info[rank].M, offDiagonalElements, diagonal_elements);
-    }
-
-    free(row_ptr);
-    free(col_ptr);
-    free(val_ptr);
-    /// Create vector x and fill with 1.0
-    buf_x = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
-    for (int i = 0; i < ranks_info[rank].M; i++) {
-        buf_x[i] = 1.00;
     }
 
     /// Share process info among all the processes
