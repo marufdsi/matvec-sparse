@@ -124,9 +124,17 @@ int main(int argc, char *argv[]) {
     int reducedVectorSized = (ranks_info[rank].N-counter);
     buf_x_reorder = (double *) malloc_or_exit(reducedVectorSized * sizeof(double));
     for (int k = 0; k < ranks_info[rank].N; ++k) {
-        buf_x_reorder[v_required[k]] = buf_x[k];
+        if(v_required[k] >= reducedVectorSized){
+            printf("[%d] Something wrong\n", rank);
+            return 0;
+        }
+        if (v_required[k] >= 0)
+            buf_x_reorder[v_required[k]] = buf_x[k];
     }
     for (int k = 0; k < ranks_info[rank].NZ; ++k) {
+        if (v_required[k] < 0)
+            continue;
+
         int col = col_ptr[k];
         col_ptr[k] = v_required[col];
     }
