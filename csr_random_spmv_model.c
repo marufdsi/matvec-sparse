@@ -371,7 +371,7 @@ int main(int argc, char *argv[]) {
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
 
-    printf("[%d] Start Multiplication\n");
+    printf("[%d] Start Multiplication\n", rank);
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
     MPI_Barrier(MPI_COMM_WORLD);
