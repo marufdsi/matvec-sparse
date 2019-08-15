@@ -78,14 +78,14 @@ double *matMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int
         assert(r != MPI_UNDEFINED);
         /// fill x array with new elements.
         for (int i = 0; i < perRankDataRecv[r]; i++) {
-            /*for (int j = 1; j < (1 + (2 * colCount[reqColFromRank[r][i]])); j+=2) {
+            for (int j = 1; j < (1 + (2 * colCount[reqColFromRank[r][i]])); j+=2) {
                 y[reqRowCol[r][i][j]] += off_val_ptr[reqRowCol[r][i][j+1]] * recv_buf[r][i];
-            }*/
-            reqRowCol[r][i]++;
+            }
+            /*reqRowCol[r][i]++;
             for (int j = 1; j < (1 + (2 * colCount[reqColFromRank[r][i]])); j+=2) {
                 y[*reqRowCol[r][i]++] += off_val_ptr[*reqRowCol[r][i]++] * (*recv_buf[r]);
             }
-            recv_buf[r]++;
+            recv_buf[r]++;*/
         }
     }
 
