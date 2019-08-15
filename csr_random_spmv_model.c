@@ -315,8 +315,6 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix can not be sized zero=%d\n", rank, ranks_info[rank].NZ);
         return 0;
     }
-
-    int diagonal_elements = ranks_info[rank].NZ - offDiagonalElements;
     if (offDiagonalElements <= 0){
         printf("[%d] No Off diagonal elements\n", rank);
         return 0;
@@ -327,7 +325,6 @@ int main(int argc, char *argv[]) {
         off_diagonal_row[0] = 0;
     int off_diag_idx = 0;
     for (int k = 0; k < ranks_info[rank].M; ++k) {
-        int l_col = ranks_info[rank].last_row, h_col = ranks_info[rank].first_row;
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
             if (!in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row)) {
                 off_diagonal_col[off_diag_idx] = col_ptr[l];
@@ -374,6 +371,7 @@ int main(int argc, char *argv[]) {
     int nRanksExpectCol = shareReqColumnInfo(rank, nRanks, procs_info, perRankDataRecv, reqColFromRank, perRankDataSend,
                                              send_col_idx, reqRequired);
 
+    printf("[%d] Start Multiplication\n");
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
     MPI_Barrier(MPI_COMM_WORLD);
@@ -432,7 +430,6 @@ int main(int argc, char *argv[]) {
     free(off_diagonal_val);
 
     free(buf_x);
-    free(colCount);
     /* MPI: end */
     MPI_Finalize();
 
