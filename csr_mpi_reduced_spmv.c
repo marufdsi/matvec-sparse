@@ -114,13 +114,17 @@ int main(int argc, char *argv[]) {
     }
     int counter = 0;
     for (int k = 0; k < ranks_info[rank].N; ++k) {
-        if(v_required[k]<=0){
+        if(v_required[k]==0){
             counter++;
             v_required[k] = -1;
         } else{
+            if(counter>k)
+                printf("[%d] error occurred\n", rank);
             v_required[k] = k-counter;
         }
     }
+
+    printf("[%d] Empty column find out\n", rank);
     int reducedVectorSized = (ranks_info[rank].N-counter);
     buf_x_reorder = (double *) malloc_or_exit(reducedVectorSized * sizeof(double));
     for (int k = 0; k < ranks_info[rank].N; ++k) {
