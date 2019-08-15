@@ -132,10 +132,9 @@ int main(int argc, char *argv[]) {
             buf_x_reorder[v_required[k]] = buf_x[k];
     }
     for (int k = 0; k < ranks_info[rank].NZ; ++k) {
-        if (v_required[k] < 0)
-            continue;
-
         int col = col_ptr[k];
+        if (v_required[col] < 0)
+            continue;
         col_ptr[k] = v_required[col];
     }
 
