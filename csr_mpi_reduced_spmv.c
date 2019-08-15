@@ -22,7 +22,7 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
-double *matMull(int rank, int m, int nnz, int *row_ptr, int *col_ptr, double *val_ptr, int * buf_x) {
+double *matMull(int rank, int m, int nnz, int *row_ptr, int *col_ptr, double *val_ptr, double * buf_x) {
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(m, sizeof(double));
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
         }
     }
     int reducedVectorSized = (ranks_info[rank].N-counter);
-    buf_x_reorder = (int *) malloc_or_exit(reducedVectorSized * sizeof(int));
+    buf_x_reorder = (double *) malloc_or_exit(reducedVectorSized * sizeof(double));
     for (int k = 0; k < ranks_info[rank].N; ++k) {
         buf_x_reorder[v_required[k]] = buf_x[k];
     }
