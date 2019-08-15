@@ -399,7 +399,7 @@ int main(int argc, char *argv[]) {
         v_required[col]++;
     }
     int counter = 0;
-    for (int k = 0; k < diagonal_elements; ++k) {
+    for (int k = 0; k < ranks_info[rank].M; ++k) {
         if(v_required[k]<=0){
             counter++;
             v_required[k] = -1;
