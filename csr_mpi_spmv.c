@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     int *row_ptr,     /* row index for all matrix elements */
             *col_ptr;     /* column index for all matrix elements */
     double *val_ptr, /* value for all matrix elements */
-            *buf_x;      /* value for all x vector elements */
+            *buf_x, *buf_x_reorder;      /* value for all x vector elements */
 
     /*******************************************/
 
@@ -97,13 +97,49 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < mat_row; i++) {
         buf_x[i] = 1.00;
     }
+
+    int *v_required = (int *) calloc_or_exit(mat_size, sizeof(int));
+    for (int k = 0; k < nonZero; ++k) {
+        int col = col_ptr[k];
+        v_required[col]++;
+    }
+    int counter = 0;
+    for (int k = 0; k < mat_size; ++k) {
+        if(v_required[k]==0){
+            counter++;
+            v_required[k] = -1;
+        } else{
+            if(counter>k)
+                printf("[%d] error occurred\n", rank);
+            v_required[k] = k-counter;
+        }
+    }
+
+    int reducedVectorSized = (mat_size-counter);
+    buf_x_reorder = (double *) malloc_or_exit(reducedVectorSized * sizeof(double));
+    for (int k = 0; k < mat_size; ++k) {
+        if(v_required[k] >= reducedVectorSized){
+            printf("[%d] Something wrong\n", rank);
+            return 0;
+        }
+        if (v_required[k] >= 0)
+            buf_x_reorder[v_required[k]] = buf_x[k];
+    }
+
+    for (int k = 0; k < nonZero; ++k) {
+        int col = col_ptr[k];
+        if (v_required[col] < 0)
+            continue;
+        col_ptr[k] = v_required[col];
+    }
+
     /* Matrix-vector multiplication for each processes */
     double totalTime = 0.0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
     double *res;
     MPI_Barrier(MPI_COMM_WORLD);
     t = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
-        res = matMullComputationOnly(rank, row_ptr, col_ptr, val_ptr, buf_x, mat_row);
+        res = matMullComputationOnly(rank, row_ptr, col_ptr, val_ptr, buf_x_reorder, mat_row);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     totalTime = (MPI_Wtime() - t) * 1000.00;
