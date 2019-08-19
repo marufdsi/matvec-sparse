@@ -26,7 +26,7 @@ double *matMullComputationOnly(int rank, int *row_ptr, int *col_ptr, double *val
     /// Sparse Matrix Vector Multiplication without Communication
     for (int i = 0; i < mat_row; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
-            y[i] += val_ptr[k] * buf_x[col_ptr[k] - first_row];
+            y[i] += val_ptr[k] * buf_x[col_ptr[k]];
         }
     }
     return y;
@@ -93,8 +93,8 @@ int main(int argc, char *argv[]) {
         printf("[%d] Matrix Creation Failed process=%d, matrix size=%d, nonzero=%d\n", rank, nprocs, mat_size, nonZeroPerRow);
     }
 
-    buf_x = (double *) malloc_or_exit(mat_row * sizeof(double));
-    for (int i = 0; i < mat_row; i++) {
+    buf_x = (double *) malloc_or_exit(mat_size * sizeof(double));
+    for (int i = 0; i < mat_size; i++) {
         buf_x[i] = 1.00;
     }
 
