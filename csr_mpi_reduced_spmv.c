@@ -171,6 +171,9 @@ int main(int argc, char *argv[]) {
             buf_x_reorder[k] = y[col_map[k]];
         }*/
     }
+    free(rec_count);
+    free(offset);
+    free(y);
     MPI_Barrier(MPI_COMM_WORLD);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
     avg_time = comp_time / total_run;
@@ -222,6 +225,8 @@ int main(int argc, char *argv[]) {
     free(row_ptr);
     free(col_ptr);
     free(val_ptr);
+    free(procs_info);
+    free(ranks_info);
     /* MPI: end */
     MPI_Finalize();
 
