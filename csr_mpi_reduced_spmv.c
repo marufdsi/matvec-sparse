@@ -22,14 +22,14 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
-double *matMull(int rank, int m, int nnz, int *row_ptr, int *col_ptr, double *val_ptr, double * buf_x) {
+double *matMull(int rank, int m, int n, int start_row, int *row_ptr, int *col_ptr, double *val_ptr, double * buf_x) {
 
     /* allocate memory for vectors and submatrixes */
-    double *y = (double *) calloc_or_exit(m, sizeof(double));
+    double *y = (double *) calloc_or_exit(n, sizeof(double));
 
     for (int i = 0; i < m; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
-            y[i] += val_ptr[k] * buf_x[col_ptr[k]];
+            y[start_row-i] += val_ptr[k] * buf_x[col_ptr[k]];
     }
 
     return y;
@@ -127,13 +127,21 @@ int main(int argc, char *argv[]) {
 
     int reducedVectorSized = (ranks_info[rank].N-counter);
     buf_x_reorder = (double *) malloc_or_exit(reducedVectorSized * sizeof(double));
+    int *col_map = (int *) malloc_or_exit(reducedVectorSized * sizeof(int));
+    int col_map_counter = 0;
     for (int k = 0; k < ranks_info[rank].N; ++k) {
         if(v_required[k] >= reducedVectorSized){
             printf("[%d] Something wrong\n", rank);
             return 0;
         }
-        if (v_required[k] >= 0)
+        if (v_required[k] >= 0) {
             buf_x_reorder[v_required[k]] = buf_x[k];
+            if(col_map_counter>=reducedVectorSized){
+                printf("[%d] something wrong in column mapping\n", rank);
+                return 0;
+            }
+            col_map[col_map_counter++] = k;
+        }
     }
 
     for (int k = 0; k < ranks_info[rank].NZ; ++k) {
@@ -145,9 +153,20 @@ int main(int argc, char *argv[]) {
 
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
+    double *y = (double *) malloc_or_exit(ranks_info[rank].N * sizeof(double));
+    int *rec_count = (int *) malloc_or_exit(nRanks * sizeof(int));
+    int *offset = (int *) malloc_or_exit(nRanks * sizeof(int));
+    for (int p = 0; p < nRanks; p++) {
+        rec_count[p] = procs_info[p].M;
+        offset[p] = procs_info[p].first_row;
+    }
     MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
-        res = matMull(rank, ranks_info[rank].M, ranks_info[rank].NZ, row_ptr, col_ptr, val_ptr, buf_x_reorder);
+        res = matMull(rank, ranks_info[rank].M, ranks_info[rank].N, ranks_info[rank].first_row, row_ptr, col_ptr, val_ptr, buf_x_reorder);
+        MPI_Allgatherv(res, ranks_info[rank].M, MPI_DOUBLE, y, rec_count, offset, MPI_DOUBLE, MPI_COMM_WORLD);
+        for (int k = 0; k < reducedVectorSized; ++k) {
+            buf_x_reorder[k] = y[col_map[k]];
+        }
     }
     MPI_Barrier(MPI_COMM_WORLD);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
