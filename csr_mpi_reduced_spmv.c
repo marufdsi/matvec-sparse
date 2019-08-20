@@ -25,11 +25,11 @@ enum tag {
 double *matMull(int rank, int m, int n, int start_row, int *row_ptr, int *col_ptr, double *val_ptr, double * buf_x) {
 
     /* allocate memory for vectors and submatrixes */
-    double *y = (double *) calloc_or_exit(n, sizeof(double));
+    double *y = (double *) calloc_or_exit(m, sizeof(double));
 
     for (int i = 0; i < m; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
-            y[start_row+i] += val_ptr[k] * buf_x[col_ptr[k]];
+            y[i] += val_ptr[k] * buf_x[col_ptr[k]];
     }
 
     return y;
