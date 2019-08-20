@@ -151,6 +151,9 @@ int main(int argc, char *argv[]) {
         col_ptr[k] = v_required[col];
     }
 
+    free(v_required);
+    free(buf_x);
+
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
     double *y = (double *) malloc_or_exit(ranks_info[rank].N * sizeof(double));
@@ -215,7 +218,6 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
     }
-    free(buf_x);
     free(buf_x_reorder);
     free(row_ptr);
     free(col_ptr);
