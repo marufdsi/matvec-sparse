@@ -166,7 +166,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
         res = matMull(rank, ranks_info[rank].M, ranks_info[rank].N, ranks_info[rank].first_row, row_ptr, col_ptr, val_ptr, buf_x_reorder);
-        MPI_Allgatherv(res, ranks_info[rank].M, MPI_DOUBLE, y, rec_count, offset, MPI_DOUBLE, MPI_COMM_WORLD);
+//        MPI_Allgatherv(res, ranks_info[rank].M, MPI_DOUBLE, y, rec_count, offset, MPI_DOUBLE, MPI_COMM_WORLD);
         /*for (int k = 0; k < reducedVectorSized; ++k) {
             buf_x_reorder[k] = y[col_map[k]];
         }*/
