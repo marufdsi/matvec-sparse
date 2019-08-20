@@ -156,24 +156,24 @@ int main(int argc, char *argv[]) {
 
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
-//    double *y = (double *) malloc_or_exit(ranks_info[rank].N * sizeof(double));
-    /*int *rec_count = (int *) malloc_or_exit(nRanks * sizeof(int));
+    double *y = (double *) malloc_or_exit(ranks_info[rank].N * sizeof(double));
+    int *rec_count = (int *) malloc_or_exit(nRanks * sizeof(int));
     int *offset = (int *) malloc_or_exit(nRanks * sizeof(int));
     for (int p = 0; p < nRanks; p++) {
         rec_count[p] = procs_info[p].M;
         offset[p] = procs_info[p].first_row;
-    }*/
+    }
     MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
         res = matMull(rank, ranks_info[rank].M, ranks_info[rank].N, ranks_info[rank].first_row, row_ptr, col_ptr, val_ptr, buf_x_reorder);
-//        MPI_Allgatherv(res, ranks_info[rank].M, MPI_DOUBLE, y, rec_count, offset, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Allgatherv(res, ranks_info[rank].M, MPI_DOUBLE, y, rec_count, offset, MPI_DOUBLE, MPI_COMM_WORLD);
         /*for (int k = 0; k < reducedVectorSized; ++k) {
             buf_x_reorder[k] = y[col_map[k]];
         }*/
     }
-//    free(rec_count);
-//    free(offset);
-//    free(y);
+    free(rec_count);
+    free(offset);
+    free(y);
 //        free(col_map);
     MPI_Barrier(MPI_COMM_WORLD);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
