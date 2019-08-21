@@ -25,10 +25,8 @@ enum tag {
 double *localMatMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr, int *off_row_ptr,
         int *off_col_ptr, double *off_val_ptr, double *buf_x, int **send_col_idx, int *perRankDataRecv, int *colCount, int **reqColFromRank,
         int ***reqRowCol, int *perRankDataSend, int reqRequired, int nRanksExpectCol, double **recv_buf,
-                double **send_buf_data, MPI_Request *recv_reqs, MPI_Request *send_reqs) {
+                double **send_buf_data, MPI_Request *recv_reqs, MPI_Request *send_reqs, double *y) {
 
-    /* allocate memory for vectors and submatrixes */
-    double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
     /// Local elements multiplication
     for (int i = 0; i < procs_info[rank].M; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
@@ -356,13 +354,15 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    /* allocate memory for vectors and submatrixes */
+    double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
     MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
         res = localMatMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
                       off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, colCount, reqColFromRank, reqRowCol,
-                      perRankDataSend, reqRequired, nRanksExpectCol, recv_buf, send_buf_data, recv_reqs, send_reqs);
+                      perRankDataSend, reqRequired, nRanksExpectCol, recv_buf, send_buf_data, recv_reqs, send_reqs, y);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
@@ -400,7 +400,7 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_SpMV_on_MPI.csv", "w"))) {
+            if (!(resultCSV = fopen("CSR_Local_Matmul_on_MPI.csv", "w"))) {
                 fprintf(stderr, "fopen: failed to open file CSR_Local_Matmul_on_MPI.csv");
                 exit(EXIT_FAILURE);
             }
