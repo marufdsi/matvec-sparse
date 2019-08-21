@@ -25,4 +25,5 @@ add_executable(matvec_sparse
         csr_random_spmv_model.c
         csr_spmv.c
         csr_mpi_reduced_spmv.c
-        spmv_p2p.c)
+        spmv_p2p.c
+        comm_p2p.c)
