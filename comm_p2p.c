@@ -443,13 +443,13 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "Name,MatrixSize,MaxRow,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall,SizeOfData,Bandwidth,InDiagonalBandwidth\n");
+                    "Name,MatrixSize,MaxRow,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall,SizeOfData,DiagonalElem,OffDiagonalElem,Bandwidth,InDiagonalBandwidth\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d,%10.3lf,%10.3lf,%d,%d,%d\n", _ptr,
+        fprintf(resultCSV, "%s,%d,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d,%10.3lf,%10.3lf,%d,%d,%d,%d,%d\n", _ptr,
                 procs_info[rank].N, max_row, min_time, max_time,
                 mean, total_run, nRanks, max_nnz_per_row, max_nnz, ((double) per_rank_data_send / nRanks),
-                ((double) totalInterProcessCall / nRanks), sizeof(double), max_band_width, max_in_diag_band_width);
+                ((double) totalInterProcessCall / nRanks), sizeof(double), diagonal_elements, offDiagonalElements, max_band_width, max_in_diag_band_width);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file CSR_Comm_on_MPI.csv");
             exit(EXIT_FAILURE);
