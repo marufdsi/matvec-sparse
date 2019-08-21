@@ -22,56 +22,18 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
-double *
-communication(int rank, proc_info_t *procs_info, int nRanks, double *off_val_ptr, double *buf_x, int **send_col_idx,
-              int *perRankDataRecv, int *colCount, int **reqColFromRank, int ***reqRowCol, int *perRankDataSend,
-              int reqRequired, int nRanksExpectCol, double **recv_buf, double **send_buf_data, MPI_Request *recv_reqs,
-              MPI_Request *send_reqs) {
+double *localMatMull(int rank, proc_info_t *procs_info, int nRanks, int *row_ptr, int *col_ptr, double *val_ptr, int *off_row_ptr,
+        int *off_col_ptr, double *off_val_ptr, double *buf_x, int **send_col_idx, int *perRankDataRecv, int *colCount, int **reqColFromRank,
+        int ***reqRowCol, int *perRankDataSend, int reqRequired, int nRanksExpectCol, double **recv_buf,
+                double **send_buf_data, MPI_Request *recv_reqs, MPI_Request *send_reqs) {
 
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
-/// receiving blocks storage
-    int reqMade = 0;
-    if (reqRequired > 0) {
-        for (int r = 0; r < nRanks; ++r) {
-            if (r == rank || perRankDataRecv[r] <= 0) {
-                continue;
-            }
-            /// Receive the block (when it comes)
-            MPI_Irecv(recv_buf[r], perRankDataRecv[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &recv_reqs[r]);
-            reqMade++;
-        }
+    /// Local elements multiplication
+    for (int i = 0; i < procs_info[rank].M; ++i) {
+        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
+            y[i] += val_ptr[k] * buf_x[col_ptr[k] - procs_info[rank].first_row];
     }
-
-    if (nRanksExpectCol > 0) {
-        for (int r = 0; r < nRanks; ++r) {
-            if (r == rank || perRankDataSend[r] <= 0) {
-                continue;
-            }
-            for (int i = 0; i < perRankDataSend[r]; ++i) {
-                send_buf_data[r][i] = buf_x[send_col_idx[r][i] - procs_info[rank].first_row];
-            }
-            MPI_Isend(send_buf_data[r], perRankDataSend[r], MPI_DOUBLE, r, RECEIVE_TAG, MPI_COMM_WORLD, &send_reqs[r]);
-        }
-    }
-
-    int r;
-    for (int q = 0; q < reqMade; q++) {
-        MPI_Waitany(nRanks, recv_reqs, &r, MPI_STATUS_IGNORE);
-        assert(r != MPI_UNDEFINED);
-        /// fill x array with new elements.
-        for (int i = 0; i < perRankDataRecv[r]; i++) {
-            for (int j = 1; j < (1 + (2 * colCount[reqColFromRank[r][i]])); j += 2) {
-                y[reqRowCol[r][i][j]] += off_val_ptr[reqRowCol[r][i][j + 1]] * recv_buf[r][i];
-            }
-        }
-    }
-
-    if (nRanksExpectCol > 0) {
-        /// Wait until send request delivered to through network.
-        MPI_Waitall(nRanks, send_reqs, MPI_STATUS_IGNORE);
-    }
-
     return y;
 }
 
@@ -92,10 +54,8 @@ void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
     MPI_Type_commit(procs_info_type);
 }
 
-int
-getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_ptr, int *col_ptr, int offDiagonalElements,
-                    int *perRankDataRecv, int *colCount,
-                    int **reqColFromRank, int ***reqRowCol, int *count_communication, int *interProcessCall) {
+int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_ptr, int *col_ptr, int offDiagonalElements, int *perRankDataRecv, int *colCount,
+                        int **reqColFromRank, int ***reqRowCol, int *count_communication, int *interProcessCall) {
     (*count_communication) = 0;
     (*interProcessCall) = 0;
     /// build sending blocks to processors
@@ -107,9 +67,9 @@ getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_ptr,
     int *perColCount = (int *) calloc_or_exit(procs_info[rank].N, sizeof(int));
     for (int i = 0; i < offDiagonalElements; i++) {
         col = col_ptr[i];
-        colCount[col] += 1;
+        colCount[col] +=1;
         trackColIdx[col] = -1;
-        if (map[col] > 0) {
+        if(map[col]>0){
             continue;
         }
         ///search which rank has the element
@@ -133,18 +93,18 @@ getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_ptr,
     for (int r = 0; r < nRanks; ++r) {
         reqRowCol[r] = (int **) malloc_or_exit(perRankDataRecv[r] * sizeof(int *));
         for (int i = 0; i < perRankDataRecv[r]; ++i) {
-            reqRowCol[r][i] = (int *) malloc_or_exit((1 + (2 * colCount[reqColFromRank[r][i]])) * sizeof(int));
+            reqRowCol[r][i] = (int *) malloc_or_exit((1 + (2*colCount[reqColFromRank[r][i]])) * sizeof(int));
         }
     }
 
     for (int i = 0; i < procs_info[rank].M; ++i) {
-        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
+        for (int k = row_ptr[i]; k < row_ptr[i+1]; ++k) {
             col = col_ptr[k];
             dest = colWiseRank[col];
-            if (trackColIdx[col] < 0) {
+            if(trackColIdx[col] < 0){
                 trackColIdx[col] = perRankColCount[dest]++;
             }
-            if (perColCount[col] == 0) {
+            if(perColCount[col] == 0){
                 reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = col;
             }
             reqRowCol[dest][trackColIdx[col]][perColCount[col]++] = i;
@@ -152,7 +112,7 @@ getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_ptr,
         }
     }
     for (int r = 0; r < nRanks; ++r) {
-        if (r == rank)
+        if(r == rank)
             continue;
         for (int i = 0; i < perRankDataRecv[r]; ++i) {
             if (reqColFromRank[r][i] != reqRowCol[r][i][0]) {
@@ -273,13 +233,13 @@ int main(int argc, char *argv[]) {
     }
 
     int diagonal_elements = ranks_info[rank].NZ - offDiagonalElements;
-    if (diagonal_elements > 0) {
+    if(diagonal_elements>0) {
         on_diagonal_row = (int *) malloc_or_exit((ranks_info[rank].M + 1) * sizeof(int));
         on_diagonal_col = (int *) malloc_or_exit(diagonal_elements * sizeof(int));
         on_diagonal_val = (double *) malloc_or_exit(diagonal_elements * sizeof(double));
         on_diagonal_row[0] = 0;
     }
-    if (offDiagonalElements > 0) {
+    if(offDiagonalElements>0) {
         off_diagonal_row = (int *) malloc_or_exit((ranks_info[rank].M + 1) * sizeof(int));
         off_diagonal_col = (int *) malloc_or_exit(offDiagonalElements * sizeof(int));
         off_diagonal_val = (double *) malloc_or_exit(offDiagonalElements * sizeof(double));
@@ -288,16 +248,16 @@ int main(int argc, char *argv[]) {
     int on_diag_idx = 0, off_diag_idx = 0;
     int in_diagonal_bandwidth = 0, bandwidth = 0;
     for (int k = 0; k < ranks_info[rank].M; ++k) {
-        int l_col = ranks_info[rank].last_row, h_col = ranks_info[rank].first_row, max_col =ranks_info[rank].last_row, min_col=ranks_info[rank].first_row;
+        int l_col =ranks_info[rank].last_row, h_col=ranks_info[rank].first_row, max_col =ranks_info[rank].last_row, min_col=ranks_info[rank].first_row;
         for (int l = row_ptr[k]; l < row_ptr[k + 1]; ++l) {
             if (in_diagonal(col_ptr[l], ranks_info[rank].first_row, ranks_info[rank].last_row)) {
                 on_diagonal_col[on_diag_idx] = col_ptr[l];
                 on_diagonal_val[on_diag_idx] = val_ptr[l];
                 on_diag_idx++;
-                if (col_ptr[l] < l_col) {
+                if(col_ptr[l]<l_col){
                     l_col = col_ptr[l];
                 }
-                if (col_ptr[l] > h_col) {
+                if(col_ptr[l]>h_col){
                     h_col = col_ptr[l];
                 }
             } else {
@@ -312,16 +272,16 @@ int main(int argc, char *argv[]) {
                 max_col = col_ptr[l];
             }
         }
-        if (in_diagonal_bandwidth < (h_col - l_col + 1)) {
+        if(in_diagonal_bandwidth < (h_col - l_col + 1)){
             in_diagonal_bandwidth = (h_col - l_col + 1);
         }
         if(bandwidth < (max_col - min_col + 1)){
             bandwidth = (max_col - min_col + 1);
         }
-        if (diagonal_elements > 0)
+        if(diagonal_elements>0)
             on_diagonal_row[k + 1] = on_diag_idx;
 
-        if (offDiagonalElements > 0)
+        if(offDiagonalElements>0)
             off_diagonal_row[k + 1] = off_diag_idx;
     }
     free(row_ptr);
@@ -353,10 +313,8 @@ int main(int argc, char *argv[]) {
                                          perRankDataRecv, reqColFromRank,
                                          &count_communication, &interProcessCall);*/
 
-        reqRequired = getRemoteColumnInfo(rank, nRanks, procs_info, off_diagonal_row, off_diagonal_col,
-                                          offDiagonalElements,
-                                          perRankDataRecv, colCount, reqColFromRank, reqRowCol, &count_communication,
-                                          &interProcessCall);
+        reqRequired = getRemoteColumnInfo(rank, nRanks, procs_info, off_diagonal_row, off_diagonal_col, offDiagonalElements,
+                                          perRankDataRecv, colCount, reqColFromRank, reqRowCol, &count_communication, &interProcessCall);
     }
 
     if (reqRequired > 0) {
@@ -390,7 +348,7 @@ int main(int argc, char *argv[]) {
         /// Reply to the requests.
         send_buf_data = (double **) malloc_or_exit(nRanks * sizeof(double *));
         for (int r = 0; r < nRanks; ++r) {
-            if (r == rank || perRankDataSend[r] <= 0) {
+            if (r == rank || perRankDataSend[r] <= 0){
                 send_reqs[r] = MPI_REQUEST_NULL;
                 continue;
             }
@@ -402,9 +360,9 @@ int main(int argc, char *argv[]) {
     double start_time = MPI_Wtime();
     MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
-        res = communication(rank, procs_info, nRanks, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, colCount,
-                            reqColFromRank, reqRowCol, perRankDataSend, reqRequired, nRanksExpectCol, recv_buf,
-                            send_buf_data, recv_reqs, send_reqs);
+        res = localMatMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
+                      off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, colCount, reqColFromRank, reqRowCol,
+                      perRankDataSend, reqRequired, nRanksExpectCol, recv_buf, send_buf_data, recv_reqs, send_reqs);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
@@ -415,14 +373,18 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
 
-    int max_nnz = 0, max_row = 0, max_band_width = 0, max_in_diag_band_width = 0;
-    double max_nnz_per_row = 0.0, nnz_per_row = procs_info[rank].NZ / procs_info[rank].M;
+    int max_nnz = 0, max_row = 0, max_in_diag_band_width = 0, max_band_width = 0;
+    double max_nnz_per_row = 0.0, nnz_per_row = procs_info[rank].NZ/procs_info[rank].M;
     MPI_Reduce(&procs_info[rank].NZ, &max_nnz, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&procs_info[rank].M, &max_row, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&in_diagonal_bandwidth, &max_in_diag_band_width, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&bandwidth, &max_band_width, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&nnz_per_row, &max_nnz_per_row, 1, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
 
+//    char *outputFIle = (char *) malloc_or_exit(100 * sizeof(char));
+//    strcpy(outputFIle, "CSR_SpMV_Model.csv");
+//    strcpy(outputFIle, "CSR_SpMV_Model_Diagonal.csv");
+//    strcpy(outputFIle, "CSR_SpMV_Model_Random.csv");
     /// print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
@@ -430,28 +392,27 @@ int main(int argc, char *argv[]) {
         char *_ptr = strtok(in_file, "_");
         FILE *resultCSV;
         FILE *checkFile;
-        if ((checkFile = fopen("CSR_Comm_on_MPI.csv", "r")) != NULL) {
+        if ((checkFile = fopen("CSR_Local_Matmul_on_MPI.csv", "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen("CSR_Comm_on_MPI.csv", "a"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_Comm_on_MPI.csv");
+            if (!(resultCSV = fopen("CSR_Local_Matmul_on_MPI.csv", "a"))) {
+                fprintf(stderr, "fopen: failed to open file CSR_Local_Matmul_on_MPI.csv");
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_Comm_on_MPI.csv", "w"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_Comm_on_MPI.csv");
+            if (!(resultCSV = fopen("CSR_SpMV_on_MPI.csv", "w"))) {
+                fprintf(stderr, "fopen: failed to open file CSR_Local_Matmul_on_MPI.csv");
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
                     "Name,MatrixSize,MaxRow,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall,SizeOfData,Bandwidth,InDiagonalBandwidth\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d,%10.3lf,%10.3lf,%d,%d,%d\n", _ptr,
-                procs_info[rank].N, max_row, min_time, max_time,
-                mean, total_run, nRanks, max_nnz_per_row, max_nnz, ((double) per_rank_data_send / nRanks),
-                ((double) totalInterProcessCall / nRanks), sizeof(double), max_band_width, max_in_diag_band_width);
+        fprintf(resultCSV, "%s,%d,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d,%10.3lf,%10.3lf,%d,%d,%d\n", _ptr,procs_info[rank].N, max_row, min_time, max_time,
+                mean, total_run, nRanks, max_nnz_per_row, max_nnz, ((double)per_rank_data_send / nRanks),
+                ((double)totalInterProcessCall / nRanks), sizeof(double), max_band_width, max_in_diag_band_width);
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file CSR_Comm_on_MPI.csv");
+            fprintf(stderr, "fopen: failed to open file CSR_Local_Matmul_on_MPI.csv");
             exit(EXIT_FAILURE);
         }
     }
@@ -472,12 +433,12 @@ int main(int argc, char *argv[]) {
         free(send_buf_data);
     }
 
-    if (diagonal_elements > 0) {
+    if(diagonal_elements>0) {
         free(on_diagonal_row);
         free(on_diagonal_col);
         free(on_diagonal_val);
     }
-    if (offDiagonalElements > 0) {
+    if(offDiagonalElements>0) {
         free(off_diagonal_row);
         free(off_diagonal_col);
         free(off_diagonal_val);

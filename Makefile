@@ -12,7 +12,7 @@ LDFLAGS = -lm -lrt
 # Object files from libraries
 OBJ = mmio.o mmio-wrapper.o partition.o util.o
 
-all: matvec_seq matvec_mpi_p2p matvec_mpi_bcast matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p
+all: matvec_seq matvec_mpi_p2p matvec_mpi_bcast matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p mult_p2p
 
 matvec_seq: matvec_seq.c $(OBJ) stopwatch.o
 	$(CC) $(CFLAGS) $(OBJ) stopwatch.o $< -o $@ $(LDFLAGS)
@@ -47,9 +47,12 @@ spmv_p2p: spmv_p2p.c $(OBJ)
 comm_p2p: comm_p2p.c $(OBJ)
 	$(MPI_C) $(MPI_CFLAGS) $(OBJ) $< -o $@ $(LDFLAGS)
 
+mult_p2p: mult_p2p.c $(OBJ)
+	$(MPI_C) $(MPI_CFLAGS) $(OBJ) $< -o $@ $(LDFLAGS)
+
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $<
 
 .PHONY: clean
 clean:
-	rm -f matvec_seq matvec_mpi_bcast matvec_mpi_p2p matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p *.o
+	rm -f matvec_seq matvec_mpi_bcast matvec_mpi_p2p matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p mult_p2p *.o
