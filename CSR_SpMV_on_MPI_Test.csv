@@ -1,0 +1,3 @@
+Name,MatrixSize,MaxRow,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall,SizeOfData,DiagonalElem,OffDiagonalElem,Bandwidth,InDiagonalBandwidth
+input/AS365,3799275,30486,     3.280,     3.285,     3.283,100,128,     6.000,182905,   121.719,     5.141,8,176362,1552,1603706,30453
+input/333SP,3712815,29821,     3.436,     3.439,     3.438,100,128,     6.000,178849,    93.141,     4.516,8,172568,308,2728052,29722
