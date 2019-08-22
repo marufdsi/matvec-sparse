@@ -435,16 +435,18 @@ int main(int argc, char *argv[]) {
         char *_ptr = strtok(in_file, "_");
         FILE *resultCSV;
         FILE *checkFile;
-        if ((checkFile = fopen("CSR_SpMV_on_MPI.csv", "r")) != NULL) {
+        // File Name CSR_SpMV_on_MPI
+        // File Name CSR_SpMV_on_MPI_Test
+        if ((checkFile = fopen("CSR_SpMV_on_MPI_Test.csv", "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen("CSR_SpMV_on_MPI.csv", "a"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI.csv");
+            if (!(resultCSV = fopen("CSR_SpMV_on_MPI_Test.csv", "a"))) {
+                fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI_Test.csv");
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_SpMV_on_MPI.csv", "w"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI.csv");
+            if (!(resultCSV = fopen("CSR_SpMV_on_MPI_Test.csv", "w"))) {
+                fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI_Test.csv");
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
@@ -455,7 +457,7 @@ int main(int argc, char *argv[]) {
                 mean, total_run, nRanks, max_nnz_per_row, max_nnz, ((double)per_rank_data_send / nRanks),
                 ((double)totalInterProcessCall / nRanks), sizeof(double), diagonal_elements, offDiagonalElements, max_band_width, max_in_diag_band_width);
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI.csv");
+            fprintf(stderr, "fopen: failed to open file CSR_SpMV_on_MPI_Test.csv");
             exit(EXIT_FAILURE);
         }
     }
