@@ -123,6 +123,9 @@ int getRemoteColumnInfo(int rank, int nRanks, proc_info_t *procs_info, int *row_
                 break;
             }
         }
+        if(dest<0){
+            printf("[%d] Column=%d does not belong to any processor\n", rank, col);
+        }
         assert(dest >= 0);
         colWiseRank[col] = dest;
         reqRequired++;
