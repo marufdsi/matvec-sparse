@@ -202,6 +202,7 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
         fscanf(f, "%d %d %lf", &(i_idx[i]), &(j_idx[i]), &(values[i]));
         i_idx[i]--; j_idx[i]--;
     }
+    return 0;
     for (int i = 0; i < nz_elements; i++) {
         if((i_idx[i]-startRow) >= nrows || (i_idx[i]-startRow)<0){
             printf("[%d] Index out of bound for row=%d, start row=%d\n", rank, i_idx[i], startRow);
@@ -209,7 +210,6 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
         }
         (*row_ptr)[i_idx[i]-startRow]++;
     }
-    return 0;
     for(int i = 0, cumsum = 0; i < nrows; i++){
         int temp = (*row_ptr)[i];
         (*row_ptr)[i] = cumsum;
