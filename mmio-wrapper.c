@@ -14,35 +14,34 @@
 #include <math.h>
 
 /* Reads a matrix from a Matrix Market file, stored in COO format */
-int read_matrix (const char * filename, int **i_idx, int **j_idx, double **values, int *N, int *NZ)
-{
+int read_matrix(const char *filename, int **i_idx, int **j_idx, double **values, int *N, int *NZ) {
     FILE *f;
     MM_typecode matcode;
     int errorcode, nrows, ncols, nz_elements;
-     
+
     /* open the file */
-    if ( (f = fopen(filename, "r")) == NULL ) {
+    if ((f = fopen(filename, "r")) == NULL) {
         fprintf(stderr, "Cannot open '%s'\n", filename);
         return 1;
     }
-    
+
     /* process first line */
-    if ( (errorcode = mm_read_banner(f, &matcode)) != 0 ) {
+    if ((errorcode = mm_read_banner(f, &matcode)) != 0) {
         fprintf(stderr, "Error while processing banner (file:'%s') (code=%d)\n",
                 filename, errorcode);
         return 1;
     }
 
     /* matrix should be sparse and real */
-    if ( !mm_is_matrix(matcode) || 
-         !mm_is_real(matcode)   ||
-         !mm_is_sparse(matcode) ) {
+    if (!mm_is_matrix(matcode) ||
+        !mm_is_real(matcode) ||
+        !mm_is_sparse(matcode)) {
         fprintf(stderr, "Not supported matrix type: %s\n", mm_typecode_to_str(matcode));
         return 1;
     }
 
     /* read info */
-    if ( (errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
+    if ((errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
         fprintf(stderr, "Error while processing array (file:'%s') (code:%d)\n",
                 filename, errorcode);
         return 1;
@@ -58,26 +57,27 @@ int read_matrix (const char * filename, int **i_idx, int **j_idx, double **value
     *NZ = nz_elements;
 
     /* reserve memory for vector */
-    *i_idx = (int *)malloc( nz_elements * sizeof(int) );
-    *j_idx = (int *)malloc( nz_elements * sizeof(int) );
-    *values = (double *)malloc( nz_elements * sizeof(double));
-    
+    *i_idx = (int *) malloc(nz_elements * sizeof(int));
+    *j_idx = (int *) malloc(nz_elements * sizeof(int));
+    *values = (double *) malloc(nz_elements * sizeof(double));
+
     /* read actual matrix */
     for (int i = 0; i < *NZ; i++) {
         fscanf(f, "%d %d %lf", &(*i_idx)[i], &(*j_idx)[i], &(*values)[i]);
-        (*i_idx)[i]--; (*j_idx)[i]--;
+        (*i_idx)[i]--;
+        (*j_idx)[i]--;
     }
 
     /* close the file */
-    if ( fclose(f) != 0 ) {
+    if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
     }
 
     return 0;
 }
 
-int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, double **values, int *M, int *N, int *NZ, int *first_row, int *last_row, int rank)
-{
+int rank_wise_read_matrix(const char *filename, int **i_idx, int **j_idx, double **values, int *M, int *N, int *NZ,
+                          int *first_row, int *last_row, int rank) {
     FILE *f;
     MM_typecode matcode;
     int errorcode, nrows, ncols, nz_elements, start_row = 0, end_row = 0;
@@ -85,29 +85,29 @@ int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, doub
     /* open the file */
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
     char *_ptr = strtok(filename, ".");
-    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank,strtok(NULL, "-"));
-    if ( (f = fopen(rank_wise_filename, "r")) == NULL ) {
+    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, strtok(NULL, "-"));
+    if ((f = fopen(rank_wise_filename, "r")) == NULL) {
         fprintf(stderr, "Cannot open '%s'\n", rank_wise_filename);
         return 1;
     }
 
     /* process first line */
-    if ( (errorcode = mm_read_banner(f, &matcode)) != 0 ) {
+    if ((errorcode = mm_read_banner(f, &matcode)) != 0) {
         fprintf(stderr, "Error while processing banner (file:'%s') (code=%d)\n",
                 filename, errorcode);
         return 1;
     }
 
     /* matrix should be sparse and real */
-    if ( !mm_is_matrix(matcode) ||
-         !mm_is_real(matcode)   ||
-         !mm_is_sparse(matcode) ) {
+    if (!mm_is_matrix(matcode) ||
+        !mm_is_real(matcode) ||
+        !mm_is_sparse(matcode)) {
         fprintf(stderr, "Not supported matrix type: %s\n", mm_typecode_to_str(matcode));
         return 1;
     }
 
     /* read info */
-    if ( (errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
+    if ((errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
         fprintf(stderr, "Error while processing array (file:'%s') (code:%d)\n",
                 filename, errorcode);
         return 1;
@@ -125,30 +125,33 @@ int rank_wise_read_matrix (const char * filename, int **i_idx, int **j_idx, doub
     start_row = ncols;
 
     /* reserve memory for vector */
-    *i_idx = (int *)malloc( nz_elements * sizeof(int) );
-    *j_idx = (int *)malloc( nz_elements * sizeof(int) );
-    *values = (double *)malloc( nz_elements * sizeof(double));
+    *i_idx = (int *) malloc(nz_elements * sizeof(int));
+    *j_idx = (int *) malloc(nz_elements * sizeof(int));
+    *values = (double *) malloc(nz_elements * sizeof(double));
 
     /* read actual matrix */
     for (int i = 0; i < *NZ; i++) {
         fscanf(f, "%d %d %lf", &(*i_idx)[i], &(*j_idx)[i], &(*values)[i]);
-        (*i_idx)[i]--; (*j_idx)[i]--;
-        if(start_row>(*i_idx)[i])
+        (*i_idx)[i]--;
+        (*j_idx)[i]--;
+        if (start_row > (*i_idx)[i])
             start_row = (*i_idx)[i];
-        if(end_row<(*i_idx)[i])
+        if (end_row < (*i_idx)[i])
             end_row = (*i_idx)[i];
     }
 
     (*first_row) = start_row;
     (*last_row) = end_row;
     /* close the file */
-    if ( fclose(f) != 0 ) {
+    if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
     }
 
     return 0;
 }
-int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_ptr, double **val_ptr, proc_info_t **ranks_info, int sqrRank, int rank){
+
+int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
+                                proc_info_t **ranks_info, int sqrRank, int rank) {
     FILE *f;
     MM_typecode matcode;
     int errorcode, nrows, ncols, nz_elements;
@@ -156,47 +159,45 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
     /* open the file */
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
     char *_ptr = strtok(filename, ".");
-    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank,strtok(NULL, "-"));
-    if ( (f = fopen(rank_wise_filename, "r")) == NULL ) {
+    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, strtok(NULL, "-"));
+    if ((f = fopen(rank_wise_filename, "r")) == NULL) {
         printf("Cannot open '%s'\n", rank_wise_filename);
         return 1;
     }
 
     /* process first line */
-    if ( (errorcode = mm_read_banner(f, &matcode)) != 0 ) {
+    if ((errorcode = mm_read_banner(f, &matcode)) != 0) {
         printf("Error while processing banner (file:'%s') (code=%d)\n", filename, errorcode);
         return 1;
     }
 
     /* matrix should be sparse and real */
-    if ( !mm_is_matrix(matcode) ||
-         !mm_is_real(matcode)   ||
-         !mm_is_sparse(matcode) ) {
+    if (!mm_is_matrix(matcode) ||
+        !mm_is_real(matcode) ||
+        !mm_is_sparse(matcode)) {
         printf("Not supported matrix type: %s\n", mm_typecode_to_str(matcode));
         return 1;
     }
 
     /* read info */
-    if ( (errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
+    if ((errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
         printf("Error while processing array (file:'%s') (code:%d)\n", filename, errorcode);
         return 1;
     }
 
-    return 0;
-
-    int startRow = ceil(((double)ncols/sqrRank)) * (rank/sqrRank);
+    int startRow = ceil(((double) ncols / sqrRank)) * (rank / sqrRank);
     (*ranks_info)[rank].M = nrows;
     (*ranks_info)[rank].N = ncols;
     (*ranks_info)[rank].NZ = nz_elements;
     (*ranks_info[rank]).first_row = startRow;
-    (*ranks_info)[rank].last_row = startRow + nrows -1;
-    if(nrows<=0){
+    (*ranks_info)[rank].last_row = startRow + nrows - 1;
+    if (nrows <= 0) {
         printf("[%d] issue with rows=%d\n", rank, nrows);
     }
-    if(ncols<=0){
+    if (ncols <= 0) {
         printf("[%d] issue with columns=%d\n", rank, ncols);
     }
-    if(nz_elements<=0){
+    if (nz_elements <= 0) {
         printf("[%d] issue with nz_elements=%d\n", rank, nz_elements);
     }
     /// Initialize CSR row, col and value pointer.
@@ -211,25 +212,26 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
     /* read actual matrix */
     for (int i = 0; i < nz_elements; i++) {
         fscanf(f, "%d %d %lf", &(i_idx[i]), &(j_idx[i]), &(values[i]));
-        i_idx[i]--; j_idx[i]--;
+        i_idx[i]--;
+        j_idx[i]--;
     }
     for (int i = 0; i < nz_elements; i++) {
-        if((i_idx[i]-startRow) >= nrows || (i_idx[i]-startRow)<0){
+        if ((i_idx[i] - startRow) >= nrows || (i_idx[i] - startRow) < 0) {
             printf("[%d] Index out of bound for row=%d, start row=%d\n", rank, i_idx[i], startRow);
             return 1;
         }
-        (*row_ptr)[i_idx[i]-startRow]++;
+        (*row_ptr)[i_idx[i] - startRow]++;
     }
-    for(int i = 0, cumsum = 0; i < nrows; i++){
+    for (int i = 0, cumsum = 0; i < nrows; i++) {
         int temp = (*row_ptr)[i];
         (*row_ptr)[i] = cumsum;
         cumsum += temp;
     }
     (*row_ptr)[nrows] = nz_elements;
 
-    for(int n = 0; n < nz_elements; n++){
-        int row  = i_idx[n]-startRow;
-        if(row<0 || row>= nrows){
+    for (int n = 0; n < nz_elements; n++) {
+        int row = i_idx[n] - startRow;
+        if (row < 0 || row >= nrows) {
             printf("[%d] out of bound for row=%d, start row=%d\n", rank, row, startRow);
             return 1;
         }
@@ -240,20 +242,21 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
         (*row_ptr)[row]++;
     }
 
-    for(int i = 0, last = 0; i <= nrows; i++){
+    for (int i = 0, last = 0; i <= nrows; i++) {
         int temp = (*row_ptr)[i];
-        (*row_ptr)[i]  = last;
-        last   = temp;
+        (*row_ptr)[i] = last;
+        last = temp;
     }
     /* close the file */
-    if ( fclose(f) != 0 ) {
+    if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
     }
 
     return 0;
 }
-int rank_wise_read_matrix_csr (const char * filename, int **row_ptr, int **col_ptr, double **val_ptr, proc_info_t **ranks_info, int rank, int *offDiagonalElements)
-{
+
+int rank_wise_read_matrix_csr(const char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
+                              proc_info_t **ranks_info, int rank, int *offDiagonalElements) {
     FILE *f;
     MM_typecode matcode;
     int errorcode, nrows, ncols, nz_elements, start_row = 0, end_row = 0;
@@ -261,29 +264,29 @@ int rank_wise_read_matrix_csr (const char * filename, int **row_ptr, int **col_p
     /* open the file */
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
     char *_ptr = strtok(filename, ".");
-    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank,strtok(NULL, "-"));
-    if ( (f = fopen(rank_wise_filename, "r")) == NULL ) {
+    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, strtok(NULL, "-"));
+    if ((f = fopen(rank_wise_filename, "r")) == NULL) {
         fprintf(stderr, "Cannot open '%s'\n", rank_wise_filename);
         return 1;
     }
 
     /* process first line */
-    if ( (errorcode = mm_read_banner(f, &matcode)) != 0 ) {
+    if ((errorcode = mm_read_banner(f, &matcode)) != 0) {
         fprintf(stderr, "Error while processing banner (file:'%s') (code=%d)\n",
                 filename, errorcode);
         return 1;
     }
 
     /* matrix should be sparse and real */
-    if ( !mm_is_matrix(matcode) ||
-         !mm_is_real(matcode)   ||
-         !mm_is_sparse(matcode) ) {
+    if (!mm_is_matrix(matcode) ||
+        !mm_is_real(matcode) ||
+        !mm_is_sparse(matcode)) {
         fprintf(stderr, "Not supported matrix type: %s\n", mm_typecode_to_str(matcode));
         return 1;
     }
 
     /* read info */
-    if ( (errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
+    if ((errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
         fprintf(stderr, "Error while processing array (file:'%s') (code:%d)\n",
                 filename, errorcode);
         return 1;
@@ -305,35 +308,37 @@ int rank_wise_read_matrix_csr (const char * filename, int **row_ptr, int **col_p
     /* read actual matrix */
     for (int i = 0; i < nz_elements; i++) {
         fscanf(f, "%d %d %lf", &(i_idx[i]), &(j_idx[i]), &(values[i]));
-        i_idx[i]--; j_idx[i]--;
-        if(start_row>i_idx[i])
+        i_idx[i]--;
+        j_idx[i]--;
+        if (start_row > i_idx[i])
             start_row = i_idx[i];
-        if(end_row<i_idx[i])
+        if (end_row < i_idx[i])
             end_row = i_idx[i];
     }
     (*ranks_info)[rank].first_row = start_row;
     (*ranks_info)[rank].last_row = end_row;
     for (int i = 0; i < nz_elements; i++) {
-        if((i_idx[i]-start_row) >= nrows || (i_idx[i]-start_row)<0){
-            printf("[%d] Index out of bound for row=%d, start row=%d, end row=%d\n", rank, i_idx[i], start_row, end_row);
+        if ((i_idx[i] - start_row) >= nrows || (i_idx[i] - start_row) < 0) {
+            printf("[%d] Index out of bound for row=%d, start row=%d, end row=%d\n", rank, i_idx[i], start_row,
+                   end_row);
         }
-        (*row_ptr)[i_idx[i]-start_row]++;
+        (*row_ptr)[i_idx[i] - start_row]++;
     }
 
-    for(int i = 0, cumsum = 0; i < nrows; i++){
+    for (int i = 0, cumsum = 0; i < nrows; i++) {
         int temp = (*row_ptr)[i];
         (*row_ptr)[i] = cumsum;
         cumsum += temp;
     }
     (*row_ptr)[nrows] = nz_elements;
 
-    for(int n = 0; n < nz_elements; n++){
-        int row  = i_idx[n]-start_row;
-        if(row<0 || row>= nrows){
+    for (int n = 0; n < nz_elements; n++) {
+        int row = i_idx[n] - start_row;
+        if (row < 0 || row >= nrows) {
             printf("[%d] out of bound for row=%d, start row=%d, end row=%d\n", rank, row, start_row, end_row);
         }
         int dest = (*row_ptr)[row];
-        if(!in_diagonal(j_idx[n], start_row, end_row)){
+        if (!in_diagonal(j_idx[n], start_row, end_row)) {
             (*offDiagonalElements)++;
         }
         (*col_ptr)[dest] = j_idx[n];
@@ -342,26 +347,25 @@ int rank_wise_read_matrix_csr (const char * filename, int **row_ptr, int **col_p
         (*row_ptr)[row]++;
     }
 
-    for(int i = 0, last = 0; i <= nrows; i++){
+    for (int i = 0, last = 0; i <= nrows; i++) {
         int temp = (*row_ptr)[i];
-        (*row_ptr)[i]  = last;
-        last   = temp;
+        (*row_ptr)[i] = last;
+        last = temp;
     }
     /* close the file */
-    if ( fclose(f) != 0 ) {
+    if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
     }
 
     return 0;
 }
 
-int write_matrix (const char *filename, const int *i_idx, const int *j_idx, const double *values, int N, int NZ)
-{
-    FILE* f;
+int write_matrix(const char *filename, const int *i_idx, const int *j_idx, const double *values, int N, int NZ) {
+    FILE *f;
     MM_typecode matcode;
 
     /* open the file */
-    if ( (f = fopen(filename, "w")) == NULL ) {
+    if ((f = fopen(filename, "w")) == NULL) {
         fprintf(stderr, "Cannot open '%s'\n", filename);
         return 1;
     }
@@ -382,7 +386,7 @@ int write_matrix (const char *filename, const int *i_idx, const int *j_idx, cons
     }
 
     /* close the file */
-    if ( fclose(f) != 0 ) {
+    if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
     }
 
