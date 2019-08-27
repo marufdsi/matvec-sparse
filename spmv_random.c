@@ -78,8 +78,8 @@ int main(int argc, char *argv[]) {
     ranks_info = (proc_info_t *) malloc_or_exit(nRanks * sizeof(proc_info_t));
 
     int sqrRank = sqrt(nRanks);
-    int col_rank = rank/sqrRank; //which col of proc am I
-    int row_rank = rank%sqrRank; //which row of proc am I
+    int row_rank = rank/sqrRank; //which col of proc am I
+    int col_rank = rank%sqrRank; //which row of proc am I
 
     //initialize communicators
     MPI_Comm commrow;
@@ -122,13 +122,13 @@ int main(int argc, char *argv[]) {
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
         //broadcast X along column communicator
-        MPI_Bcast (x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol); //col_rank is the one with the correct information
+        MPI_Bcast (x, ranks_info[rank].M, MPI_FLOAT, col_rank*sqrRank, commcol); //col_rank is the one with the correct information
 
         // Multiplication
 //        matMull(rank, row_ptr, col_ptr, val_ptr, x, ranks_info[rank].M, ranks_info[rank].first_row, y);
 
         //reduce Y along row communicator
-        MPI_Reduce(y, x, ranks_info[rank].M, MPI_FLOAT, MPI_SUM, row_rank, commrow);
+        MPI_Reduce(y, x, ranks_info[rank].M, MPI_FLOAT, MPI_SUM, row_rank*sqrRank, commrow);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
