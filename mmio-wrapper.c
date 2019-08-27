@@ -291,15 +291,6 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     (*ranks_info)[rank].NZ = nz_elements;
     (*ranks_info)[rank].first_row = startRow;
     (*ranks_info)[rank].last_row = startRow + nrows - 1;
-    if (nrows <= 0) {
-        printf("[%d] issue with rows=%d\n", rank, nrows);
-    }
-    if (ncols <= 0) {
-        printf("[%d] issue with columns=%d\n", rank, ncols);
-    }
-    if (nz_elements <= 0) {
-        printf("[%d] issue with nz_elements=%d\n", rank, nz_elements);
-    }
     /// Initialize CSR row, col and value pointer.
     (*row_ptr) = (int *) calloc_or_exit((nrows + 1), sizeof(int));
     (*col_ptr) = (int *) malloc_or_exit(nz_elements * sizeof(int));
