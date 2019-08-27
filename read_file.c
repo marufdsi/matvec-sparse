@@ -47,8 +47,10 @@ int main(int argc, char *argv[]) {
     }
     int sqrRank = sqrt(nRanks);
     for (int rank = 0; rank < nRanks; ++rank) {
+        char *file;
+        stpcpy(file, in_file);
         printf("[%d] Start reading\n",rank);
-        if (test_csr_read_2D_partitioned_mat(in_file, &row_ptr, &col_ptr, &val_ptr, sqrRank, rank) != 0) {
+        if (test_csr_read_2D_partitioned_mat(file, &row_ptr, &col_ptr, &val_ptr, sqrRank, rank) != 0) {
             fprintf(stderr, "read_matrix: failed\n");
             exit(EXIT_FAILURE);
         }
