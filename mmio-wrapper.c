@@ -289,7 +289,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     (*ranks_info)[rank].M = nrows;
     (*ranks_info)[rank].N = ncols;
     (*ranks_info)[rank].NZ = nz_elements;
-    (*ranks_info[rank]).first_row = startRow;
+    (*ranks_info)[rank].first_row = startRow;
     (*ranks_info)[rank].last_row = startRow + nrows - 1;
     if (nrows <= 0) {
         printf("[%d] issue with rows=%d\n", rank, nrows);
