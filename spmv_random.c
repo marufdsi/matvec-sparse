@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     if(rank == MASTER)
         printf("[%d] Reading Matrix done!\n", rank);
+    MPI_Finalize();
     return 0;
     y = (double *) calloc_or_exit(ranks_info[rank].M, sizeof(double));
     x = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
