@@ -209,7 +209,7 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
         }
         (*row_ptr)[i_idx[i]-startRow]++;
     }
-
+    return 0;
     for(int i = 0, cumsum = 0; i < nrows; i++){
         int temp = (*row_ptr)[i];
         (*row_ptr)[i] = cumsum;
