@@ -83,10 +83,10 @@ int main(int argc, char *argv[]) {
 
     //initialize communicators
     MPI_Comm commrow;
-    MPI_Comm_split (MPI_COMM_WORLD, row_rank, rank, &commrow);
+    MPI_Comm_split (MPI_COMM_WORLD, row_rank*sqrRank, rank, &commrow);
 
     MPI_Comm commcol;
-    MPI_Comm_split (MPI_COMM_WORLD, col_rank, rank, &commcol);
+    MPI_Comm_split (MPI_COMM_WORLD, col_rank*sqrRank, rank, &commcol);
 
     if (argc < 2) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
