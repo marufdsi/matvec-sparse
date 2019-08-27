@@ -24,24 +24,6 @@ enum tag {
 
 
 /**
- * Creates two MPI derived datatypes for the respective structs
- */
-void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
-    MPI_Datatype oldtypes[2];
-    MPI_Aint offsets[2];
-    int blockcounts[2];
-
-    /* create `proc_info_t` datatype */
-    offsets[0] = 0;
-    oldtypes[0] = MPI_INT;
-    blockcounts[0] = 9;
-
-    MPI_Type_create_struct(1, blockcounts, offsets, oldtypes, procs_info_type);
-    MPI_Type_commit(procs_info_type);
-}
-
-
-/**
  *
  * @param argc
  * @param argv
@@ -61,7 +43,7 @@ int main(int argc, char *argv[]) {
         return 0;
     } else {
         in_file = argv[1];
-        nRanks = argv[2];
+        nRanks = atoi(argv[2]);
     }
     int sqrRank = sqrt(nRanks);
     for (int rank = 0; rank < nRanks; ++rank) {
