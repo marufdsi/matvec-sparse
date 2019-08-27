@@ -11,6 +11,7 @@
 #include "mmio-wrapper.h"
 #include "mmio.h"
 #include "util.h"
+#include <math.h>
 
 /* Reads a matrix from a Matrix Market file, stored in COO format */
 int read_matrix (const char * filename, int **i_idx, int **j_idx, double **values, int *N, int *NZ)
@@ -183,7 +184,7 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
         return 1;
     }
 
-    int startRow = (ncols/sqrRank) * (rank/sqrRank);
+    int startRow = ceil(((double)ncols/sqrRank)) * (rank/sqrRank);
     (*ranks_info)[rank].M = nrows;
     (*ranks_info)[rank].N = ncols;
     (*ranks_info)[rank].NZ = nz_elements;
