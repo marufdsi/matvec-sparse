@@ -181,7 +181,7 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
         printf("Error while processing array (file:'%s') (code:%d)\n", filename, errorcode);
         return 1;
     }
-    
+
     return 0;
 
     int startRow = ceil(((double)ncols/sqrRank)) * (rank/sqrRank);

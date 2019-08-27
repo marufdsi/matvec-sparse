@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
     procs_info = (proc_info_t *) malloc_or_exit(nRanks * sizeof(proc_info_t));
     ranks_info = (proc_info_t *) malloc_or_exit(nRanks * sizeof(proc_info_t));
 
-    int sqrRank = sqrtl(nRanks);
+    int sqrRank = sqrt(nRanks);
     int col_rank = rank/sqrRank; //which col of proc am I
     int row_rank = rank%sqrRank; //which row of proc am I
 
