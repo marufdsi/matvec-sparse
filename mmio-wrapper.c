@@ -184,11 +184,11 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
     }
 
     int startRow = (ncols/sqrRank) * (rank/sqrRank);
-    (*ranks_info)[rank].M = (startRow + (ncols/sqrRank)) > ncols ? (ncols-startRow + 1) : (ncols/sqrRank);
+    (*ranks_info)[rank].M = nrows;
     (*ranks_info)[rank].N = ncols;
     (*ranks_info)[rank].NZ = nz_elements;
     (*ranks_info[rank]).first_row = startRow;
-    (*ranks_info)[rank].last_row = (startRow + (ncols/sqrRank)) > ncols ? (ncols-1) : (startRow + (ncols/sqrRank) -1);
+    (*ranks_info)[rank].last_row = startRow + nrows -1;
     /// Initialize CSR row, col and value pointer.
     (*row_ptr) = (int *) calloc_or_exit((nrows + 1), sizeof(int));
     (*col_ptr) = (int *) malloc_or_exit(nz_elements * sizeof(int));
