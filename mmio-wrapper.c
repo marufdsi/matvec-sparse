@@ -222,6 +222,7 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
         int row  = i_idx[n]-startRow;
         if(row<0 || row>= nrows){
             printf("[%d] out of bound for row=%d, start row=%d\n", rank, row, startRow);
+            return 1;
         }
         int dest = (*row_ptr)[row];
         (*col_ptr)[dest] = j_idx[n];

@@ -99,6 +99,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+
     y = (double *) calloc_or_exit(ranks_info[rank].M, sizeof(double));
     x = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
     for (int i = 0; i < ranks_info[rank].M; ++i) {
@@ -109,6 +110,9 @@ int main(int argc, char *argv[]) {
     /// Share process info among all the processes
     MPI_Allgather(&ranks_info[rank], 1, procs_info_type, procs_info, 1, procs_info_type, MPI_COMM_WORLD);
 
+    MPI_Bcast (x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol);
+
+    printf("[%d] Reading Matrix and broad casting done!\n", rank);
     /// Start sparse matrix vector multiplication for each rank
     double start_time = MPI_Wtime();
     MPI_Barrier(MPI_COMM_WORLD);
