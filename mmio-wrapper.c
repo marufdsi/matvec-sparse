@@ -206,6 +206,7 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
     for (int i = 0; i < nz_elements; i++) {
         if((i_idx[i]-startRow) >= nrows || (i_idx[i]-startRow)<0){
             printf("[%d] Index out of bound for row=%d, start row=%d\n", rank, i_idx[i], startRow);
+            return 1;
         }
         (*row_ptr)[i_idx[i]-startRow]++;
     }
