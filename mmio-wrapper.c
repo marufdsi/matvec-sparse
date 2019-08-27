@@ -158,14 +158,13 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
     char *_ptr = strtok(filename, ".");
     sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank,strtok(NULL, "-"));
     if ( (f = fopen(rank_wise_filename, "r")) == NULL ) {
-        fprintf(stderr, "Cannot open '%s'\n", rank_wise_filename);
+        printf("Cannot open '%s'\n", rank_wise_filename);
         return 1;
     }
 
     /* process first line */
     if ( (errorcode = mm_read_banner(f, &matcode)) != 0 ) {
-        fprintf(stderr, "Error while processing banner (file:'%s') (code=%d)\n",
-                filename, errorcode);
+        printf("Error while processing banner (file:'%s') (code=%d)\n", filename, errorcode);
         return 1;
     }
 
@@ -173,14 +172,13 @@ int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_
     if ( !mm_is_matrix(matcode) ||
          !mm_is_real(matcode)   ||
          !mm_is_sparse(matcode) ) {
-        fprintf(stderr, "Not supported matrix type: %s\n", mm_typecode_to_str(matcode));
+        printf("Not supported matrix type: %s\n", mm_typecode_to_str(matcode));
         return 1;
     }
 
     /* read info */
     if ( (errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
-        fprintf(stderr, "Error while processing array (file:'%s') (code:%d)\n",
-                filename, errorcode);
+        printf("Error while processing array (file:'%s') (code:%d)\n", filename, errorcode);
         return 1;
     }
 
