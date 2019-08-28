@@ -28,7 +28,7 @@ double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x
     for (int i = 0; i <nRow; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
             if (rank>0){
-                printf("i=%d, k=%d, column=%d start Row\n", i, k, col_ptr[k], firstRow);
+                printf("i=%d, k=%d, column=%d start Row=%d\n", i, k, col_ptr[k], firstRow);
             }
             if((col_ptr[k] - firstRow) <0 ){
                 printf("Error in column=%d for start row=%d\n", col_ptr[k], firstRow);
