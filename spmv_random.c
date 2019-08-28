@@ -60,7 +60,8 @@ void create_mpi_datatypes(MPI_Datatype *procs_info_type) {
 int main(int argc, char *argv[]) {
 
     char *in_file;
-    double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
+    double comp_time = 0, bcast_time = 0.0, matmul_time = 0.0, reduce_time = 0.0, min_time = 0.0, max_time = 0.0,
+            avg_time = 0.0, mean = 0.0, avg_bcast_time = 0.0, avg_matmul_time = 0.0, avg_reduce_time = 0.0;
     int total_run = 100, nRanks, rank;
     int *row_ptr, *col_ptr;
     double *val_ptr, *x, *y;
@@ -120,33 +121,44 @@ int main(int argc, char *argv[]) {
         printf("[%d] M=%d, FirstRow=%d\n", rank, ranks_info[rank].M, ranks_info[rank].first_row);
 //    printf("[%d] Reading Matrix and broad casting done!\n", rank);
     /// Start sparse matrix vector multiplication for each rank
+    double start_bcast_time = 0.0, start_matmul_time = 0.0, start_reduce_time = 0.0, ;
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
+        start_bcast_time = MPI_Wtime();
         //broadcast X along column communicator
         MPI_Bcast (x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol); //col_rank is the one with the correct information
+        bcast_time += (MPI_Wtime() - start_bcast_time) * 1000.00;
 
+        start_matmul_time = MPI_Wtime();
         // Multiplication
         matMull(rank, row_ptr, col_ptr, val_ptr, x, ranks_info[rank].M, col_rank*ranks_info[rank].M, y);
+        matmul_time += (MPI_Wtime() - start_matmul_time) * 1000.00;
 
+        start_reduce_time = MPI_Wtime();
         //reduce Y along row communicator
         MPI_Reduce(y, x, ranks_info[rank].M, MPI_FLOAT, MPI_SUM, row_rank, commrow);
+        reduce_time += (MPI_Wtime() - start_reduce_time) * 1000.00;
     }
     MPI_Barrier(MPI_COMM_WORLD);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
     avg_time = comp_time / total_run;
+    avg_bcast_time = bcast_time / total_run;
+    avg_matmul_time = matmul_time / total_run;
+    avg_reduce_time = reduce_time / total_run;
 
     MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
 
-    int max_nnz = 0, max_row = 0;
-    double max_nnz_per_row = 0.0, nnz_per_row = procs_info[rank].NZ/procs_info[rank].M;
+    int max_nnz = 0, sum_nnz = 0, avg_row = 0;
+    double max_nnz_per_row = 0.0, nnz_per_row = (double)procs_info[rank].NZ/procs_info[rank].M, avg_nnz = 0.0;
     MPI_Reduce(&procs_info[rank].NZ, &max_nnz, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
-    MPI_Reduce(&procs_info[rank].M, &max_row, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&procs_info[rank].NZ, &sum_nnz, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&procs_info[rank].M, &avg_row, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&nnz_per_row, &max_nnz_per_row, 1, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
-
+    avg_nnz = sum_nnz/nRanks;
     /// print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
@@ -167,11 +179,11 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "Name,MatrixSize,MaxRow,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock\n");
+                    "Name,MatrixSize,AvgRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,AvgNonZeroPerBlock,MaxNonZeroPerBlock\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d\n", _ptr,procs_info[rank].N, max_row, min_time, max_time,
-                mean, total_run, nRanks, max_nnz_per_row, max_nnz);
+        fprintf(resultCSV, "%s,%d,%d,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%10.3lf,%d\n", _ptr,procs_info[rank].N, avg_row, min_time, max_time,
+                mean, avg_bcast_time, avg_matmul_time, avg_reduce_time, total_run, nRanks, max_nnz_per_row, avg_nnz, max_nnz);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file CSR_Random_BrCast_Reduce_SpMV.csv");
             exit(EXIT_FAILURE);
