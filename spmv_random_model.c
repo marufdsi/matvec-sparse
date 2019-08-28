@@ -95,7 +95,12 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-
+    if(rank == MASTER){
+        printf("[%d] done creating matrix of row size = %d and nnz = %d\n", rank, mat_row, nnz_per_block);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    return 0;
     y = (double *) calloc_or_exit(mat_row, sizeof(double));
     x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; ++i) {
