@@ -22,25 +22,25 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
-double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, int firstRow, double *y) {
+double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, int startCol, double *y) {
 
     /// multiplication
     for (int i = 0; i <nRow; ++i) {
-        if (rank>0){
+        /*if (rank>0){
             printf("Row ptr=%d\n", row_ptr[i]);
-        }
+        }*/
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
-            if (rank>0){
-                printf("i=%d, k=%d, column=%d start Row=%d\n", i, k, col_ptr[k], firstRow);
-            }
-            if((col_ptr[k] - firstRow) <0 ){
-                printf("Error in column=%d for start row=%d\n", col_ptr[k], firstRow);
+            /*if (rank>0){
+                printf("i=%d, k=%d, column=%d start Row=%d\n", i, k, col_ptr[k], startCol);
+            }*/
+            if((col_ptr[k] - startCol) <0 ){
+                printf("Error in column=%d for start row=%d\n", col_ptr[k], startCol);
                 return y;
             }
-            y[i] += val_ptr[k] * x[col_ptr[k] - firstRow];
-            if (rank>0){
+            y[i] += val_ptr[k] * x[col_ptr[k] - startCol];
+            /*if (rank>0){
                 printf("done matmul\n");
-            }
+            }*/
         }
     }
 }
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
         printf("[%d] Done reading\n",rank);
-        matMull(rank, row_ptr, col_ptr, val_ptr, x, 123761, (rank/sqrRank)*123761, y);
+        matMull(rank, row_ptr, col_ptr, val_ptr, x, 123761, (rank%sqrRank)*123761, y);
         printf("[%d] Done Multiplication\n",rank);
     }
     /* MPI: end */
