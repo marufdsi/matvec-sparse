@@ -74,20 +74,9 @@ int main(int argc, char *argv[]) {
     int total_run = 100, nRanks, rank, *row_ptr, *col_ptr, _size, mat_row, nnz_per_block;
 
     /* Initialize MPI */
-    MPI_Init(&argc, &argv);
+   /* MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &nRanks);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    int sqrRank = sqrt(nRanks);
-    int row_rank = rank / sqrRank; //which col of proc am I
-    int col_rank = rank % sqrRank; //which row of proc am I
-
-    //initialize communicators
-    MPI_Comm commrow;
-    MPI_Comm_split(MPI_COMM_WORLD, row_rank, rank, &commrow);
-
-    MPI_Comm commcol;
-    MPI_Comm_split(MPI_COMM_WORLD, col_rank, rank, &commcol);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);*/
 
     if (argc < 2) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
@@ -98,7 +87,21 @@ int main(int argc, char *argv[]) {
         nnz_per_block = atoi(argv[3]);
         if (argc > 4)
             total_run = atoi(argv[4]);
+        nRanks = atoi(argv[5]);
+        rank = atoi(argv[6]);
     }
+
+    int sqrRank = sqrt(nRanks);
+    int row_rank = rank / sqrRank; //which col of proc am I
+    int col_rank = rank % sqrRank; //which row of proc am I
+
+    //initialize communicators
+    /*MPI_Comm commrow;
+    MPI_Comm_split(MPI_COMM_WORLD, row_rank, rank, &commrow);
+
+    MPI_Comm commcol;
+    MPI_Comm_split(MPI_COMM_WORLD, col_rank, rank, &commcol);*/
+
     if (createCSRMat(row_ptr, col_ptr, val_ptr, mat_row, nnz_per_block, col_rank * mat_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
@@ -116,26 +119,27 @@ int main(int argc, char *argv[]) {
     }
     /// Start sparse matrix vector multiplication for each rank
     double start_bcast_time = 0.0, start_matmul_time = 0.0, start_reduce_time = 0.0;
-    MPI_Barrier(MPI_COMM_WORLD);
-    double start_time = MPI_Wtime();
+//    MPI_Barrier(MPI_COMM_WORLD);
+//    double start_time = MPI_Wtime();
+    printf("[%d] Start multiplication\n", rank);
     for (int r = 0; r < total_run; ++r) {
-        start_bcast_time = MPI_Wtime();
+        /*start_bcast_time = MPI_Wtime();
         //broadcast X along column communicator
         MPI_Bcast(x, mat_row, MPI_FLOAT, col_rank,
                   commcol); //col_rank is the one with the correct information
-        bcast_time += (MPI_Wtime() - start_bcast_time) * 1000.00;
+        bcast_time += (MPI_Wtime() - start_bcast_time) * 1000.00;*/
 
         start_matmul_time = MPI_Wtime();
         // Multiplication
         matMull(rank, row_ptr, col_ptr, val_ptr, x, mat_row, col_rank * mat_row, y);
         matmul_time += (MPI_Wtime() - start_matmul_time) * 1000.00;
 
-        start_reduce_time = MPI_Wtime();
+        /*start_reduce_time = MPI_Wtime();
         //reduce Y along row communicator
         MPI_Reduce(y, x, mat_row, MPI_FLOAT, MPI_SUM, row_rank, commrow);
-        reduce_time += (MPI_Wtime() - start_reduce_time) * 1000.00;
+        reduce_time += (MPI_Wtime() - start_reduce_time) * 1000.00;*/
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+//    MPI_Barrier(MPI_COMM_WORLD);
     printf("[%d] done multiplication\n", rank);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
     avg_time = comp_time / total_run;
@@ -143,12 +147,15 @@ int main(int argc, char *argv[]) {
     avg_matmul_time = matmul_time / total_run;
     avg_reduce_time = reduce_time / total_run;
 
-    MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    /*MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    mean = mean / nRanks;
+    mean = mean / nRanks;*/
 
     double nnz_per_row = (double)nnz_per_block/mat_row;
+    printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
+           rank, min_time, max_time, mean, nnz_per_block);
+    return 0;
     /// print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
@@ -182,7 +189,7 @@ int main(int argc, char *argv[]) {
     free(x);
     free(y);
     /* MPI: end */
-    MPI_Finalize();
+//    MPI_Finalize();
 
     return 0;
 }
