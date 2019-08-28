@@ -54,6 +54,9 @@ int main(int argc, char *argv[]) {
     printf("[%d] allocate space for vector\n", nRanks);
     double *y = (double *) calloc_or_exit(123761, sizeof(double));
     double *x = (double *) malloc_or_exit(123761 * sizeof(double));
+    for (int i = 0; i < 123761; ++i) {
+        x[i] = 1.0;
+    }
     printf("[%d] Done allocating\n", nRanks);
     for (int rank = 0; rank < nRanks; ++rank) {
         int *row_ptr, *col_ptr;
