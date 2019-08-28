@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
         MPI_Bcast (x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol); //col_rank is the one with the correct information
 
         // Multiplication
-//        matMull(rank, row_ptr, col_ptr, val_ptr, x, ranks_info[rank].M, ranks_info[rank].first_row, y);
+        matMull(rank, row_ptr, col_ptr, val_ptr, x, ranks_info[rank].M, ranks_info[rank].first_row, y);
 
         //reduce Y along row communicator
         MPI_Reduce(y, x, ranks_info[rank].M, MPI_FLOAT, MPI_SUM, row_rank, commrow);
