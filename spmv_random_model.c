@@ -136,6 +136,7 @@ int main(int argc, char *argv[]) {
         reduce_time += (MPI_Wtime() - start_reduce_time) * 1000.00;
     }
     MPI_Barrier(MPI_COMM_WORLD);
+    printf("[%d] done multiplication\n", rank);
     comp_time = (MPI_Wtime() - start_time) * 1000.00;
     avg_time = comp_time / total_run;
     avg_bcast_time = bcast_time / total_run;
