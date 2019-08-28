@@ -29,4 +29,5 @@ add_executable(matvec_sparse
         comm_p2p.c
         mult_p2p.c
         spmv_random.c
+        spmv_random_model.c
         read_file.c)

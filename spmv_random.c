@@ -110,16 +110,6 @@ int main(int argc, char *argv[]) {
 
     /// Share process info among all the processes
     MPI_Allgather(&ranks_info[rank], 1, procs_info_type, procs_info, 1, procs_info_type, MPI_COMM_WORLD);
-/*
-    MPI_Bcast (x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol);
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf("[%d] Reading Matrix done!\n", rank);
-    MPI_Finalize();
-    return 0;*/
-    if(rank == 899)
-        printf("[%d] M=%d, FirstRow=%d\n", rank, ranks_info[rank].M, ranks_info[rank].first_row);
-//    printf("[%d] Reading Matrix and broad casting done!\n", rank);
     /// Start sparse matrix vector multiplication for each rank
     double start_bcast_time = 0.0, start_matmul_time = 0.0, start_reduce_time = 0.0;
     MPI_Barrier(MPI_COMM_WORLD);

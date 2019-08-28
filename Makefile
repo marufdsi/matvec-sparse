@@ -12,7 +12,7 @@ LDFLAGS = -lm -lrt
 # Object files from libraries
 OBJ = mmio.o mmio-wrapper.o partition.o util.o
 
-all: matvec_seq matvec_mpi_p2p matvec_mpi_bcast matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p mult_p2p spmv_random read_file
+all: matvec_seq matvec_mpi_p2p matvec_mpi_bcast matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p mult_p2p spmv_random read_file spmv_random_model
 
 matvec_seq: matvec_seq.c $(OBJ) stopwatch.o
 	$(CC) $(CFLAGS) $(OBJ) stopwatch.o $< -o $@ $(LDFLAGS)
@@ -53,6 +53,9 @@ mult_p2p: mult_p2p.c $(OBJ)
 spmv_random: spmv_random.c $(OBJ)
 	$(MPI_C) $(MPI_CFLAGS) $(OBJ) $< -o $@ $(LDFLAGS)
 
+spmv_random_model: spmv_random_model.c $(OBJ)
+	$(MPI_C) $(MPI_CFLAGS) $(OBJ) $< -o $@ $(LDFLAGS)
+
 read_file: read_file.c $(OBJ)
 	$(MPI_C) $(MPI_CFLAGS) $(OBJ) $< -o $@ $(LDFLAGS)
 
@@ -61,4 +64,4 @@ read_file: read_file.c $(OBJ)
 
 .PHONY: clean
 clean:
-	rm -f matvec_seq matvec_mpi_bcast matvec_mpi_p2p matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p mult_p2p spmv_random read_file *.o
+	rm -f matvec_seq matvec_mpi_bcast matvec_mpi_p2p matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p mult_p2p spmv_random read_file spmv_random_model *.o
