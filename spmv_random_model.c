@@ -107,8 +107,6 @@ int main(int argc, char *argv[]) {
         nnz_per_block = atoi(argv[3]);
         if (argc > 4)
             total_run = atoi(argv[4]);
-        nRanks = atoi(argv[5]);
-        rank = atoi(argv[6]);
     }
 
     int sqrRank = sqrt(nRanks);
