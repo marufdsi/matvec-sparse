@@ -35,7 +35,8 @@ int createCSRMat(int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int n
     srand(time(NULL) * (rank + 1));
     for (int k = 0; k < nnz_per_block; ++k) {
         int randColIdx = rand() % mat_row;
-        row_ptr[k%mat_row]++;
+        int rowIdx = rank%2 == 0 ? (mat_row-1)-(k%mat_row) : (k%mat_row);
+        row_ptr[rowIdx]++;
         col_ptr[k] = startCol + randColIdx;
         val_ptr[k] = 1.0;
     }
