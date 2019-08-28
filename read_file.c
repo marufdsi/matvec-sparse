@@ -54,8 +54,10 @@ int main(int argc, char *argv[]) {
         nRanks = atoi(argv[2]);
     }
     int sqrRank = sqrt(nRanks);
+    printf("[%d] allocate space for vector\n", nRanks);
     double *y = (double *) calloc_or_exit(123761, sizeof(double));
     double *x = (double *) malloc_or_exit(123761 * sizeof(double));
+    printf("[%d] Done allocating\n", nRanks);
     for (int rank = 0; rank < nRanks; ++rank) {
         char *file;
         stpcpy(file, in_file);
