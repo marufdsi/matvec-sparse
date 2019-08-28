@@ -22,12 +22,12 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
-double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, int firstRow, double *y) {
+double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, int startCol, double *y) {
 
     /// multiplication
     for (int i = 0; i <nRow; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
-            y[i] += val_ptr[k] * x[col_ptr[k] - firstRow];
+            y[i] += val_ptr[k] * x[col_ptr[k] - startCol];
     }
 }
 
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
         MPI_Bcast (x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol); //col_rank is the one with the correct information
 
         // Multiplication
-        matMull(rank, row_ptr, col_ptr, val_ptr, x, ranks_info[rank].M, ranks_info[rank].first_row, y);
+        matMull(rank, row_ptr, col_ptr, val_ptr, x, ranks_info[rank].M, col_rank*ranks_info[rank].M, y);
 
         //reduce Y along row communicator
         MPI_Reduce(y, x, ranks_info[rank].M, MPI_FLOAT, MPI_SUM, row_rank, commrow);
