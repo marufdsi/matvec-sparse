@@ -122,6 +122,12 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
+    for (int i = 0; i < mat_row; ++i) {
+        for (int j = row_ptr[i]; j < row_ptr[i+1]; ++j) {
+            printf("col=%d:val=%10.3lf  ", col_ptr[j], val_ptr[j]);
+        }
+        printf("\n");
+    }
     /*if(rank == MASTER){
         printf("[%d] done creating matrix of row size = %d and nnz = %d\n", rank, mat_row, nnz_per_block);
     }
