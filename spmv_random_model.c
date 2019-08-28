@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <jmorecfg.h>
 
 #include "mpi.h"
 
@@ -33,17 +34,32 @@ int createCSRMat(int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int n
     col_ptr = (int *) malloc_or_exit(nnz_per_block * sizeof(int));
     val_ptr = (double *) malloc_or_exit(nnz_per_block * sizeof(double));
     srand(time(NULL) * (rank + 1));
-    int **trackIndex = (int **) malloc_or_exit(mat_row * sizeof(int*));
+    int max_nnz_per_row = ceil((double)nnz_per_block/mat_row);
+    int **trackIndex = (int **) malloc_or_exit( mat_row * sizeof(int*));
+    int *counter = (int *) calloc_or_exit(mat_row, sizeof(int));
     for (int i = 0; i < mat_row; ++i) {
-        trackIndex[i] = (int *) calloc_or_exit(mat_row, sizeof(int));
+        trackIndex[i] = (int *) malloc_or_exit(max_nnz_per_row * sizeof(int));
     }
+    for (int i = 0; i < mat_row; ++i) {
+        for (int j = 0; j < max_nnz_per_row; ++j) {
+            trackIndex[i][j] = -1;
+        }
+    }
+    int isExist = 0;
     for (int k = 0; k < nnz_per_block; ++k) {
         int rowIdx = rank%2 == 0 ? (mat_row-1)-(k%mat_row) : (k%mat_row);
-        int randColIdx = rand() % mat_row;
-        while (trackIndex[rowIdx][randColIdx] != 0){
+        int randColIdx;
+        do {
+            isExist = 0;
             randColIdx = rand() % mat_row;
-        }
-        trackIndex[rowIdx][randColIdx] = 1;
+            for (int i = 0; i < counter[rowIdx]; ++i) {
+                if(trackIndex[rowIdx][i] == randColIdx) {
+                    isExist = 1;
+                    break;
+                }
+            }
+        } while (isExist != 0);
+        trackIndex[rowIdx][counter[rowIdx]++] = randColIdx;
         row_ptr[rowIdx]++;
         col_ptr[k] = startCol + randColIdx;
         val_ptr[k] = 1.0;
