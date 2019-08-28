@@ -290,7 +290,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     (*ranks_info)[rank].N = ncols;
     (*ranks_info)[rank].NZ = nz_elements;
     (*ranks_info)[rank].first_row = startRow;
-    (*ranks_info)[rank].last_row = startRow + nrows - 1;
+    (*ranks_info)[rank].last_row = startRow + (*ranks_info)[rank].M - 1;
     /// Initialize CSR row, col and value pointer.
     (*row_ptr) = (int *) calloc_or_exit(((*ranks_info)[rank].M + 1), sizeof(int));
     (*col_ptr) = (int *) malloc_or_exit(nz_elements * sizeof(int));
@@ -307,22 +307,22 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         j_idx[i]--;
     }
     for (int i = 0; i < nz_elements; i++) {
-        if ((i_idx[i] - startRow) >= nrows || (i_idx[i] - startRow) < 0) {
+        if ((i_idx[i] - startRow) >= (*ranks_info)[rank].M || (i_idx[i] - startRow) < 0) {
             printf("[%d] Index out of bound for row=%d, start row=%d\n", rank, i_idx[i], startRow);
             return 1;
         }
         (*row_ptr)[i_idx[i] - startRow]++;
     }
-    for (int i = 0, cumsum = 0; i < nrows; i++) {
+    for (int i = 0, cumsum = 0; i < (*ranks_info)[rank].M; i++) {
         int temp = (*row_ptr)[i];
         (*row_ptr)[i] = cumsum;
         cumsum += temp;
     }
-    (*row_ptr)[nrows] = nz_elements;
+    (*row_ptr)[(*ranks_info)[rank].M] = nz_elements;
 
     for (int n = 0; n < nz_elements; n++) {
         int row = i_idx[n] - startRow;
-        if (row < 0 || row >= nrows) {
+        if (row < 0 || row >= (*ranks_info)[rank].M) {
             printf("[%d] out of bound for row=%d, start row=%d\n", rank, row, startRow);
             return 1;
         }
@@ -333,7 +333,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         (*row_ptr)[row]++;
     }
 
-    for (int i = 0, last = 0; i <= nrows; i++) {
+    for (int i = 0, last = 0; i <= (*ranks_info)[rank].M; i++) {
         int temp = (*row_ptr)[i];
         (*row_ptr)[i] = last;
         last = temp;

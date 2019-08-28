@@ -22,6 +22,14 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
+double *matMull(int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, int firstRow, double *y) {
+
+    /// multiplication
+    for (int i = 0; i <nRow; ++i) {
+        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
+            y[i] += val_ptr[k] * x[col_ptr[k] - firstRow];
+    }
+}
 
 /**
  *
@@ -46,6 +54,8 @@ int main(int argc, char *argv[]) {
         nRanks = atoi(argv[2]);
     }
     int sqrRank = sqrt(nRanks);
+    double *y = (double *) calloc_or_exit(123761, sizeof(double));
+    double *x = (double *) malloc_or_exit(123761 * sizeof(double));
     for (int rank = 0; rank < nRanks; ++rank) {
         char *file;
         stpcpy(file, in_file);
@@ -55,6 +65,8 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
         printf("[%d] Done reading\n",rank);
+        matMull(row_ptr, col_ptr, val_ptr, x, 123761, (rank/sqrRank)*123761, y);
+        printf("[%d] Done Multiplication\n",rank);
     }
     /* MPI: end */
 
