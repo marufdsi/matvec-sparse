@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
         printf("[%d] M=%d, FirstRow=%d\n", rank, ranks_info[rank].M, ranks_info[rank].first_row);
 //    printf("[%d] Reading Matrix and broad casting done!\n", rank);
     /// Start sparse matrix vector multiplication for each rank
-    double start_bcast_time = 0.0, start_matmul_time = 0.0, start_reduce_time = 0.0, ;
+    double start_bcast_time = 0.0, start_matmul_time = 0.0, start_reduce_time = 0.0;
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
     for (int r = 0; r < total_run; ++r) {
