@@ -122,6 +122,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
+    printf("[%d]Matrix Creation done\n", rank);
     for (int i = 0; i < mat_row; ++i) {
         for (int j = row_ptr[i]; j < row_ptr[i+1]; ++j) {
             printf("col=%d:val=%10.3lf  ", col_ptr[j], val_ptr[j]);
