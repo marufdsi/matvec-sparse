@@ -145,9 +145,6 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER){
         printf("[%d] Matrix creation done\n", rank);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;
     /// Start sparse matrix vector multiplication for each rank
     double start_bcast_time = 0.0, start_matmul_time = 0.0, start_reduce_time = 0.0;
     MPI_Barrier(MPI_COMM_WORLD);
