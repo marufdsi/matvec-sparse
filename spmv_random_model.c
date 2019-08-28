@@ -178,6 +178,8 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
 
+    MPI_Finalize();
+    return 0;
     double nnz_per_row = (double)nnz_per_block/mat_row;
     /// print execution stats
     if (rank == MASTER) {
