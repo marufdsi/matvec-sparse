@@ -29,10 +29,10 @@ double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x
     }
 }
 
-int createCSRMat(int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int nnz_per_block, int startCol, int rank){
-    row_ptr = (int *) calloc_or_exit(mat_row+1, sizeof(int));
-    col_ptr = (int *) malloc_or_exit(nnz_per_block * sizeof(int));
-    val_ptr = (double *) malloc_or_exit(nnz_per_block * sizeof(double));
+int createCSRMat(int **row_ptr, int **col_ptr, double **val_ptr, int mat_row, int nnz_per_block, int startCol, int rank){
+    (*row_ptr) = (int *) calloc_or_exit(mat_row+1, sizeof(int));
+    (*col_ptr) = (int *) malloc_or_exit(nnz_per_block * sizeof(int));
+    (*val_ptr) = (double *) malloc_or_exit(nnz_per_block * sizeof(double));
     srand(time(NULL) * (rank + 1));
     int max_nnz_per_row = ceil((double)nnz_per_block/mat_row);
     int **trackIndex = (int **) malloc_or_exit( mat_row * sizeof(int*));
@@ -60,16 +60,16 @@ int createCSRMat(int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int n
             }
         } while (isExist != 0);
         trackIndex[rowIdx][counter[rowIdx]++] = randColIdx;
-        row_ptr[rowIdx]++;
-        col_ptr[k] = startCol + randColIdx;
-        val_ptr[k] = 1.0;
+        (*row_ptr)[rowIdx]++;
+        (*col_ptr)[k] = startCol + randColIdx;
+        (*val_ptr)[k] = 1.0;
     }
     for (int i = 0, cumsum = 0; i < mat_row; i++) {
-        int temp = row_ptr[i];
-        row_ptr[i] = cumsum;
+        int temp = (*row_ptr)[i];
+        (*row_ptr)[i] = cumsum;
         cumsum += temp;
     }
-    row_ptr[mat_row] = nnz_per_block;
+    (*row_ptr)[mat_row] = nnz_per_block;
     return 0;
 }
 
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm commcol;
     MPI_Comm_split(MPI_COMM_WORLD, col_rank, rank, &commcol);*/
 
-    if (createCSRMat(row_ptr, col_ptr, val_ptr, mat_row, nnz_per_block, col_rank * mat_row, rank) != 0) {
+    if (createCSRMat(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block, col_rank * mat_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
