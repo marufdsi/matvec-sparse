@@ -195,6 +195,7 @@ int test_csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **
     if (nz_elements <= 0) {
         printf("[%d] issue with nz_elements=%d\n", rank, nz_elements);
     }
+    nrows = 123761;
     /// Initialize CSR row, col and value pointer.
     (*row_ptr) = (int *) calloc_or_exit((nrows + 1), sizeof(int));
     (*col_ptr) = (int *) malloc_or_exit(nz_elements * sizeof(int));
