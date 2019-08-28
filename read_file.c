@@ -26,6 +26,9 @@ double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x
 
     /// multiplication
     for (int i = 0; i <nRow; ++i) {
+        if (rank>0){
+            printf("Row ptr=%d\n", row_ptr[i]);
+        }
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
             if (rank>0){
                 printf("i=%d, k=%d, column=%d start Row=%d\n", i, k, col_ptr[k], firstRow);
@@ -35,6 +38,9 @@ double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x
                 return y;
             }
             y[i] += val_ptr[k] * x[col_ptr[k] - firstRow];
+            if (rank>0){
+                printf("done matmul\n");
+            }
         }
     }
 }
