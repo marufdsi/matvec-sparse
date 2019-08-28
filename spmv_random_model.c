@@ -178,14 +178,11 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
 
-    MPI_Finalize();
-    return 0;
     double nnz_per_row = (double)nnz_per_block/mat_row;
     /// print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
                rank, min_time, max_time, mean, nnz_per_block);
-        char *_ptr = strtok(in_file, "_");
         FILE *resultCSV;
         FILE *checkFile;
         if ((checkFile = fopen("CSR_SpMV_Model_of_Random_BrCast_Reduce.csv", "r")) != NULL) {
