@@ -26,8 +26,13 @@ double *matMull(int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow
 
     /// multiplication
     for (int i = 0; i <nRow; ++i) {
-        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
+        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
+            if((col_ptr[k] - firstRow) <0 ){
+                printf("Error in column=%d for start row=%d\n", col_ptr[k], firstRow);
+                return y;
+            }
             y[i] += val_ptr[k] * x[col_ptr[k] - firstRow];
+        }
     }
 }
 
