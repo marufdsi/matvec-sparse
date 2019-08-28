@@ -72,8 +72,8 @@ int createCSRMat(int **row_ptr, int **col_ptr, double **val_ptr, int mat_row, in
     (*row_ptr)[mat_row] = nnz_per_block;
     for (int i = 0; i < mat_row; ++i) {
         free(trackIndex[i]);
-        free(counter);
     }
+    free(counter);
     return 0;
 }
 
