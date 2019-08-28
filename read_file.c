@@ -42,10 +42,7 @@ double *matMull(int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow
 int main(int argc, char *argv[]) {
 
     char *in_file;
-    int nRanks, *row_ptr, *col_ptr;
-    double *val_ptr;
-
-
+    int nRanks;
     if (argc < 2) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
         return 0;
@@ -59,6 +56,8 @@ int main(int argc, char *argv[]) {
     double *x = (double *) malloc_or_exit(123761 * sizeof(double));
     printf("[%d] Done allocating\n", nRanks);
     for (int rank = 0; rank < nRanks; ++rank) {
+        int *row_ptr, *col_ptr;
+        double *val_ptr;
         char file[100];
         stpcpy(file, in_file);
         printf("[%d] Start reading\n",rank);
