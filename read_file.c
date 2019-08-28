@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     printf("[%d] Done allocating\n", nRanks);
     for (int rank = 0; rank < nRanks; ++rank) {
         char *file;
-        stpcpy(file, in_file);
+        stpcpy(in_file, file);
         printf("[%d] Start reading\n",rank);
         if (test_csr_read_2D_partitioned_mat(file, &row_ptr, &col_ptr, &val_ptr, sqrRank, rank) != 0) {
             fprintf(stderr, "read_matrix: failed\n");
