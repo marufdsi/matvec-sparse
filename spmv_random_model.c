@@ -33,9 +33,17 @@ int createCSRMat(int *row_ptr, int *col_ptr, double *val_ptr, int mat_row, int n
     col_ptr = (int *) malloc_or_exit(nnz_per_block * sizeof(int));
     val_ptr = (double *) malloc_or_exit(nnz_per_block * sizeof(double));
     srand(time(NULL) * (rank + 1));
+    int **trackIndex = (int **) malloc_or_exit(mat_row * sizeof(int*));
+    for (int i = 0; i < mat_row; ++i) {
+        trackIndex[i] = (int *) calloc_or_exit(mat_row, sizeof(int));
+    }
     for (int k = 0; k < nnz_per_block; ++k) {
-        int randColIdx = rand() % mat_row;
         int rowIdx = rank%2 == 0 ? (mat_row-1)-(k%mat_row) : (k%mat_row);
+        int randColIdx = rand() % mat_row;
+        while (trackIndex[rowIdx][randColIdx] != 0){
+            randColIdx = rand() % mat_row;
+        }
+        trackIndex[rowIdx][randColIdx] = 1;
         row_ptr[rowIdx]++;
         col_ptr[k] = startCol + randColIdx;
         val_ptr[k] = 1.0;
@@ -95,12 +103,12 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-    if(rank == MASTER){
+    /*if(rank == MASTER){
         printf("[%d] done creating matrix of row size = %d and nnz = %d\n", rank, mat_row, nnz_per_block);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
-    return 0;
+    return 0;*/
     y = (double *) calloc_or_exit(mat_row, sizeof(double));
     x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; ++i) {
