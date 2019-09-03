@@ -29,8 +29,8 @@ double *matMull(int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow
     for (int i = 0; i < nRow; ++i) {
         double tmp = 0;
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
-            tmp += val_ptr[k] * x[col_ptr[k]];
-        y[i] = tmp;
+            y[i] += val_ptr[k] * x[col_ptr[k]];
+//        y[i] = tmp;
     }
 }
 
