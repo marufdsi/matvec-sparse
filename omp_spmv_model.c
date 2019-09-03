@@ -24,13 +24,11 @@
 
 double *matMull(int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, double *y) {
 
-    int i, k;
-    double tmp;
     /// multiplication
-    #pragma omp parallel for default(shared) private(i, k, tmp)
-    for (i = 0; i < nRow; ++i) {
-        tmp = 0;
-        for (k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
+    #pragma omp parallel for schedule(dynamic, 64)
+    for (int i = 0; i < nRow; ++i) {
+        double tmp = 0;
+        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
             tmp += val_ptr[k] * x[col_ptr[k]];
         y[i] = tmp;
     }
