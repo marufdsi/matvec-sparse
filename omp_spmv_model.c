@@ -25,7 +25,7 @@
 double *matMull(int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, double *y) {
 
     /// multiplication
-    #pragma omp for schedule(static)
+    #pragma omp for schedule(dynamic)
     for (int i = 0; i < nRow; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
             y[i] += val_ptr[k] * x[col_ptr[k]];
