@@ -27,7 +27,7 @@ double *matMull(int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow
     int i, k;
     double tmp;
     /// multiplication
-    #pragma omp parallel for default(shared) private(i, k, temp)
+    #pragma omp parallel for default(shared) private(i, k, tmp)
     for (i = 0; i < nRow; ++i) {
         tmp = 0;
         for (k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
