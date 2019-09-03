@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
     clock_gettime(CLOCK_MONOTONIC, &_start);
     #pragma omp for schedule(static)
     for (int i = 0; i < 100000000; ++i) {
-        C = A[i] + B[i];
+        C[i] = A[i] + B[i];
     }
     clock_gettime(CLOCK_MONOTONIC, &_end);
     double dummy_time = ((_end.tv_sec * 1000 + (_end.tv_nsec / 1.0e6)) -
