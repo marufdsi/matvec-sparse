@@ -130,14 +130,14 @@ int main(int argc, char *argv[]) {
 
     int nzPerRow = ceil((double)_nnz/mat_row);
     _nnz = nzPerRow*mat_row;
-    /*if (createCSRMat(&row_ptr, &col_ptr, &val_ptr, mat_row, _nnz) != 0) {
-        fprintf(stderr, "read_matrix: failed\n");
-        exit(EXIT_FAILURE);
-    }*/
-    if (create_csr_diagonal_mat(&row_ptr, &col_ptr, &val_ptr, mat_row, _nnz, nzPerRow) != 0) {
+    if (createCSRMat(&row_ptr, &col_ptr, &val_ptr, mat_row, _nnz) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
+    /*if (create_csr_diagonal_mat(&row_ptr, &col_ptr, &val_ptr, mat_row, _nnz, nzPerRow) != 0) {
+        fprintf(stderr, "read_matrix: failed\n");
+        exit(EXIT_FAILURE);
+    }*/
     y = (double *) calloc_or_exit(mat_row, sizeof(double));
     x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; ++i) {
