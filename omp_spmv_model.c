@@ -124,7 +124,31 @@ int main(int argc, char *argv[]) {
     }
     avg_time = comp_time / total_run;
 
-    printf("Parallel SpMV computational time: %lf\n", avg_time);
+    int max_tid = omp_get_max_threads();
+    printf("Parallel SpMV computational time: %lf of matrix size: %d, using %d threads\n", avg_time, mat_row, max_tid);
+
+    FILE *resultCSV;
+    FILE *checkFile;
+    if ((checkFile = fopen("OMP_CSR_SpMV_Model.csv", "r")) != NULL) {
+        // file exists
+        fclose(checkFile);
+        if (!(resultCSV = fopen("OMP_CSR_SpMV_Model.csv", "a"))) {
+            fprintf(stderr, "fopen: failed to open file OMP_CSR_SpMV_Model.csv");
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        if (!(resultCSV = fopen("OMP_CSR_SpMV_Model.csv", "w"))) {
+            fprintf(stderr, "fopen: failed to open file OMP_CSR_SpMV_Model.csv");
+            exit(EXIT_FAILURE);
+        }
+        fprintf(resultCSV, "MatrixSize,AvgTime,TotalRun,Threads,NonZeroPerRow,NonZeroPerBlock\n");
+    }
+
+    fprintf(resultCSV, "%d,%10.3lf,%d,%d,%10.3lf,%d\n", mat_row, avg_time, total_run, max_tid, (double)_nnz/mat_row, _nnz);
+    if (fclose(resultCSV) != 0) {
+        fprintf(stderr, "fopen: failed to open file OMP_CSR_SpMV_Model.csv");
+        exit(EXIT_FAILURE);
+    }
 
     free(x);
     free(y);
