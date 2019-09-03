@@ -24,11 +24,15 @@
 
 double *matMull(int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, double *y) {
 
+    int i, k;
+    double tmp;
     /// multiplication
-    #pragma omp for schedule(static)
-    for (int i = 0; i < nRow; ++i) {
-        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
-            y[i] += val_ptr[k] * x[col_ptr[k]];
+    #pragma omp parallel for default(shared) private(i, k, temp)
+    for (i = 0; i < nRow; ++i) {
+        tmp = 0;
+        for (k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
+            tmp += val_ptr[k] * x[col_ptr[k]];
+        y[i] = tmp;
     }
 }
 
@@ -132,19 +136,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }*/
-    int *A = (int *) calloc_or_exit(100000000, sizeof(int));
-    int *B = (int *) calloc_or_exit(100000000, sizeof(int));
-    int *C = (int *) malloc_or_exit(100000000 * sizeof(int));
-    struct timespec _start, _end;
-    clock_gettime(CLOCK_MONOTONIC, &_start);
-    #pragma omp for schedule(static)
-    for (int i = 0; i < 100000000; ++i) {
-        C[i] = A[i] + B[i];
-    }
-    clock_gettime(CLOCK_MONOTONIC, &_end);
-    double dummy_time = ((_end.tv_sec * 1000 + (_end.tv_nsec / 1.0e6)) -
-                         (_start.tv_sec * 1000 + (_start.tv_nsec / 1.0e6)));
-    printf("dummy sum of 100000000: %lf\n", dummy_time);
     if (create_csr_diagonal_mat(&row_ptr, &col_ptr, &val_ptr, mat_row, _nnz, nzPerRow) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
