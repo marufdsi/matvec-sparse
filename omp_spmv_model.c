@@ -144,11 +144,15 @@ int main(int argc, char *argv[]) {
     /// Start sparse matrix vector multiplication
     struct timespec start_time, end_time;
     for (int r = 0; r < total_run+skip; ++r) {
-        clock_gettime(CLOCK_MONOTONIC, &start_time);
+        if(r>=skip)
+            clock_gettime(CLOCK_MONOTONIC, &start_time);
         // Multiplication
         matMull(row_ptr, col_ptr, val_ptr, x, mat_row, y);
-        clock_gettime(CLOCK_MONOTONIC, &end_time);
-        comp_time += ((end_time.tv_sec * 1000 + (end_time.tv_nsec / 1.0e6)) - (start_time.tv_sec * 1000 + (start_time.tv_nsec / 1.0e6)));
+        if(r>=skip) {
+            clock_gettime(CLOCK_MONOTONIC, &end_time);
+            comp_time += ((end_time.tv_sec * 1000 + (end_time.tv_nsec / 1.0e6)) -
+                          (start_time.tv_sec * 1000 + (start_time.tv_nsec / 1.0e6)));
+        }
     }
     avg_time = comp_time / total_run;
 
