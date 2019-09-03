@@ -99,7 +99,7 @@ int create_csr_diagonal_mat(int **row_ptr, int **col_ptr, double **val_ptr, int 
         }
         (*row_ptr)[r + 1] = row_elements;
     }
-    return 1;
+    return 0;
 }
 
 /**
