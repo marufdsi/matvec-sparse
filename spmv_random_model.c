@@ -91,7 +91,8 @@ int main(int argc, char *argv[]) {
     double comp_time = 0.0, bcast_time = 0.0, matmul_time = 0.0, reduce_time = 0.0, min_time = 0.0, max_time = 0.0,
             avg_time = 0.0, mean = 0.0, avg_bcast_time = 0.0, avg_matmul_time = 0.0, avg_reduce_time = 0.0,
             *val_ptr, *x, *y;
-    int total_run = 1000, skip=100, nRanks, rank, *row_ptr, *col_ptr, _size, mat_row, nnz_per_block;
+    int total_run = 1000, skip=100, nRanks, rank, *row_ptr, *col_ptr, _size, mat_row, nnz_per_block,
+            nodes = 0, procs_per_node = 0;
 
     /* Initialize MPI */
     MPI_Init(&argc, &argv);
@@ -107,6 +108,10 @@ int main(int argc, char *argv[]) {
         nnz_per_block = atoi(argv[3]);
         if (argc > 4)
             total_run = atoi(argv[4]);
+        if (argc > 5)
+            nodes = atoi(argv[5]);
+        if (argc > 6)
+            procs_per_node = atoi(argv[6]);
     }
 
     int sqrRank = sqrt(nRanks);
@@ -124,19 +129,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-   /* printf("[%d]Matrix Creation done\n", rank);
-    for (int i = 0; i < mat_row; ++i) {
-        for (int j = row_ptr[i]; j < row_ptr[i+1]; ++j) {
-            printf("col=%d:val=%10.3lf  ", col_ptr[j], val_ptr[j]);
-        }
-        printf("\n");
-    }*/
-    /*if(rank == MASTER){
-        printf("[%d] done creating matrix of row size = %d and nnz = %d\n", rank, mat_row, nnz_per_block);
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Finalize();
-    return 0;*/
     y = (double *) calloc_or_exit(mat_row, sizeof(double));
     x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; ++i) {
@@ -190,28 +182,30 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
                rank, min_time, max_time, mean, nnz_per_block);
+        char outputFile[100] = "CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
         FILE *resultCSV;
         FILE *checkFile;
-        if ((checkFile = fopen("CSR_SpMV_Model_of_Random_BrCast_Reduce.csv", "r")) != NULL) {
+        if ((checkFile = fopen(outputFile, "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen("CSR_SpMV_Model_of_Random_BrCast_Reduce.csv", "a"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_of_Random_BrCast_Reduce.csv");
+            if (!(resultCSV = fopen(outputFile, "a"))) {
+                fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_SpMV_Model_of_Random_BrCast_Reduce.csv", "w"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_of_Random_BrCast_Reduce.csv");
+            if (!(resultCSV = fopen(outputFile, "w"))) {
+                fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "MatrixSize,PartitionRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock\n");
+                    "MatrixSize,PartitionRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,Nodes,ProcessPerNode\n");
         }
 
-        fprintf(resultCSV, "%d,%d,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d\n", _size, mat_row,
-                min_time, max_time, mean, avg_bcast_time, avg_matmul_time, avg_reduce_time, total_run, nRanks, nnz_per_row, nnz_per_block);
+        fprintf(resultCSV, "%d,%d,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d,%d,%d\n", _size, mat_row,
+                min_time, max_time, mean, avg_bcast_time, avg_matmul_time, avg_reduce_time, total_run, nRanks,
+                nnz_per_row, nnz_per_block, nodes, procs_per_node);
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file CSR_SpMV_Model_of_Random_BrCast_Reduce.csv");
+            fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
             exit(EXIT_FAILURE);
         }
     }
