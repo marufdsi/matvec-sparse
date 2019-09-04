@@ -115,7 +115,7 @@ int create_csr_diagonal_mat(int **row_ptr, int **col_ptr, double **val_ptr, int 
 int main(int argc, char *argv[]) {
 
     double comp_time = 0.0, avg_time = 0.0, *val_ptr, *x, *y;
-    int total_run = 1000, skip=100, *row_ptr, *col_ptr, mat_row, _nnz;
+    int total_run = 1000, skip=100, *row_ptr, *col_ptr, mat_row, _nnz, type=0;
 
 
     if (argc < 2) {
@@ -126,18 +126,23 @@ int main(int argc, char *argv[]) {
         _nnz = atoi(argv[2]);
         if (argc > 3)
             total_run = atoi(argv[3]);
+        if (argc > 4)
+            type = atoi(argv[4]);
     }
 
     int nzPerRow = ceil((double)_nnz/mat_row);
     _nnz = nzPerRow*mat_row;
-    if (createCSRMat(&row_ptr, &col_ptr, &val_ptr, mat_row, _nnz) != 0) {
-        fprintf(stderr, "read_matrix: failed\n");
-        exit(EXIT_FAILURE);
+    if (type == 0) {
+        if (createCSRMat(&row_ptr, &col_ptr, &val_ptr, mat_row, _nnz) != 0) {
+            fprintf(stderr, "read_matrix: failed\n");
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        if (create_csr_diagonal_mat(&row_ptr, &col_ptr, &val_ptr, mat_row, _nnz, nzPerRow) != 0) {
+            fprintf(stderr, "read_matrix: failed\n");
+            exit(EXIT_FAILURE);
+        }
     }
-    /*if (create_csr_diagonal_mat(&row_ptr, &col_ptr, &val_ptr, mat_row, _nnz, nzPerRow) != 0) {
-        fprintf(stderr, "read_matrix: failed\n");
-        exit(EXIT_FAILURE);
-    }*/
     y = (double *) calloc_or_exit(mat_row, sizeof(double));
     x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; ++i) {
@@ -161,20 +166,22 @@ int main(int argc, char *argv[]) {
     int max_tid = omp_get_max_threads();
     printf("Parallel SpMV computational time: %lf of matrix size: %d, using %d threads\n", avg_time, mat_row, max_tid);
 
-    // file name OMP_CSR_SpMV_Model
-    // file Name OMP_CSR_SpMV_Model_on_Diagonal_Matrix
+    char outputFile[50] = "OMP_CSR_SpMV_Model.csv";
+    if (type != 0) {
+        strcpy(outputFile, "OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
+    }
     FILE *resultCSV;
     FILE *checkFile;
-    if ((checkFile = fopen("OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv", "r")) != NULL) {
+    if ((checkFile = fopen(outputFile, "r")) != NULL) {
         // file exists
         fclose(checkFile);
-        if (!(resultCSV = fopen("OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv", "a"))) {
-            fprintf(stderr, "fopen: failed to open file OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
+        if (!(resultCSV = fopen(outputFile, "a"))) {
+            fprintf(stderr, "fopen: failed to open %s file\n", outputFile);
             exit(EXIT_FAILURE);
         }
     } else {
-        if (!(resultCSV = fopen("OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv", "w"))) {
-            fprintf(stderr, "fopen: failed to open file OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
+        if (!(resultCSV = fopen(outputFile, "w"))) {
+            fprintf(stderr, "fopen: failed to open file %s\n",outputFile);
             exit(EXIT_FAILURE);
         }
         fprintf(resultCSV, "MatrixSize,AvgTime,TotalRun,Threads,NonZeroPerRow,NonZeroElements\n");
@@ -182,7 +189,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(resultCSV, "%d,%10.3lf,%d,%d,%d,%d\n", mat_row, avg_time, total_run, max_tid, nzPerRow, _nnz);
     if (fclose(resultCSV) != 0) {
-        fprintf(stderr, "fopen: failed to open file OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
+        fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
         exit(EXIT_FAILURE);
     }
 
