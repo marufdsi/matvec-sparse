@@ -168,9 +168,11 @@ int main(int argc, char *argv[]) {
     int max_tid = omp_get_max_threads();
     printf("Parallel SpMV computational time: %lf of matrix size: %d, using %d threads\n", avg_time, mat_row, max_tid);
 
-    char outputFile[50] = "SkyLake_OMP_CSR_SpMV_Model.csv";
+//    char outputFile[50] = "SkyLake_OMP_CSR_SpMV_Model.csv";
+    char outputFile[50] = "OMP_CSR_SpMV_Model.csv";
     if (type != 0) {
-        strcpy(outputFile, "SkyLake_OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
+//        strcpy(outputFile, "SkyLake_OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
+        strcpy(outputFile, "OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
     }
     FILE *resultCSV;
     FILE *checkFile;
