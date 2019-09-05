@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     double comp_time = 0.0, avg_time = 0.0, *val_ptr, *x, *y;
     int total_run = 1000, skip=100, *row_ptr, *col_ptr, mat_row, _nnz, type=0;
     char *affinity, *inputFileName;
-
+    int reserve_nodes =  omp_get_max_threads();
     if (argc < 2) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
         return 0;
@@ -58,6 +58,8 @@ int main(int argc, char *argv[]) {
             total_run = atoi(argv[2]);
         if (argc > 3)
             affinity = argv[3];
+	if (argc > 4)
+	  reserve_nodes = atoi(argv[4]);
     }
 
     if (read_coo_matrix_to_csr(inputFileName, &row_ptr, &col_ptr, &val_ptr, &mat_row, &_nnz) != 0) {
@@ -106,10 +108,10 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "fopen: failed to open file %s\n",outputFile);
             exit(EXIT_FAILURE);
         }
-        fprintf(resultCSV, "GraphName,MatrixSize,AvgTime,TotalRun,Threads,NonZeroPerRow,NonZeroElements,AffinityType\n");
+        fprintf(resultCSV, "GraphName,MatrixSize,AvgTime,TotalRun,Threads,NonZeroPerRow,NonZeroElements,AffinityType,ReserveNodes\n");
     }
 
-    fprintf(resultCSV, "%s,%d,%10.3lf,%d,%d,%10.3lf,%d,%s\n", matrixName, mat_row, avg_time, total_run, max_tid, nzPerRow, _nnz, affinity);
+    fprintf(resultCSV, "%s,%d,%10.3lf,%d,%d,%10.3lf,%d,%s,%d\n", matrixName, mat_row, avg_time, total_run, max_tid, nzPerRow, _nnz, affinity, reserve_nodes);
     if (fclose(resultCSV) != 0) {
         fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
         exit(EXIT_FAILURE);
