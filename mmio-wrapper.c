@@ -452,6 +452,95 @@ int rank_wise_read_matrix_csr(const char *filename, int **row_ptr, int **col_ptr
     return 0;
 }
 
+int read_coo_matrix_to_csr(const char *filename, int **row_ptr, int **col_ptr, double **val_ptr, int *mat_row, int *_nnz) {
+    FILE *f;
+    MM_typecode matcode;
+    int errorcode, nrows, ncols, nz_elements;
+
+    /* open the file */
+    if ((f = fopen(filename, "r")) == NULL) {
+        fprintf(stderr, "Cannot open '%s'\n", filename);
+        return 1;
+    }
+
+    /* process first line */
+    if ((errorcode = mm_read_banner(f, &matcode)) != 0) {
+        fprintf(stderr, "Error while processing banner (file:'%s') (code=%d)\n",
+                filename, errorcode);
+        return 1;
+    }
+
+    /* matrix should be sparse and real */
+    if (!mm_is_matrix(matcode) ||
+        !mm_is_real(matcode) ||
+        !mm_is_sparse(matcode)) {
+        fprintf(stderr, "Not supported matrix type: %s\n", mm_typecode_to_str(matcode));
+        return 1;
+    }
+
+    /* read info */
+    if ((errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
+        fprintf(stderr, "Error while processing array (file:'%s') (code:%d)\n",
+                filename, errorcode);
+        return 1;
+    }
+    (*mat_row) = nrows;
+    (*_nnz) = nz_elements;
+
+    /// Initialize CSR row, col and value pointer.
+    (*row_ptr) = (int *) calloc_or_exit((nrows + 1), sizeof(int));
+    (*col_ptr) = (int *) malloc_or_exit(nz_elements * sizeof(int));
+    (*val_ptr) = (double *) malloc_or_exit(nz_elements * sizeof(double));
+
+    (*row_ptr)[0] = 0;
+    int *i_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
+    int *j_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
+    double *values = (double *) malloc_or_exit(nz_elements * sizeof(double));
+    /* read actual matrix */
+    for (int i = 0; i < nz_elements; i++) {
+        fscanf(f, "%d %d %lf", &(i_idx[i]), &(j_idx[i]), &(values[i]));
+        i_idx[i]--;
+        j_idx[i]--;
+    }
+    for (int i = 0; i < nz_elements; i++) {
+        if ((i_idx[i]) >= nrows || (i_idx[i]) < 0) {
+            printf("Index out of bound for row=%d\n", i_idx[i]);
+        }
+        (*row_ptr)[i_idx[i]]++;
+    }
+
+    for (int i = 0, cumsum = 0; i < nrows; i++) {
+        int temp = (*row_ptr)[i];
+        (*row_ptr)[i] = cumsum;
+        cumsum += temp;
+    }
+    (*row_ptr)[nrows] = nz_elements;
+
+    for (int n = 0; n < nz_elements; n++) {
+        int row = i_idx[n];
+        if (row < 0 || row >= nrows) {
+            printf("out of bound for row=%d\n", row);
+        }
+        int dest = (*row_ptr)[row];
+        (*col_ptr)[dest] = j_idx[n];
+        (*val_ptr)[dest] = values[n];
+
+        (*row_ptr)[row]++;
+    }
+
+    for (int i = 0, last = 0; i <= nrows; i++) {
+        int temp = (*row_ptr)[i];
+        (*row_ptr)[i] = last;
+        last = temp;
+    }
+    /* close the file */
+    if (fclose(f) != 0) {
+        fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
+    }
+
+    return 0;
+}
+
 int write_matrix(const char *filename, const int *i_idx, const int *j_idx, const double *values, int N, int NZ) {
     FILE *f;
     MM_typecode matcode;

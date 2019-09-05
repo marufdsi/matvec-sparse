@@ -15,6 +15,7 @@ int rank_wise_read_matrix_csr (const char * filename, int **row_ptr, int **col_p
 int csr_read_2D_partitioned_mat(const char * filename, int **row_ptr, int **col_ptr, double **val_ptr, proc_info_t **ranks_info, int sqrRank, int rank);
 int test_csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
                                      int sqrRank, int rank);
+int read_coo_matrix_to_csr(const char *filename, int **row_ptr, int **col_ptr, double **val_ptr, int *mat_row, int *_nnz);
 int write_matrix (const char *filename, const int *i_idx, const int *j_idx, const double *values, int N, int NZ);
 
 #endif
