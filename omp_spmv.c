@@ -90,7 +90,8 @@ int main(int argc, char *argv[]) {
     avg_time = comp_time / total_run;
 
     int max_tid = omp_get_max_threads();
-    char *matrixName = strtok(inputFileName, ".");
+    char *ptr = strtok(inputFileName, "/");
+    char *matrixName = strtok(strtok(NULL, "-"), ".");
     printf("Parallel SpMV computational time: %lf of matrix %s, size: %d, using %d threads\n", avg_time, matrixName, mat_row, max_tid);
 
     char outputFile[] = "OpenMP_Parallel_SpMV_on_Graphs.csv";
