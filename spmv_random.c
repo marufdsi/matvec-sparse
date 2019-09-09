@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     char *in_file;
     double comp_time = 0, bcast_time = 0.0, matmul_time = 0.0, reduce_time = 0.0, min_time = 0.0, max_time = 0.0,
             avg_time = 0.0, mean = 0.0, avg_bcast_time = 0.0, avg_matmul_time = 0.0, avg_reduce_time = 0.0;
-    int total_run = 100, nRanks, rank;
+    int total_run = 100, skip=100, nRanks, rank;
     int *row_ptr, *col_ptr;
     double *val_ptr, *x, *y;
     proc_info_t *ranks_info;
@@ -113,25 +113,32 @@ int main(int argc, char *argv[]) {
     /// Start sparse matrix vector multiplication for each rank
     double start_bcast_time = 0.0, start_matmul_time = 0.0, start_reduce_time = 0.0;
     MPI_Barrier(MPI_COMM_WORLD);
-    double start_time = MPI_Wtime();
-    for (int r = 0; r < total_run; ++r) {
+    double start_time = 0.0;
+    for (int r = 0; r < total_run+skip; ++r) {
+        start_time = MPI_Wtime();
         start_bcast_time = MPI_Wtime();
         //broadcast X along column communicator
         MPI_Bcast (x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol); //col_rank is the one with the correct information
-        bcast_time += (MPI_Wtime() - start_bcast_time) * 1000.00;
+        if(r>=skip)
+            bcast_time += (MPI_Wtime() - start_bcast_time) * 1000.00;
 
         start_matmul_time = MPI_Wtime();
         // Multiplication
         matMull(rank, row_ptr, col_ptr, val_ptr, x, ranks_info[rank].M, col_rank*ranks_info[rank].M, y);
-        matmul_time += (MPI_Wtime() - start_matmul_time) * 1000.00;
+        if(r>=skip)
+            matmul_time += (MPI_Wtime() - start_matmul_time) * 1000.00;
 
         start_reduce_time = MPI_Wtime();
         //reduce Y along row communicator
         MPI_Reduce(y, x, ranks_info[rank].M, MPI_FLOAT, MPI_SUM, row_rank, commrow);
-        reduce_time += (MPI_Wtime() - start_reduce_time) * 1000.00;
+        if(r>=skip) {
+            reduce_time += (MPI_Wtime() - start_reduce_time) * 1000.00;
+            comp_time += (MPI_Wtime() - start_time) * 1000.00;
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    comp_time = (MPI_Wtime() - start_time) * 1000.00;
+//    comp_time = (MPI_Wtime() - start_time) * 1000.00;
     avg_time = comp_time / total_run;
     avg_bcast_time = bcast_time / total_run;
     avg_matmul_time = matmul_time / total_run;
