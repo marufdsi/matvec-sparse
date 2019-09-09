@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
 
     char *in_file, *out_file = NULL;
     double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
-    int total_run = 100, nRanks, rank;
+    int total_run = 100, skip=100, nRanks, rank;
     int *row_ptr, *on_diagonal_row, *off_diagonal_row, *col_ptr, *off_diagonal_col, *on_diagonal_col;
     double *val_ptr, *off_diagonal_val, *on_diagonal_val, *buf_x, *res;
     proc_info_t *ranks_info;
@@ -357,15 +357,19 @@ int main(int argc, char *argv[]) {
     /* allocate memory for vectors and submatrixes */
     double *y = (double *) calloc_or_exit(procs_info[rank].M, sizeof(double));
     /// Start sparse matrix vector multiplication for each rank
-    double start_time = MPI_Wtime();
+    double start_time = 0.0;
     MPI_Barrier(MPI_COMM_WORLD);
-    for (int r = 0; r < total_run; ++r) {
+    for (int r = 0; r < total_run+skip; ++r) {
+        start_time = MPI_Wtime();
         res = localMatMull(rank, procs_info, nRanks, on_diagonal_row, on_diagonal_col, on_diagonal_val, off_diagonal_row,
                       off_diagonal_col, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, colCount, reqColFromRank, reqRowCol,
                       perRankDataSend, reqRequired, nRanksExpectCol, recv_buf, send_buf_data, recv_reqs, send_reqs, y);
+        if(r>=skip)
+            comp_time += (MPI_Wtime() - start_time) * 1000.00;
+        MPI_Barrier(MPI_COMM_WORLD);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    comp_time = (MPI_Wtime() - start_time) * 1000.00;
+//    comp_time = (MPI_Wtime() - start_time) * 1000.00;
     avg_time = comp_time / total_run;
 
     MPI_Reduce(&avg_time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
