@@ -1,0 +1,10 @@
+rm -r mpi_simple.o*
+rm -r mpi_simple.e*
+rm -r seq_simple.o*
+rm -r seq_simple.e*
+rm -r spmv_simple.o*
+rm -r spmv_simple.e*
+rm -r omp_spmv.o*
+rm -r omp_spmv.e*
+rm -r omp_aff.o*
+rm -r omp_aff.e*
