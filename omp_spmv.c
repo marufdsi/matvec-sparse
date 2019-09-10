@@ -7,7 +7,6 @@
 #include <time.h>
 #include <jmorecfg.h>
 
-#include "mpi.h"
 
 #define TOTAL_RUNS 100
 
