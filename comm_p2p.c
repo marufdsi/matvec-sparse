@@ -400,14 +400,17 @@ int main(int argc, char *argv[]) {
 
     /// Start sparse matrix vector multiplication for each rank
     double start_time = 0.0;
+    struct timespec start, end;
     MPI_Barrier(MPI_COMM_WORLD);
     for (int r = 0; r < total_run; ++r) {
-        start_time = MPI_Wtime();
+        clock_gettime(CLOCK_MONOTONIC, &start);
         res = communication(rank, procs_info, nRanks, off_diagonal_val, buf_x, send_col_idx, perRankDataRecv, colCount,
                             reqColFromRank, reqRowCol, perRankDataSend, reqRequired, nRanksExpectCol, recv_buf,
                             send_buf_data, recv_reqs, send_reqs);
-        if(r>=skip)
-            comp_time += (MPI_Wtime() - start_time) * 1000.00;
+        if(r>=skip) {
+            clock_gettime(CLOCK_MONOTONIC, &end);
+            comp_time += ((end.tv_sec * 1000 + (end.tv_nsec / 1.0e6)) - (start.tv_sec * 1000 + (start.tv_nsec / 1.0e6)));
+        }
         MPI_Barrier(MPI_COMM_WORLD);
     }
     MPI_Barrier(MPI_COMM_WORLD);
