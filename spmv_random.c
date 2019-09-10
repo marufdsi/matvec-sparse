@@ -140,10 +140,6 @@ int main(int argc, char *argv[]) {
         //reduce Y along row communicator
         MPI_Reduce(y, x, ranks_info[rank].M, MPI_FLOAT, MPI_SUM, row_rank, commrow);
         if(r>=skip) {
-            reduce_time += (MPI_Wtime() - start_reduce_time) * 1000.00;
-            comp_time += (MPI_Wtime() - start_time) * 1000.00;
-        }
-        if(r>=skip) {
             clock_gettime(CLOCK_MONOTONIC, &r_end);
             clock_gettime(CLOCK_MONOTONIC, &end);
             reduce_time += ((r_end.tv_sec * 1000 + (r_end.tv_nsec / 1.0e6)) - (r_start.tv_sec * 1000 + (r_start.tv_nsec / 1.0e6)));
