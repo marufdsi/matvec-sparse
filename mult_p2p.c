@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
 
     char *in_file, *out_file = NULL;
     double comp_time = 0, min_time = 0.0, max_time = 0.0, avg_time = 0.0, mean = 0.0;
-    int total_run = 100, skip=100, nRanks, rank;
+    int total_run = 100, skip=100, nRanks, rank, knl=0;
     int *row_ptr, *on_diagonal_row, *off_diagonal_row, *col_ptr, *off_diagonal_col, *on_diagonal_col;
     double *val_ptr, *off_diagonal_val, *on_diagonal_val, *buf_x, *res;
     proc_info_t *ranks_info;
@@ -215,8 +215,8 @@ int main(int argc, char *argv[]) {
         return 0;
     } else {
         in_file = argv[1];
-        if (argc == 3)
-            out_file = argv[2];
+        if (argc > 2)
+            knl = atoi(argv[2]);
     }
     int offDiagonalElements = 0;
     if (rank_wise_read_matrix_csr(in_file, &row_ptr, &col_ptr, &val_ptr, &ranks_info, rank,
@@ -393,30 +393,35 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
                rank, min_time, max_time, mean, procs_info[rank].NZ);
-        char *_ptr = strtok(in_file, "_");
+        char *_ptr = strtok(in_file, "/");
+        char *matrixName = strtok(strtok(NULL, "-"), ".");
+        char outputFile[100] = "Skylake_CSR_Local_Matmul_on_MPI.csv";
+        if(knl > 0)
+            strcpy(outputFile, "KNL_CSR_Local_Matmul_on_MPI.csv");
+
         FILE *resultCSV;
         FILE *checkFile;
-        if ((checkFile = fopen("CSR_Local_Matmul_on_MPI.csv", "r")) != NULL) {
+        if ((checkFile = fopen(outputFile, "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen("CSR_Local_Matmul_on_MPI.csv", "a"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_Local_Matmul_on_MPI.csv");
+            if (!(resultCSV = fopen(outputFile, "a"))) {
+                fprintf(stderr, "fopen: failed to open file %s", outputFile);
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_Local_Matmul_on_MPI.csv", "w"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_Local_Matmul_on_MPI.csv");
+            if (!(resultCSV = fopen(outputFile, "w"))) {
+                fprintf(stderr, "fopen: failed to open file %s", outputFile);
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
                     "Name,MatrixSize,MaxRow,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,AvgCommunication,AvgInterProcessCall,SizeOfData,DiagonalElem,OffDiagonalElem,Bandwidth,InDiagonalBandwidth\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%d,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%d,%10.3lf,%10.3lf,%d,%d,%d,%d,%d\n", _ptr,procs_info[rank].N, max_row, min_time, max_time,
+        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%d,%d,%lf,%d,%lf,%lf,%d,%d,%d,%d,%d\n", matrixName,procs_info[rank].N, max_row, min_time, max_time,
                 mean, total_run, nRanks, max_nnz_per_row, max_nnz, ((double)per_rank_data_send / nRanks),
                 ((double)totalInterProcessCall / nRanks), sizeof(double), diagonal_elements, offDiagonalElements, max_band_width, max_in_diag_band_width);
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file CSR_Local_Matmul_on_MPI.csv");
+            fprintf(stderr, "fopen: failed to open file %s", outputFile);
             exit(EXIT_FAILURE);
         }
     }

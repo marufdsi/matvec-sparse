@@ -45,7 +45,7 @@ double *matMull(int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow
 int main(int argc, char *argv[]) {
 
     double comp_time = 0.0, avg_time = 0.0, *val_ptr, *x, *y;
-    int total_run = 1000, skip=100, *row_ptr, *col_ptr, mat_row, _nnz, type=0;
+    int total_run = 1000, skip=100, *row_ptr, *col_ptr, mat_row, _nnz, type=0, knl = 0;
     char *affinity, *inputFileName;
     int reserve_nodes =  omp_get_max_threads();
     if (argc < 2) {
@@ -57,6 +57,8 @@ int main(int argc, char *argv[]) {
             total_run = atoi(argv[2]);
         if (argc > 3)
             affinity = argv[3];
+        if (argc > 4)
+            knl = atoi(argv[4]);
 	if (argc > 4)
 	  reserve_nodes = atoi(argv[4]);
     }
@@ -93,7 +95,9 @@ int main(int argc, char *argv[]) {
     char *matrixName = strtok(strtok(NULL, "-"), ".");
     printf("Parallel SpMV computational time: %lf of matrix %s, size: %d, using %d threads\n", avg_time, matrixName, mat_row, max_tid);
 
-    char outputFile[] = "OpenMP_Parallel_SpMV_on_Graphs.csv";
+    char outputFile[100] = "Skylake_OpenMP_Parallel_SpMV_on_Graphs.csv";
+    if(knl > 0)
+        strcpy(outputFile, "KNL_OpenMP_Parallel_SpMV_on_Graphs.csv");
     FILE *resultCSV;
     FILE *checkFile;
     if ((checkFile = fopen(outputFile, "r")) != NULL) {
@@ -111,7 +115,7 @@ int main(int argc, char *argv[]) {
         fprintf(resultCSV, "GraphName,MatrixSize,AvgTime,TotalRun,Threads,NonZeroPerRow,NonZeroElements,AffinityType,ReserveNodes\n");
     }
 
-    fprintf(resultCSV, "%s,%d,%10.3lf,%d,%d,%10.3lf,%d,%s,%d\n", matrixName, mat_row, avg_time, total_run, max_tid, nzPerRow, _nnz, affinity, reserve_nodes);
+    fprintf(resultCSV, "%s,%d,%lf,%d,%d,%10.3lf,%d,%s,%d\n", matrixName, mat_row, avg_time, total_run, max_tid, nzPerRow, _nnz, affinity, reserve_nodes);
     if (fclose(resultCSV) != 0) {
         fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
         exit(EXIT_FAILURE);

@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     char *in_file;
     double comp_time = 0, bcast_time = 0.0, matmul_time = 0.0, reduce_time = 0.0, min_time = 0.0, max_time = 0.0,
             avg_time = 0.0, mean = 0.0, avg_bcast_time = 0.0, avg_matmul_time = 0.0, avg_reduce_time = 0.0;
-    int total_run = 100, skip=100, nRanks, rank;
+    int total_run = 100, skip=100, nRanks, rank, knl = 0;
     int *row_ptr, *col_ptr;
     double *val_ptr, *x, *y;
     proc_info_t *ranks_info;
@@ -94,6 +94,8 @@ int main(int argc, char *argv[]) {
         return 0;
     } else {
         in_file = argv[1];
+        if (argc > 2)
+            knl = atoi(argv[2]);
     }
     if (csr_read_2D_partitioned_mat(in_file, &row_ptr, &col_ptr, &val_ptr, &ranks_info, sqrRank, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
@@ -160,29 +162,34 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
                rank, min_time, max_time, mean, procs_info[rank].NZ);
-        char *_ptr = strtok(in_file, "_");
+        char *_ptr = strtok(in_file, "/");
+        char *matrixName = strtok(strtok(NULL, "-"), ".");
+        char outputFile[100] = "Skylake_CSR_Random_BrCast_Reduce_SpMV.csv";
+        if(knl > 0)
+            strcpy(outputFile, "KNL_CSR_Random_BrCast_Reduce_SpMV.csv");
+
         FILE *resultCSV;
         FILE *checkFile;
-        if ((checkFile = fopen("CSR_Random_BrCast_Reduce_SpMV.csv", "r")) != NULL) {
+        if ((checkFile = fopen(outputFile, "r")) != NULL) {
             // file exists
             fclose(checkFile);
-            if (!(resultCSV = fopen("CSR_Random_BrCast_Reduce_SpMV.csv", "a"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_Random_BrCast_Reduce_SpMV.csv");
+            if (!(resultCSV = fopen(outputFile, "a"))) {
+                fprintf(stderr, "fopen: failed to open file %s", outputFile);
                 exit(EXIT_FAILURE);
             }
         } else {
-            if (!(resultCSV = fopen("CSR_Random_BrCast_Reduce_SpMV.csv", "w"))) {
-                fprintf(stderr, "fopen: failed to open file CSR_Random_BrCast_Reduce_SpMV.csv");
+            if (!(resultCSV = fopen(outputFile, "w"))) {
+                fprintf(stderr, "fopen: failed to open file %s", outputFile);
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
                     "Name,MatrixSize,AvgRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,AvgNonZeroPerBlock,MaxNonZeroPerBlock\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%d,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%10.3lf,%d,%d,%10.3lf,%10.3lf,%d\n", _ptr,procs_info[rank].N, avg_row, min_time, max_time,
+        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%d\n", matrixName,procs_info[rank].N, avg_row, min_time, max_time,
                 mean, avg_bcast_time, avg_matmul_time, avg_reduce_time, total_run, nRanks, max_nnz_per_row, avg_nnz, max_nnz);
         if (fclose(resultCSV) != 0) {
-            fprintf(stderr, "fopen: failed to open file CSR_Random_BrCast_Reduce_SpMV.csv");
+            fprintf(stderr, "fopen: failed to open file %s", outputFile);
             exit(EXIT_FAILURE);
         }
     }
