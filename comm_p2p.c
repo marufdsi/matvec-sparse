@@ -4,7 +4,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <string.h>
-
+#include<time.h>
 #include "mpi.h"
 
 #define TOTAL_RUNS 100
