@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
                     "Name,MatrixSize,MaxRow,MinTime,MaxTime,AvgTime,TotalRun,nProcess,NonZeroPerRow,NonZeroPerBlock,DiagonalElem,OffDiagonalElem,Bandwidth,InDiagonalBandwidth\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%d,%d,%lf,%d,%lf,%lf,%d,%d,%d,%d,%d\n", matrixName,procs_info[rank].N, max_row, min_time, max_time,
+        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%d,%d,%lf,%d,%d,%d,%d,%d\n", matrixName,procs_info[rank].N, max_row, min_time, max_time,
                 mean, total_run, nRanks, max_nnz_per_row, max_nnz, diagonal_elements, offDiagonalElements, max_band_width, max_in_diag_band_width);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file %s", outputFile);
