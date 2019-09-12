@@ -114,7 +114,7 @@ int create_csr_diagonal_mat(int **row_ptr, int **col_ptr, double **val_ptr, int 
 int main(int argc, char *argv[]) {
 
     double comp_time = 0.0, avg_time = 0.0, *val_ptr, *x, *y;
-    int total_run = 1000, skip=100, *row_ptr, *col_ptr, mat_row, _nnz, type=0;
+    int total_run = 1000, skip=100, *row_ptr, *col_ptr, mat_row, _nnz, type=0, knl = 0;
     char *affinity;
 
     if (argc < 2) {
@@ -129,6 +129,8 @@ int main(int argc, char *argv[]) {
             type = atoi(argv[4]);
         if (argc > 5)
             affinity = argv[5];
+        if (argc > 6)
+            knl = atoi(argv[6]);
     }
 
     int nzPerRow = ceil((double)_nnz/mat_row);
@@ -167,9 +169,14 @@ int main(int argc, char *argv[]) {
     int max_tid = omp_get_max_threads();
     printf("Parallel SpMV computational time: %lf of matrix size: %d, using %d threads\n", avg_time, mat_row, max_tid);
 
-    char outputFile[50] = "SkyLake_OMP_CSR_SpMV_Model.csv";
-//    char outputFile[50] = "OMP_CSR_SpMV_Model.csv";
-    if (type != 0) {
+    char outputFile[100] = "SkyLake_OMP_CSR_SpMV_Model.csv";
+    if(knl > 0) {
+        strcpy(outputFile, "KNL_SkyLake_OMP_CSR_SpMV_Model.csv");
+        if (type != 0) {
+            strcpy(outputFile, "KNL_OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
+//        strcpy(outputFile, "OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
+        }
+    } else if (type != 0) {
         strcpy(outputFile, "SkyLake_OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
 //        strcpy(outputFile, "OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
     }
