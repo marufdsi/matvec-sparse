@@ -8,3 +8,5 @@ rm -r omp_spmv.o*
 rm -r omp_spmv.e*
 rm -r omp_aff.o*
 rm -r omp_aff.e*
+rm -r mpijob.o*
+rm -r mpijob.e*
