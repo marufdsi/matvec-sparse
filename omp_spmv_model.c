@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
 
     char outputFile[100] = "SkyLake_OMP_CSR_SpMV_Model.csv";
     if(knl > 0) {
-        strcpy(outputFile, "KNL_SkyLake_OMP_CSR_SpMV_Model.csv");
+        strcpy(outputFile, "KNL_OMP_CSR_SpMV_Model.csv");
         if (type != 0) {
             strcpy(outputFile, "KNL_OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
 //        strcpy(outputFile, "OMP_CSR_SpMV_Model_on_Diagonal_Matrix.csv");
