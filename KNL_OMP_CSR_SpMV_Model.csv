@@ -62,3 +62,5 @@ MatrixSize,AvgTime,TotalRun,Threads,NonZeroPerRow,NonZeroElements,AffinityType
 400000,     0.492,50,272,1,400000,balanced
 600000,     0.704,50,272,1,600000,balanced
 500000,     0.608,50,272,1,500000,balanced
+800000,     0.919,50,272,1,800000,balanced
+700000,     0.824,50,272,1,700000,balanced
