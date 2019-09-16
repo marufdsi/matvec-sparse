@@ -1,8 +1,13 @@
-# C compiler 
-CC = icc
-CFLAGS = -O3 -xCORE-AVX2 -ffreestanding 
+# C compiler
 
-OMP_FLAGS = -qopenmp
+CC = gcc
+CFLAGS = -O3 -std=gnu99 -DDEBUG
+
+OMP_FLAGS = -fopenmp
+#CC = icc
+#CFLAGS = -O3 -xCORE-AVX2 -ffreestanding 
+
+#OMP_FLAGS = -qopenmp
 
 # MPI compiler wrapper
 MPI_C = mpicc
