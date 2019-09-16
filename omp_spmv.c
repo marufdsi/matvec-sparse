@@ -58,9 +58,9 @@ int main(int argc, char *argv[]) {
         if (argc > 3)
             affinity = argv[3];
         if (argc > 4)
-            knl = atoi(argv[4]);
-	if (argc > 4)
-	  reserve_nodes = atoi(argv[4]);
+            reserve_nodes = atoi(argv[4]);
+        if (argc > 5)
+            knl = atoi(argv[5]);
     }
 
     if (read_coo_matrix_to_csr(inputFileName, &row_ptr, &col_ptr, &val_ptr, &mat_row, &_nnz) != 0) {
