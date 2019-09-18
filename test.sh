@@ -1,1 +1,1 @@
-echo "something"$type
+lscpu
