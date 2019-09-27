@@ -29,7 +29,7 @@ void  create_random_matrix(int m, int n, int nnz_per_row, char *out_file){
                 randColIdx = rand() % n;
             } while (trackIndex[randColIdx] != -1);
             trackIndex[ randColIdx] = 1.0;
-            fprintf(newMat, "%d %d %lf\n", i, randColIdx, ((double)(randColIdx%10) +1));
+            fprintf(newMat, "%d %d %lf\n", i+1, randColIdx+1, ((double)(randColIdx%10) +1));
         }
     }
     free(trackIndex);
