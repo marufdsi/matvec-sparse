@@ -20,19 +20,19 @@ void  create_random_matrix(int m, int n, int nnz_per_row, char *out_file){
     fprintf(newMat, "%d %d %d\n", m, n, m*nnz_per_row);
     srand(time(NULL) * (n%m + 1));
     printf("*********** Initialization DOne **********");
-    int *trackIndex = (int *) malloc_or_exit( n * sizeof(int));
+    int *trackIndex;
     for (int i = 0; i < m; ++i) {
-        memset(trackIndex, -1, n * sizeof(int));
+        trackIndex = (int *)calloc_or_exit( n, sizeof(int));
         for (int j = 0; j < nnz_per_row; ++j) {
             int randColIdx;
             do {
                 randColIdx = rand() % n;
-            } while (trackIndex[randColIdx] != -1);
+            } while (trackIndex[randColIdx] != 0);
             trackIndex[ randColIdx] = 1.0;
             fprintf(newMat, "%d %d %lf\n", i+1, randColIdx+1, ((double)(randColIdx%10) +1));
         }
+        free(trackIndex);
     }
-    free(trackIndex);
 /// close file
     if (fclose(newMat) != 0) {
         fprintf(stderr, "fopen: failed to open file '%s'", out_file);
