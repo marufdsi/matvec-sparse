@@ -8,7 +8,7 @@
 #include "mmio-wrapper.h"
 #include "util.h"
 #include "partition.h"
-
+#include <time.h>
 
 void  create_random_matrix(int m, int n, int nnz_per_row, char *out_file){
     FILE *newMat;
