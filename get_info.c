@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "mmio-wrapper.h"
+#include <limits.h>
 
 /**
  *
