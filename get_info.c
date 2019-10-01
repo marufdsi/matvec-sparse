@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
         printf("No elements are found for %s\n", in_file);
     }
 
+    printf("Find Mode\n");
     int maxValue = 0, maxCount = 0;
     for (int i = 0; i < mat_row; ++i) {
         int count = 0;
@@ -59,10 +60,10 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
         exit(EXIT_FAILURE);
     }
-    fprintf(resultCSV, "MatrixName,MatrixSize,Mode_NNZ\n");
+    fprintf(resultCSV, "MatrixName,MatrixSize,Mode_NNZ,Count\n");
 
 
-    fprintf(resultCSV, "%s,%d,%d\n", matrixName, mat_row, maxValue);
+    fprintf(resultCSV, "%s,%d,%d,%d\n", matrixName, mat_row, maxValue, maxCount);
     if (fclose(resultCSV) != 0) {
         fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
         exit(EXIT_FAILURE);
