@@ -37,8 +37,14 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Find Mode\n");
-    int maxValue = 0, maxCount = 0;
+    int maxValue = 0, maxCount = 0, max_deg=0, min_deg=INT_MAX;
     for (int i = 0; i < mat_row; ++i) {
+        int deg = row_ptr[i+1]-row_ptr[i];
+        if(deg>max_deg)
+            max_deg = deg;
+        if(deg<min_deg)
+            min_deg = deg;
+
         int count = 0;
         for (int j = 0; j < mat_row; ++j) {
             if ((row_ptr[j + 1] - row_ptr[j]) == (row_ptr[i + 1] - row_ptr[i]))
@@ -68,10 +74,10 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
             exit(EXIT_FAILURE);
         }
-        fprintf(resultCSV, "MatrixName,MatrixSize,Mode_NNZ,Count\n");
+        fprintf(resultCSV, "MatrixName,MatrixSize,Mode_NNZ,Count,MinDegree,MaxDegree\n");
     }
 
-    fprintf(resultCSV, "%s,%d,%d,%d\n", matrixName, mat_row, maxValue, maxCount);
+    fprintf(resultCSV, "%s,%d,%d,%d,%d,%d\n", matrixName, mat_row, maxValue, maxCount, min_deg, max_deg);
     if (fclose(resultCSV) != 0) {
         fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
         exit(EXIT_FAILURE);
