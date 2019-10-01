@@ -55,13 +55,21 @@ int main(int argc, char *argv[]) {
 
     char outputFile[100] = "Matrix_Info.csv";
     FILE *resultCSV;
-
-    if (!(resultCSV = fopen(outputFile, "w"))) {
-        fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
-        exit(EXIT_FAILURE);
+    FILE *checkFile;
+    if ((checkFile = fopen(outputFile, "r")) != NULL) {
+        // file exists
+        fclose(checkFile);
+        if (!(resultCSV = fopen(outputFile, "a"))) {
+            fprintf(stderr, "fopen: failed to open %s file\n", outputFile);
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        if (!(resultCSV = fopen(outputFile, "w"))) {
+            fprintf(stderr, "fopen: failed to open file %s\n", outputFile);
+            exit(EXIT_FAILURE);
+        }
+        fprintf(resultCSV, "MatrixName,MatrixSize,Mode_NNZ,Count\n");
     }
-    fprintf(resultCSV, "MatrixName,MatrixSize,Mode_NNZ,Count\n");
-
 
     fprintf(resultCSV, "%s,%d,%d,%d\n", matrixName, mat_row, maxValue, maxCount);
     if (fclose(resultCSV) != 0) {
