@@ -29,6 +29,54 @@ double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x
     }
 }
 
+void  create_random_matrix(int **row_ptr, int **col_ptr, double **val_ptr, int m, int n, int nnz_per_row, int startCol, int rank){
+    (*row_ptr) = (int *) calloc_or_exit(m+1, sizeof(int));
+    (*col_ptr) = (int *) malloc_or_exit(m*nnz_per_row * sizeof(int));
+    (*val_ptr) = (double *) malloc_or_exit(m*nnz_per_row * sizeof(double));
+    srand(time(NULL) * (rank + 1));
+
+    int *trackIndex, idx = 0;
+    for (int i = 0; i < m; ++i) {
+        trackIndex = (int *)calloc_or_exit( n, sizeof(int));
+        for (int j = 0; j < nnz_per_row; ++j) {
+            int randColIdx;
+            do {
+                randColIdx = rand() % n;
+            } while (trackIndex[randColIdx] != 0);
+            trackIndex[ randColIdx] = 1.0;
+            (*row_ptr)[i]++;
+            (*col_ptr)[idx] = startCol + randColIdx;
+            (*val_ptr)[idx] = ((double)(randColIdx%10) +1);
+            idx++;
+        }
+        free(trackIndex);
+    }
+}
+
+void  create_random_diagonal_matrix(int **row_ptr, int **col_ptr, double **val_ptr, int m, int nnz_per_row, int startCol, int rank){
+    (*row_ptr) = (int *) calloc_or_exit(m+1, sizeof(int));
+    (*col_ptr) = (int *) malloc_or_exit(m*nnz_per_row * sizeof(int));
+    (*val_ptr) = (double *) malloc_or_exit(m*nnz_per_row * sizeof(double));
+    srand(time(NULL) * (rank + 1));
+
+    int *trackIndex, idx = 0;
+    for (int i = 0; i < m; ++i) {
+        trackIndex = (int *)calloc_or_exit( m, sizeof(int));
+        for (int j = 0; j < nnz_per_row; ++j) {
+            int randColIdx;
+            do {
+                randColIdx = rand() % m;
+            } while (trackIndex[randColIdx] != 0);
+            trackIndex[ randColIdx] = 1.0;
+            (*row_ptr)[i]++;
+            (*col_ptr)[idx] = startCol + randColIdx;
+            (*val_ptr)[idx] = ((double)(randColIdx%10) +1);
+            idx++;
+        }
+        free(trackIndex);
+    }
+}
+
 int createCSRMat(int **row_ptr, int **col_ptr, double **val_ptr, int mat_row, int nnz_per_block, int startCol, int rank){
     (*row_ptr) = (int *) calloc_or_exit(mat_row+1, sizeof(int));
     (*col_ptr) = (int *) malloc_or_exit(nnz_per_block * sizeof(int));
@@ -90,7 +138,7 @@ int main(int argc, char *argv[]) {
     char *in_file;
     double comp_time = 0.0, bcast_time = 0.0, matmul_time = 0.0, reduce_time = 0.0, min_time = 0.0, max_time = 0.0,
             avg_time = 0.0, mean = 0.0, avg_bcast_time = 0.0, avg_matmul_time = 0.0, avg_reduce_time = 0.0,
-            *val_ptr, *x, *y;
+            *val_ptr, *x, *y, *y_seq;
     int total_run = 1000, skip=100, nRanks, rank, *row_ptr, *col_ptr, _size, mat_row, nnz_per_block,
             nodes = 0, procs_per_node = 0;
 
@@ -125,11 +173,16 @@ int main(int argc, char *argv[]) {
     MPI_Comm commcol;
     MPI_Comm_split(MPI_COMM_WORLD, col_rank, rank, &commcol);
 
-    if (createCSRMat(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block, col_rank * mat_row, rank) != 0) {
+    /*if (createCSRMat(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block, col_rank * mat_row, rank) != 0) {
+        fprintf(stderr, "read_matrix: failed\n");
+        exit(EXIT_FAILURE);
+    }*/
+    if (create_random_diagonal_matrix(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block, col_rank * mat_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
     y = (double *) calloc_or_exit(mat_row, sizeof(double));
+    y_seq = (double *) calloc_or_exit(mat_row, sizeof(double));
     x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; ++i) {
         x[i] = 1.0;
@@ -137,6 +190,22 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER){
         printf("[%d] Matrix creation done\n", rank);
     }
+    /// Test code
+    MPI_Barrier(MPI_COMM_WORLD);
+    //broadcast X along column communicator
+    MPI_Bcast(x, mat_row, MPI_FLOAT, col_rank, commcol);
+    // Multiplication
+    matMull(rank, row_ptr, col_ptr, val_ptr, x, mat_row, col_rank * mat_row, y);
+    //reduce Y along row communicator
+    MPI_Reduce(y, x, mat_row, MPI_FLOAT, MPI_SUM, row_rank, commrow);
+    MPI_Barrier(MPI_COMM_WORLD);
+    for (int l = 0; l < mat_row; ++l) {
+        for (int m = row_ptr[l+1]; m < row_ptr[l+1]; ++m) {
+
+        }
+    }
+    /// End testing
+    y = (double *) calloc_or_exit(mat_row, sizeof(double));
     /// Start sparse matrix vector multiplication for each rank
     double start_bcast_time = 0.0, start_matmul_time = 0.0, start_reduce_time = 0.0;
     MPI_Barrier(MPI_COMM_WORLD);
