@@ -3,6 +3,7 @@
 CC = gcc
 CFLAGS = -O3 -std=gnu99 -DDEBUG
 
+CCXXFLAGS = -O3 -std=c++11
 OMP_FLAGS = -fopenmp
 #CC = icc
 #CFLAGS = -O3 -xCORE-AVX2 -ffreestanding 
@@ -78,9 +79,12 @@ create_matrix: create_matrix.c $(OBJ)
 get_info: get_info.c $(OBJ)
 	$(CC) $(CFLAGS) $(OMP_FLAGS) $(OBJ) $< -o $@ $(LDFLAGS)
 
+reorder_matrix: reorder_matrix.c $(OBJ)
+	$(CC) $(CCXXFLAGS) $(OMP_FLAGS) $(OBJ) $< -o $@ $(LDFLAGS)
+
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $<
 
 .PHONY: clean
 clean:
-	rm -f matvec_seq matvec_mpi_bcast matvec_mpi_p2p matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p mult_p2p spmv_random read_file spmv_random_model omp_spmv_model omp_spmv create_matrix get_info *.o
+	rm -f matvec_seq matvec_mpi_bcast matvec_mpi_p2p matvec_mpi_calculation csr_mpi_spmv csr_mpi_model csr_random_spmv_model csr_spmv csr_mpi_reduced_spmv spmv_p2p comm_p2p mult_p2p spmv_random read_file spmv_random_model omp_spmv_model omp_spmv create_matrix get_info reorder_matrix *.o
