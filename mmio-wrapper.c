@@ -541,6 +541,170 @@ int read_coo_matrix_to_csr(const char *filename, int **row_ptr, int **col_ptr, V
     return 0;
 }
 
+int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int * mat_row, int *mat_col, int *_nnz, int *max_deg){
+    // load matrix
+    FILE *f;
+    MM_typecode matcode;
+    int isInteger = 0, isReal = 0, isPattern = 0, isSymmetric = 0, ret_code, m, n, nnzA, nnzA_mtx_report;
+    if ((f = fopen(filename, "r")) == NULL)
+        return -1;
+
+    if (mm_read_banner(f, &matcode) != 0)
+    {
+        printf("Could not process Matrix Market banner.\n");
+        return -2;
+    }
+
+    if ( mm_is_complex( matcode ) )
+    {
+        printf("Sorry, data type 'COMPLEX' is not supported.\n");
+        return -3;
+    }
+
+    if ( mm_is_pattern( matcode ) )  { isPattern = 1; /*cout << "type = Pattern" << endl;*/ }
+    if ( mm_is_real ( matcode) )     { isReal = 1; /*cout << "type = real" << endl;*/ }
+    if ( mm_is_integer ( matcode ) ) { isInteger = 1; /*cout << "type = integer" << endl;*/ }
+
+    /* find out size of sparse matrix .... */
+    ret_code = mm_read_mtx_crd_size(f, &m, &n, &nnzA_mtx_report);
+    if (ret_code != 0)
+        return -4;
+
+    (*mat_row) = m;
+    (*mat_col) = n;
+    (*_nnz) = nnzA_mtx_report;
+    if ( mm_is_symmetric( matcode ) || mm_is_hermitian( matcode ) )
+    {
+        isSymmetric = 1;
+        //cout << "symmetric = true" << endl;
+    }
+    else
+    {
+        //cout << "symmetric = false" << endl;
+    }
+
+    int *csrRowPtrA_counter = (int *)malloc((m+1) * sizeof(int));
+    memset(csrRowPtrA_counter, 0, (m+1) * sizeof(int));
+
+    int *csrRowIdxA_tmp = (int *)malloc(nnzA_mtx_report * sizeof(int));
+    int *csrColIdxA_tmp = (int *)malloc(nnzA_mtx_report * sizeof(int));
+    ValueType *csrValA_tmp    = (ValueType *)malloc(nnzA_mtx_report * sizeof(ValueType));
+
+    /* NOTE: when reading in doubles, ANSI C requires the use of the "l"  */
+    /*   specifier as in "%lg", "%lf", "%le", otherwise errors will occur */
+    /*  (ANSI C X3.159-1989, Sec. 4.9.6.2, p. 136 lines 13-15)            */
+
+    for (int i = 0; i < nnzA_mtx_report; i++)
+    {
+        int idxi, idxj;
+        double fval;
+        int ival;
+
+        if (isReal)
+            fscanf(f, "%d %d %lg\n", &idxi, &idxj, &fval);
+        else if (isInteger)
+        {
+            int count = fscanf(f, "%d %d %d\n", &idxi, &idxj, &ival);
+            fval = ival;
+        }
+        else if (isPattern)
+        {
+            int count = fscanf(f, "%d %d\n", &idxi, &idxj);
+            fval = 1.0;
+        }
+
+        // adjust from 1-based to 0-based
+        idxi--;
+        idxj--;
+
+        csrRowPtrA_counter[idxi]++;
+        csrRowIdxA_tmp[i] = idxi;
+        csrColIdxA_tmp[i] = idxj;
+        csrValA_tmp[i] = fval;
+        if((*max_deg) < csrRowPtrA_counter[idxi]){
+            (*max_deg) = csrRowPtrA_counter[idxi];
+        }
+    }
+
+    if (f != stdin)
+        fclose(f);
+
+    if (isSymmetric)
+    {
+        for (int i = 0; i < nnzA_mtx_report; i++)
+        {
+            if (csrRowIdxA_tmp[i] != csrColIdxA_tmp[i])
+                csrRowPtrA_counter[csrColIdxA_tmp[i]]++;
+        }
+    }
+
+    // exclusive scan for csrRowPtrA_counter
+    int old_val, new_val;
+
+    old_val = csrRowPtrA_counter[0];
+    csrRowPtrA_counter[0] = 0;
+    for (int i = 1; i <= m; i++)
+    {
+        new_val = csrRowPtrA_counter[i];
+        csrRowPtrA_counter[i] = old_val + csrRowPtrA_counter[i-1];
+        old_val = new_val;
+    }
+
+    nnzA = csrRowPtrA_counter[m];
+    (*row_ptr) = (int *)malloc((m+1) * sizeof(int));
+    memcpy((*row_ptr), csrRowPtrA_counter, (m+1) * sizeof(int));
+    memset(csrRowPtrA_counter, 0, (m+1) * sizeof(int));
+
+    (*col_ptr) = (int *)malloc(nnzA * sizeof(int));
+    (*val_ptr)    = (ValueType *)malloc(nnzA * sizeof(ValueType));
+
+    double gb = (double)((m + 1 + nnzA) * sizeof(int) + (2 * nnzA + m) * sizeof(ValueType));
+    double gflop = (double)(2 * nnzA);
+
+    if (isSymmetric)
+    {
+        for (int i = 0; i < nnzA_mtx_report; i++)
+        {
+            if (csrRowIdxA_tmp[i] != csrColIdxA_tmp[i])
+            {
+                int offset = (*row_ptr)[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
+                (*col_ptr)[offset] = csrColIdxA_tmp[i];
+                (*val_ptr)[offset] = csrValA_tmp[i];
+                csrRowPtrA_counter[csrRowIdxA_tmp[i]]++;
+
+                offset = (*row_ptr)[csrColIdxA_tmp[i]] + csrRowPtrA_counter[csrColIdxA_tmp[i]];
+                (*col_ptr)[offset] = csrRowIdxA_tmp[i];
+                (*val_ptr)[offset] = csrValA_tmp[i];
+                csrRowPtrA_counter[csrColIdxA_tmp[i]]++;
+            }
+            else
+            {
+                int offset = (*row_ptr)[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
+                (*col_ptr)[offset] = csrColIdxA_tmp[i];
+                (*val_ptr)[offset] = csrValA_tmp[i];
+                csrRowPtrA_counter[csrRowIdxA_tmp[i]]++;
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0; i < nnzA_mtx_report; i++)
+        {
+            int offset = (*row_ptr)[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
+            (*col_ptr)[offset] = csrColIdxA_tmp[i];
+            (*val_ptr)[offset] = csrValA_tmp[i];
+            csrRowPtrA_counter[csrRowIdxA_tmp[i]]++;
+        }
+    }
+
+    // free tmp space
+    free(csrColIdxA_tmp);
+    free(csrValA_tmp);
+    free(csrRowIdxA_tmp);
+    free(csrRowPtrA_counter);
+    return 0;
+}
+
 int read_coo_matrix_to_csr_with_max_deg(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int *mat_row, int *_nnz, int *max_deg) {
     FILE *f;
     MM_typecode matcode;
