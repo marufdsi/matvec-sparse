@@ -102,7 +102,11 @@ int main(int argc, char *argv[]) {
     }
 
     int max_deg = 0;
-    if (csr_read_Matrix(in_file, &row_ptr, &col_ptr, &val_ptr, &m, &n, &nnzA, &max_deg) != 0) {
+    /*if (csr_read_Matrix(in_file, &row_ptr, &col_ptr, &val_ptr, &m, &n, &nnzA, &max_deg) != 0) {
+        fprintf(stderr, "read_matrix: failed\n");
+        exit(EXIT_FAILURE);
+    }*/
+    if (read_coo_matrix_to_csr_with_max_deg(in_file, &row_ptr, &col_ptr, &val_ptr, &m, &nnzA, &max_deg) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
