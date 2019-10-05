@@ -84,7 +84,8 @@ int rank_wise_read_matrix(const char *filename, int **i_idx, int **j_idx, double
 
     /* open the file */
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
-    char *file_n = filename;
+    char file_n[100];
+    strcpy(file_n, filename);
     char *_ptr = strtok(file_n, ".");
     sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, strtok(NULL, "-"));
     if ((f = fopen(rank_wise_filename, "r")) == NULL) {
@@ -159,7 +160,8 @@ int test_csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **
 
     /* open the file */
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
-    char *file_n = filename;
+    char file_n[100];
+    strcpy(file_n, filename);
     char *_ptr = strtok(file_n, ".");
     sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, strtok(NULL, "-"));
     if ((f = fopen(rank_wise_filename, "r")) == NULL) {
@@ -261,7 +263,8 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
 
     /* open the file */
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
-    char *file_n = filename;
+    char file_n[100];
+    strcpy(file_n, filename);
     char *_ptr = strtok(file_n, ".");
     sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, strtok(NULL, "-"));
     if ((f = fopen(rank_wise_filename, "r")) == NULL) {
@@ -358,7 +361,8 @@ int rank_wise_read_matrix_csr(const char *filename, int **row_ptr, int **col_ptr
 
     /* open the file */
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
-    char *file_n = filename;
+    char file_n[100];
+    strcpy(file_n, filename);
     char *_ptr = strtok(file_n, ".");
     sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, strtok(NULL, "-"));
     if ((f = fopen(rank_wise_filename, "r")) == NULL) {
