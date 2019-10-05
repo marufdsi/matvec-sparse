@@ -9,6 +9,7 @@
 #include "util.h"
 #include "partition.h"
 #include <time.h>
+#include <unordered_set>
 
 int transactionByte = 128;
 
