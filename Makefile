@@ -1,9 +1,9 @@
 # C compiler
 
 CC = icpc
-#CFLAGS = -O3 -std=gnu99 -DDEBUG
+CFLAGS = -O3 -std=gnu99 -DDEBUG
 
-CFLAGS = -O3 -std=c++11
+#CFLAGS = -O3 -std=c++11
 OMP_FLAGS = -fopenmp
 #CC = icc
 #CFLAGS = -O3 -xCORE-AVX2 -ffreestanding 
