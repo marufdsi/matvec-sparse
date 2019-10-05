@@ -76,7 +76,7 @@ int read_matrix(const char *filename, int **i_idx, int **j_idx, double **values,
     return 0;
 }
 
-int rank_wise_read_matrix(const char *filename, int **i_idx, int **j_idx, double **values, int *M, int *N, int *NZ,
+int rank_wise_read_matrix(char *filename, int **i_idx, int **j_idx, double **values, int *M, int *N, int *NZ,
                           int *first_row, int *last_row, int rank) {
     FILE *f;
     MM_typecode matcode;
@@ -150,7 +150,7 @@ int rank_wise_read_matrix(const char *filename, int **i_idx, int **j_idx, double
     return 0;
 }
 
-int test_csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
+int test_csr_read_2D_partitioned_mat(char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
                                 int sqrRank, int rank) {
     FILE *f;
     MM_typecode matcode;
@@ -251,7 +251,7 @@ int test_csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **
     return 0;
 }
 
-int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
+int csr_read_2D_partitioned_mat(char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
                                 proc_info_t **ranks_info, int sqrRank, int rank) {
     FILE *f;
     MM_typecode matcode;
@@ -347,7 +347,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     return 0;
 }
 
-int rank_wise_read_matrix_csr(const char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
+int rank_wise_read_matrix_csr(char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
                               proc_info_t **ranks_info, int rank, int *offDiagonalElements) {
     FILE *f;
     MM_typecode matcode;
