@@ -10,3 +10,5 @@ rm -r omp_aff.o*
 rm -r omp_aff.e*
 rm -r mpijob.o*
 rm -r mpijob.e*
+rm -r genMat.o*
+rm -r genMat.e*
