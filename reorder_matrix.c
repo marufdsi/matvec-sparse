@@ -21,7 +21,10 @@ reOrderMatrix(int *row_ptr, int *col_ptr, ValueType *val_ptr, int m, int n, int 
         return;
     }
     ValueType *x;
-    x = (ValueType *) malloc_or_exit(n * sizeof(ValueType));
+    x = (ValueType *) malloc(n * sizeof(ValueType));
+    for (int i = 0; i < n; ++i) {
+        x = 1;
+    }
     fprintf(newMat, "%%%MatrixMarket matrix coordinate real general\n");
     fprintf(newMat, "%d %d %d\n", m, n, nnzA);
     int wordSize = transactionByte / sizeof(ValueType);
@@ -87,7 +90,7 @@ void create_diagonal_matrix() {
 int main(int argc, char *argv[]) {
 
     char *out_file, *in_file;
-    int m, n, nnzA, *row_ptr, *col_ptr;
+    int m, n, nnzA = 0, *row_ptr, *col_ptr;
     ValueType *val_ptr;
     if (argc < 2) {
         printf("Usage: %s input_file output_file]\n", argv[0]);

@@ -541,7 +541,7 @@ int read_coo_matrix_to_csr(const char *filename, int **row_ptr, int **col_ptr, V
     return 0;
 }
 
-int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int * mat_row, int *mat_col, int *_nnz, int *max_deg){
+int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int *mat_row, int *mat_col, int *_nnz, int *max_deg){
     // load matrix
     FILE *f;
     MM_typecode matcode;

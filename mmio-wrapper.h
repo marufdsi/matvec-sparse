@@ -18,6 +18,6 @@ int test_csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **
 int read_coo_matrix_to_csr(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int *mat_row, int *_nnz);
 int read_coo_matrix_to_csr_with_max_deg(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int *mat_row, int *_nnz, int *max_deg);
 int write_matrix (const char *filename, const int *i_idx, const int *j_idx, const double *values, int N, int NZ);
-int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int * mat_row, int *mat_col, int *_nnz, int *max_deg);
+int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int *mat_row, int *mat_col, int *_nnz, int *max_deg);
 #endif
 
