@@ -23,7 +23,7 @@ reOrderMatrix(int *row_ptr, int *col_ptr, ValueType *val_ptr, int m, int n, int 
     ValueType *x;
     x = (ValueType *) malloc(n * sizeof(ValueType));
     for (int i = 0; i < n; ++i) {
-        x = 1;
+        x[i] = 1;
     }
     fprintf(newMat, "%%%MatrixMarket matrix coordinate real general\n");
     fprintf(newMat, "%d %d %d\n", m, n, nnzA);
