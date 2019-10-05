@@ -28,7 +28,7 @@ reOrderMatrix(int *row_ptr, int *col_ptr, ValueType *val_ptr, int m, int n, int 
     for (int i = 0; i < m; ++i) {
         for (int deg = 0; deg < max_deg; ++deg) {
             int rows = (i + wordSize) > m ? m : (i + wordSize);
-            unordered_set<long> hashme;
+            std::unordered_set<long> hashme;
             int firstRow = i;
             while (firstRow < rows) {
                 if (deg < (row_ptr[firstRow] - row_ptr[firstRow + 1])) {
