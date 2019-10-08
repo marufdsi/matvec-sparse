@@ -29,7 +29,7 @@ double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x
     }
 }
 
-void  create_random_matrix(int **row_ptr, int **col_ptr, double **val_ptr, int m, int n, int nnz_per_row, int startCol, int rank){
+int  create_random_matrix(int **row_ptr, int **col_ptr, double **val_ptr, int m, int n, int nnz_per_row, int startCol, int rank){
     (*row_ptr) = (int *) calloc_or_exit(m+1, sizeof(int));
     (*col_ptr) = (int *) malloc_or_exit(m*nnz_per_row * sizeof(int));
     (*val_ptr) = (double *) malloc_or_exit(m*nnz_per_row * sizeof(double));
@@ -51,9 +51,10 @@ void  create_random_matrix(int **row_ptr, int **col_ptr, double **val_ptr, int m
         }
         free(trackIndex);
     }
+    return 0;
 }
 
-void  create_random_diagonal_matrix(int **row_ptr, int **col_ptr, double **val_ptr, int m, int nnz_per_row, int startCol, int rank){
+int  create_random_diagonal_matrix(int **row_ptr, int **col_ptr, double **val_ptr, int m, int nnz_per_row, int startCol, int rank){
     (*row_ptr) = (int *) calloc_or_exit(m+1, sizeof(int));
     (*col_ptr) = (int *) malloc_or_exit(m*nnz_per_row * sizeof(int));
     (*val_ptr) = (double *) malloc_or_exit(m*nnz_per_row * sizeof(double));
@@ -75,6 +76,7 @@ void  create_random_diagonal_matrix(int **row_ptr, int **col_ptr, double **val_p
         }
         free(trackIndex);
     }
+    return 0;
 }
 
 int createCSRMat(int **row_ptr, int **col_ptr, double **val_ptr, int mat_row, int nnz_per_block, int startCol, int rank){
