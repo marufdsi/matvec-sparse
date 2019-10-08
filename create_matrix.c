@@ -40,8 +40,29 @@ void  create_random_matrix(int m, int n, int nnz_per_row, char *out_file){
     }
 }
 
-void  create_diagonal_matrix(){
+void  create_diagonal_matrix(int m, int n, int nnz_per_row, char *out_file){
+    FILE *newMat;
+    if (!(newMat = fopen(strcat(out_file, ".mtx"), "w"))) {
+        printf("fopen: failed to open file '%s'", out_file);
+        return;
+    }
+    fprintf(newMat, "%%%MatrixMarket matrix coordinate real general\n");
+    fprintf(newMat, "%d %d %d\n", m, n, m*nnz_per_row);
 
+    int start_idx = 0;
+    int row_elements = 0;
+    int lower_nnz = nnz_per_row - (nnz_per_row / 2);
+    for (int r = 0; r < m; ++r) {
+        int start_coldIdx = (r - lower_nnz + 1) < 0 ? 0 : ((r - lower_nnz + 1 + nzPerRow)> mat_row) ? (mat_row-nzPerRow) : (r - lower_nnz + 1);
+        for (int colIdx = start_coldIdx; colIdx < start_coldIdx + nzPerRow; ++colIdx) {
+            fprintf(newMat, "%d %d %lf\n", r+1, colIdx+1, ((double)(colIdx%10) +1));
+        }
+    }
+    /// close file
+    if (fclose(newMat) != 0) {
+        fprintf(stderr, "fopen: failed to open file '%s'", out_file);
+        return;
+    }
 }
 
 /**
@@ -55,7 +76,7 @@ void  create_diagonal_matrix(){
 int main(int argc, char *argv[]) {
 
     char *out_file;
-    int m, n, nnz_per_row;
+    int m, n, nnz_per_row, isDiagonal = 0;
     if (argc < 4) {
         printf("Usage: %s m n nnz_per_row output_file]\n", argv[0]);
         return 0;
@@ -64,9 +85,13 @@ int main(int argc, char *argv[]) {
         n = atoi(argv[2]);
         nnz_per_row = atoi(argv[3]);
         out_file = argv[4];
+        if(argc>5)
+            isDiagonal = atoi(argv[5]);
     }
-
-    create_random_matrix(m, n, nnz_per_row, out_file);
+    if(isDiagonal == 0)
+        create_random_matrix(m, n, nnz_per_row, out_file);
+    else
+        create_diagonal_matrix(m, n, nnz_per_row, out_file);
 
     return 0;
 }

@@ -34,4 +34,4 @@ add_executable(matvec_sparse
         omp_spmv_model.c
         omp_spmv.c
         get_info.c
-        reorder_matrix.c)
+        )
