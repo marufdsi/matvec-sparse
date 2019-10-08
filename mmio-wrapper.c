@@ -549,7 +549,7 @@ int read_coo_matrix_to_csr(const char *filename, int **row_ptr, int **col_ptr, V
     return 0;
 }
 
-int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int *mat_row, int *mat_col, int *_nnz, int *max_deg){
+/*int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int *mat_row, int *mat_col, int *_nnz, int *max_deg){
     // load matrix
     FILE *f;
     MM_typecode matcode;
@@ -569,11 +569,11 @@ int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueTyp
         return -3;
     }
 
-    if ( mm_is_pattern( matcode ) )  { isPattern = 1; /*cout << "type = Pattern" << endl;*/ }
-    if ( mm_is_real ( matcode) )     { isReal = 1; /*cout << "type = real" << endl;*/ }
-    if ( mm_is_integer ( matcode ) ) { isInteger = 1; /*cout << "type = integer" << endl;*/ }
+    if ( mm_is_pattern( matcode ) )  { isPattern = 1; *//*cout << "type = Pattern" << endl;*//* }
+    if ( mm_is_real ( matcode) )     { isReal = 1; *//*cout << "type = real" << endl;*//* }
+    if ( mm_is_integer ( matcode ) ) { isInteger = 1; *//*cout << "type = integer" << endl;*//* }
 
-    /* find out size of sparse matrix .... */
+    *//* find out size of sparse matrix .... *//*
     ret_code = mm_read_mtx_crd_size(f, &m, &n, &nnzA_mtx_report);
     if (ret_code != 0)
         return -4;
@@ -598,9 +598,9 @@ int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueTyp
     int *csrColIdxA_tmp = (int *)malloc(nnzA_mtx_report * sizeof(int));
     ValueType *csrValA_tmp    = (ValueType *)malloc(nnzA_mtx_report * sizeof(ValueType));
 
-    /* NOTE: when reading in doubles, ANSI C requires the use of the "l"  */
-    /*   specifier as in "%lg", "%lf", "%le", otherwise errors will occur */
-    /*  (ANSI C X3.159-1989, Sec. 4.9.6.2, p. 136 lines 13-15)            */
+    *//* NOTE: when reading in doubles, ANSI C requires the use of the "l"  *//*
+    *//*   specifier as in "%lg", "%lf", "%le", otherwise errors will occur *//*
+    *//*  (ANSI C X3.159-1989, Sec. 4.9.6.2, p. 136 lines 13-15)            *//*
 
     for (int i = 0; i < nnzA_mtx_report; i++)
     {
@@ -711,27 +711,27 @@ int csr_read_Matrix(const char *filename, int **row_ptr, int **col_ptr, ValueTyp
     free(csrRowIdxA_tmp);
     free(csrRowPtrA_counter);
     return 0;
-}
+}*/
 
-int read_coo_matrix_to_csr_with_max_deg(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int *mat_row, int *_nnz, int *max_deg) {
+/*int read_coo_matrix_to_csr_with_max_deg(const char *filename, int **row_ptr, int **col_ptr, ValueType **val_ptr, int *mat_row, int *_nnz, int *max_deg) {
     FILE *f;
     MM_typecode matcode;
     int errorcode, nrows, ncols, nz_elements;
 
-    /* open the file */
+    *//* open the file *//*
     if ((f = fopen(filename, "r")) == NULL) {
         fprintf(stderr, "Cannot open '%s'\n", filename);
         return 1;
     }
 
-    /* process first line */
+    *//* process first line *//*
     if ((errorcode = mm_read_banner(f, &matcode)) != 0) {
         fprintf(stderr, "Error while processing banner (file:'%s') (code=%d)\n",
                 filename, errorcode);
         return 1;
     }
 
-    /* matrix should be sparse and real */
+    *//* matrix should be sparse and real *//*
     if (!mm_is_matrix(matcode) ||
         !mm_is_real(matcode) ||
         !mm_is_sparse(matcode)) {
@@ -739,7 +739,7 @@ int read_coo_matrix_to_csr_with_max_deg(const char *filename, int **row_ptr, int
         return 1;
     }
 
-    /* read info */
+    *//* read info *//*
     if ((errorcode = mm_read_mtx_crd_size(f, &nrows, &ncols, &nz_elements)) != 0) {
         fprintf(stderr, "Error while processing array (file:'%s') (code:%d)\n",
                 filename, errorcode);
@@ -757,7 +757,7 @@ int read_coo_matrix_to_csr_with_max_deg(const char *filename, int **row_ptr, int
     int *i_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
     int *j_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
     ValueType *values = (ValueType *) malloc_or_exit(nz_elements * sizeof(ValueType));
-    /* read actual matrix */
+    *//* read actual matrix *//*
     for (int i = 0; i < nz_elements; i++) {
         fscanf(f, "%d %d %lf", &(i_idx[i]), &(j_idx[i]), &(values[i]));
         i_idx[i]--;
@@ -766,14 +766,14 @@ int read_coo_matrix_to_csr_with_max_deg(const char *filename, int **row_ptr, int
         if((*max_deg) < (*row_ptr)[i_idx[i]])
             (*max_deg) = (*row_ptr)[i_idx[i]];
     }
-    /*for (int i = 0; i < nz_elements; i++) {
+    *//*for (int i = 0; i < nz_elements; i++) {
         if ((i_idx[i]) >= nrows || (i_idx[i]) < 0) {
             printf("Index out of bound for row=%d\n", i_idx[i]);
         }
         (*row_ptr)[i_idx[i]]++;
         if(max_deg < (*row_ptr)[i_idx[i]])
             max_deg = (*row_ptr)[i_idx[i]];
-    }*/
+    }*//*
 
     for (int i = 0, cumsum = 0; i < nrows; i++) {
         int temp = (*row_ptr)[i];
@@ -799,13 +799,13 @@ int read_coo_matrix_to_csr_with_max_deg(const char *filename, int **row_ptr, int
         (*row_ptr)[i] = last;
         last = temp;
     }
-    /* close the file */
+    *//* close the file *//*
     if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
     }
 
     return 0;
-}
+}*/
 
 int write_matrix(const char *filename, const int *i_idx, const int *j_idx, const double *values, int N, int NZ) {
     FILE *f;

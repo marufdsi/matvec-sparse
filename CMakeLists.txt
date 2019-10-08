@@ -33,5 +33,4 @@ add_executable(matvec_sparse
         read_file.c
         omp_spmv_model.c
         omp_spmv.c
-        get_info.c
         )
