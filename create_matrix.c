@@ -89,11 +89,11 @@ int main(int argc, char *argv[]) {
             isDiagonal = atoi(argv[5]);
     }
     if(isDiagonal == 0) {
-        printf("Random Matrix Creation for %d rows, %d columns with %d non zeros per row.\n", m, n nnz_per_row);
+        printf("Random Matrix Creation for %d rows, %d columns with %d non zeros per row.\n", m, n, nnz_per_row);
         create_random_matrix(m, n, nnz_per_row, out_file);
     }
     else {
-        printf("Diagonal Matrix Creation for %d rows, %d columns with %d non zeros per row.\n", m, n nnz_per_row);
+        printf("Diagonal Matrix Creation for %d rows, %d columns with %d non zeros per row.\n", m, n, nnz_per_row);
         create_diagonal_matrix(m, n, nnz_per_row, out_file);
     }
 
