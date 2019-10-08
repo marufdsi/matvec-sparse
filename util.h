@@ -34,7 +34,7 @@ typedef struct {
     struct Value value;
 } Map;
 
-typedef float ValueType;
+typedef double ValueType;
 
 double getVal(Map *map, int col, int limit);
 
