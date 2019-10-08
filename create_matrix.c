@@ -53,7 +53,7 @@ void  create_diagonal_matrix(int m, int n, int nnz_per_row, char *out_file){
     int row_elements = 0;
     int lower_nnz = nnz_per_row - (nnz_per_row / 2);
     for (int r = 0; r < m; ++r) {
-        int start_coldIdx = (r - lower_nnz + 1) < 0 ? 0 : ((r - lower_nnz + 1 + nzPerRow)> mat_row) ? (mat_row-nzPerRow) : (r - lower_nnz + 1);
+        int start_coldIdx = (r - lower_nnz + 1) < 0 ? 0 : ((r - lower_nnz + 1 + nnz_per_row)> m) ? (m-nnz_per_row) : (r - lower_nnz + 1);
         for (int colIdx = start_coldIdx; colIdx < start_coldIdx + nzPerRow; ++colIdx) {
             fprintf(newMat, "%d %d %lf\n", r+1, colIdx+1, ((double)(colIdx%10) +1));
         }
