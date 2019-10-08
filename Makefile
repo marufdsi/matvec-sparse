@@ -1,6 +1,6 @@
 # C compiler
 
-CC = icpc
+CC = gcc
 CFLAGS = -O3 -std=gnu99 -DDEBUG
 
 #CFLAGS = -O3 -std=c++11
