@@ -62,7 +62,8 @@ int main(int argc, char *argv[]) {
     char *in_file;
     double comp_time = 0, bcast_time = 0.0, matmul_time = 0.0, reduce_time = 0.0, min_time = 0.0, max_time = 0.0,
             avg_time = 0.0, mean = 0.0, avg_bcast_time = 0.0, avg_matmul_time = 0.0, avg_reduce_time = 0.0;
-    int total_run = 100, skip=100, nRanks, rank, knl = 0;
+    int total_run = 30, skip=5, nRanks, rank, knl = 0, TOTAL_MAT_MUL = 20;
+
     int *row_ptr, *col_ptr;
     double *val_ptr, *x, *y;
     proc_info_t *ranks_info;
@@ -102,7 +103,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    y = (double *) calloc_or_exit(ranks_info[rank].M, sizeof(double));
+    y = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
     x = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
     for (int i = 0; i < ranks_info[rank].M; ++i) {
         x[i] = 1.0;
@@ -118,34 +119,44 @@ int main(int argc, char *argv[]) {
     double start_time = 0.0;
     struct timespec start, end, b_start, b_end, r_start, r_end, m_start, m_end;
     for (int r = 0; r < total_run+skip; ++r) {
-        clock_gettime(CLOCK_MONOTONIC, &start);
-        clock_gettime(CLOCK_MONOTONIC, &b_start);
-        //broadcast X along column communicator
-        MPI_Bcast (x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol); //col_rank is the one with the correct information
-        if(r>=skip) {
-            clock_gettime(CLOCK_MONOTONIC, &b_end);
-            bcast_time += ((b_end.tv_sec * 1000 + (b_end.tv_nsec / 1.0e6)) - (b_start.tv_sec * 1000 + (b_start.tv_nsec / 1.0e6)));
-        }
+        for (int mul = 0; mul < TOTAL_MAT_MUL; ++mul) {
+            for (int i = 0; i < ranks_info[rank].M; ++i) {
+                y[i] = 0.0;
+            }
+            clock_gettime(CLOCK_MONOTONIC, &start);
+            clock_gettime(CLOCK_MONOTONIC, &b_start);
+            //broadcast X along column communicator
+            MPI_Bcast(x, ranks_info[rank].M, MPI_FLOAT, col_rank,
+                      commcol); //col_rank is the one with the correct information
+            if (r >= skip) {
+                clock_gettime(CLOCK_MONOTONIC, &b_end);
+                bcast_time += ((b_end.tv_sec * 1000 + (b_end.tv_nsec / 1.0e6)) -
+                               (b_start.tv_sec * 1000 + (b_start.tv_nsec / 1.0e6)));
+            }
 
 
-        clock_gettime(CLOCK_MONOTONIC, &m_start);
-        // Multiplication
-        matMull(rank, row_ptr, col_ptr, val_ptr, x, ranks_info[rank].M, col_rank*ranks_info[rank].M, y);
-        if(r>=skip) {
-            clock_gettime(CLOCK_MONOTONIC, &m_end);
-            matmul_time += ((m_end.tv_sec * 1000 + (m_end.tv_nsec / 1.0e6)) - (m_start.tv_sec * 1000 + (m_start.tv_nsec / 1.0e6)));
-        }
+            clock_gettime(CLOCK_MONOTONIC, &m_start);
+            // Multiplication
+            matMull(rank, row_ptr, col_ptr, val_ptr, x, ranks_info[rank].M, col_rank * ranks_info[rank].M, y);
+            if (r >= skip) {
+                clock_gettime(CLOCK_MONOTONIC, &m_end);
+                matmul_time += ((m_end.tv_sec * 1000 + (m_end.tv_nsec / 1.0e6)) -
+                                (m_start.tv_sec * 1000 + (m_start.tv_nsec / 1.0e6)));
+            }
 
-        clock_gettime(CLOCK_MONOTONIC, &r_start);
-        //reduce Y along row communicator
-        MPI_Reduce(y, x, ranks_info[rank].M, MPI_FLOAT, MPI_SUM, row_rank, commrow);
-        if(r>=skip) {
-            clock_gettime(CLOCK_MONOTONIC, &r_end);
-            clock_gettime(CLOCK_MONOTONIC, &end);
-            reduce_time += ((r_end.tv_sec * 1000 + (r_end.tv_nsec / 1.0e6)) - (r_start.tv_sec * 1000 + (r_start.tv_nsec / 1.0e6)));
-            comp_time += ((end.tv_sec * 1000 + (end.tv_nsec / 1.0e6)) - (start.tv_sec * 1000 + (start.tv_nsec / 1.0e6)));
+            clock_gettime(CLOCK_MONOTONIC, &r_start);
+            //reduce Y along row communicator
+            MPI_Reduce(y, x, ranks_info[rank].M, MPI_FLOAT, MPI_SUM, row_rank, commrow);
+            if (r >= skip) {
+                clock_gettime(CLOCK_MONOTONIC, &r_end);
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                reduce_time += ((r_end.tv_sec * 1000 + (r_end.tv_nsec / 1.0e6)) -
+                                (r_start.tv_sec * 1000 + (r_start.tv_nsec / 1.0e6)));
+                comp_time += ((end.tv_sec * 1000 + (end.tv_nsec / 1.0e6)) -
+                              (start.tv_sec * 1000 + (start.tv_nsec / 1.0e6)));
+            }
+            MPI_Barrier(MPI_COMM_WORLD);
         }
-        MPI_Barrier(MPI_COMM_WORLD);
     }
     MPI_Barrier(MPI_COMM_WORLD);
 //    comp_time = (MPI_Wtime() - start_time) * 1000.00;
