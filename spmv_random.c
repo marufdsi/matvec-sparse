@@ -114,9 +114,7 @@ int main(int argc, char *argv[]) {
     /// Share process info among all the processes
     MPI_Allgather(&ranks_info[rank], 1, procs_info_type, procs_info, 1, procs_info_type, MPI_COMM_WORLD);
     /// Start sparse matrix vector multiplication for each rank
-    double start_bcast_time = 0.0, start_matmul_time = 0.0, start_reduce_time = 0.0;
     MPI_Barrier(MPI_COMM_WORLD);
-    double start_time = 0.0;
     struct timespec start, end, b_start, b_end, r_start, r_end, m_start, m_end;
     for (int r = 0; r < total_run+skip; ++r) {
         for (int mul = 0; mul < TOTAL_MAT_MUL; ++mul) {
@@ -126,8 +124,7 @@ int main(int argc, char *argv[]) {
             clock_gettime(CLOCK_MONOTONIC, &start);
             clock_gettime(CLOCK_MONOTONIC, &b_start);
             //broadcast X along column communicator
-            MPI_Bcast(x, ranks_info[rank].M, MPI_FLOAT, col_rank,
-                      commcol); //col_rank is the one with the correct information
+            MPI_Bcast(x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol); //col_rank is the one with the correct information
             if (r >= skip) {
                 clock_gettime(CLOCK_MONOTONIC, &b_end);
                 bcast_time += ((b_end.tv_sec * 1000 + (b_end.tv_nsec / 1.0e6)) -
