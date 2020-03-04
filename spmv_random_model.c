@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
         char outputFile[100] = "Skylake_CSR_SpMV_Model_of_Diagonal_BrCast_Reduce.csv";
 #elif RANDOM_MATRIX
         char outputFile[100] = "Skylake_CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
-#else DIAGONAL_MATRIX
+#else 
         char outputFile[100] = "CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
 #endif
         FILE *resultCSV;
