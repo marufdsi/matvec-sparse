@@ -174,6 +174,10 @@ int main(int argc, char *argv[]) {
             procs_per_node = atoi(argv[6]);
     }
 
+    if(rank == MASTER){
+        printf("matrix ize: %d, row: %d, nzpb: %d, run: %d, nodes: %d, ppn: %d\n", _size, mat_row, nnz_per_block,
+                total_run, nodes, procs_per_node);
+    }
     int sqrRank = sqrt(nRanks);
     int row_rank = rank / sqrRank; //which col of proc am I
     int col_rank = rank % sqrRank; //which row of proc am I
@@ -186,12 +190,14 @@ int main(int argc, char *argv[]) {
     MPI_Comm_split(MPI_COMM_WORLD, col_rank, rank, &commcol);
 
 #if CSR_MATRIX
+    printf("CSR matrix called\n");
     if (createCSRMat(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block, col_rank * mat_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
 #endif
 #if DIAGONAL_MATRIX
+    printf("Diagonal matrix called\n");
     if (create_random_diagonal_matrix(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block, col_rank * mat_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
@@ -267,7 +273,7 @@ int main(int argc, char *argv[]) {
         char outputFile[100] = "Skylake_CSR_SpMV_Model_of_Diagonal_BrCast_Reduce.csv";
 #elif RANDOM_MATRIX
         char outputFile[100] = "Skylake_CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
-#else 
+#else
         char outputFile[100] = "CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
 #endif
         FILE *resultCSV;
