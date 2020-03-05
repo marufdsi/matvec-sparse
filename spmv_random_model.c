@@ -19,7 +19,7 @@
 #include "util.h"
 #include "partition.h"
 #ifndef DIAGONAL_MATRIX
-#define DIAGONAL_MATRIX true
+#define DIAGONAL_MATRIX false
 #endif
 
 #ifndef RANDOM_MATRIX
@@ -27,7 +27,7 @@
 #endif
 
 #ifndef CSR_MATRIX
-#define CSR_MATRIX false
+#define CSR_MATRIX true
 #endif
 
 double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, int startCol, double *y) {
