@@ -12,3 +12,8 @@ rm -r mpijob.o*
 rm -r mpijob.e*
 rm -r genMat.o*
 rm -r genMat.e*
+rm -r mpi_2D_model.o*
+rm -r mpi_2D_model.e*
+rm -r mpi_2D.o*
+rm -r mpi_2D.e*
+rm -r core.*

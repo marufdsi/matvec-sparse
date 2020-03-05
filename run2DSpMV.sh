@@ -1,5 +1,6 @@
 #!/bin/bash
-module load openmpi
+module remove openmpi/4.0.1
+module load openmpi/3.1.2
 
 mpirun -n $procs ./spmv_random "input/"$input"_random_"$procs".mtx"
 
