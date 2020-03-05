@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
     }
 #endif
 //#if DIAGONAL_MATRIX
-    printf("Diagonal matrix called\n");
+//    printf("Diagonal matrix called\n");
     if (create_random_diagonal_matrix(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block/mat_row, col_rank * mat_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
