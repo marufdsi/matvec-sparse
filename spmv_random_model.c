@@ -281,13 +281,11 @@ int main(int argc, char *argv[]) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
                rank, min_time, max_time, mean, nnz_per_block);
 //        char outputFile[100] = "CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
-#if DIAGONAL_MATRIX
         char outputFile[100] = "Skylake_CSR_SpMV_Model_of_Diagonal_BrCast_Reduce.csv";
-#elif RANDOM_MATRIX
-        char outputFile[100] = "Skylake_CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
-#else
-        char outputFile[100] = "CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
-#endif
+
+//        char outputFile[100] = "Skylake_CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
+
+//        char outputFile[100] = "CSR_SpMV_Model_of_Random_BrCast_Reduce.csv";
         FILE *resultCSV;
         FILE *checkFile;
         if ((checkFile = fopen(outputFile, "r")) != NULL) {
