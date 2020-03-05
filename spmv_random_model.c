@@ -39,7 +39,7 @@ double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x
                 printf("Negative index found\n");
             if((col_ptr[k] - startCol) >= nRow)
                 printf("index out of bound\n");
-            y[i] += val_ptr[k] * x[col_ptr[k] - startCol];
+//            y[i] += val_ptr[k] * x[col_ptr[k] - startCol];
         }
     }
 }
