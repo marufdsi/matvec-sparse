@@ -77,7 +77,6 @@ int  create_random_diagonal_matrix(int **row_ptr, int **col_ptr, double **val_pt
 
     int *trackIndex, idx = 0;
     trackIndex = (int *)malloc_or_exit( m * sizeof(int));
-    int usedIndx[nnz_per_row];
     for(int l=0; l<m; ++l) {
         trackIndex[l] = -1;
     }
@@ -88,7 +87,6 @@ int  create_random_diagonal_matrix(int **row_ptr, int **col_ptr, double **val_pt
                 randColIdx = rand() % m;
             } while (trackIndex[randColIdx] >= i);
             trackIndex[randColIdx] = i;
-            usedIndx[j] = randColIdx;
             (*row_ptr)[i]++;
             (*col_ptr)[idx] = startCol + randColIdx;
             (*val_ptr)[idx] = ((double)(randColIdx%10) +1);
