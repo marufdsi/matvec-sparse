@@ -208,13 +208,13 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 #endif
-#if DIAGONAL_MATRIX
+//#if DIAGONAL_MATRIX
     printf("Diagonal matrix called\n");
     if (create_random_diagonal_matrix(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block/mat_row, col_rank * mat_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-#endif
+//#endif
     y = (double *) malloc_or_exit(mat_row * sizeof(double));
     x = (double *) malloc_or_exit(mat_row * sizeof(double));
     for (int i = 0; i < mat_row; ++i) {
