@@ -34,6 +34,7 @@ double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x
 
     /// multiplication
     for (int i = 0; i < nRow; ++i) {
+        int zx = row_ptr[i];
         /*for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
 //            if((col_ptr[k] - startCol) < 0)
                 printf("Negative index found\n");
