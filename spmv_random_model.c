@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
 #endif
 #if DIAGONAL_MATRIX
     printf("Diagonal matrix called\n");
-    if (create_random_diagonal_matrix(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block, col_rank * mat_row, rank) != 0) {
+    if (create_random_diagonal_matrix(&row_ptr, &col_ptr, &val_ptr, mat_row, nnz_per_block/mat_row, col_rank * mat_row, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
 
             clock_gettime(CLOCK_MONOTONIC, &m_start);
             // Multiplication
-//            matMull(rank, row_ptr, col_ptr, val_ptr, x, mat_row, col_rank * mat_row, y);
+            matMull(rank, row_ptr, col_ptr, val_ptr, x, mat_row, col_rank * mat_row, y);
             if (r >= skip) {
                 clock_gettime(CLOCK_MONOTONIC, &m_end);
                 matmul_time += ((m_end.tv_sec * 1000 + (m_end.tv_nsec / 1.0e6)) -
