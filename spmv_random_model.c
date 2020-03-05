@@ -76,8 +76,10 @@ int  create_random_diagonal_matrix(int **row_ptr, int **col_ptr, double **val_pt
     srand(time(NULL) * (rank + 1));
 
     int *trackIndex, idx = 0;
+    trackIndex = (int *)malloc_or_exit( m * sizeof(int));
     for (int i = 0; i < m; ++i) {
-        trackIndex = (int *)calloc_or_exit( m, sizeof(int));
+        for(int l=0; l<m; ++l)
+            trackIndex[l] = 0;
         for (int j = 0; j < nnz_per_row; ++j) {
             int randColIdx;
             do {
@@ -89,8 +91,8 @@ int  create_random_diagonal_matrix(int **row_ptr, int **col_ptr, double **val_pt
             (*val_ptr)[idx] = ((double)(randColIdx%10) +1);
             idx++;
         }
-        free(trackIndex);
     }
+    free(trackIndex);
     return 0;
 }
 
@@ -236,7 +238,7 @@ int main(int argc, char *argv[]) {
 
             clock_gettime(CLOCK_MONOTONIC, &m_start);
             // Multiplication
-//            matMull(rank, row_ptr, col_ptr, val_ptr, x, mat_row, col_rank * mat_row, y);
+            matMull(rank, row_ptr, col_ptr, val_ptr, x, mat_row, col_rank * mat_row, y);
             if (r >= skip) {
                 clock_gettime(CLOCK_MONOTONIC, &m_end);
                 matmul_time += ((m_end.tv_sec * 1000 + (m_end.tv_nsec / 1.0e6)) -
