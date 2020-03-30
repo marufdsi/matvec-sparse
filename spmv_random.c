@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
     avg_nnz = 0.0, sd = 0.0, avg_sd = 0.0;
 
     for (int j = 1; j < procs_info[rank].M+1; ++j) {
-        sd += (row_ptr[j] - nnz_per_row) * (row_ptr[j] - nnz_per_row);
+        sd += (row_ptr[j] - row_ptr[j-1] - nnz_per_row) * (row_ptr[j] - row_ptr[j-1] - nnz_per_row);
     }
     sd = sd/procs_info[rank].M;
     sd = sqrt(sd);
