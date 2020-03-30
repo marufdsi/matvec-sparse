@@ -255,7 +255,7 @@ int test_csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **
     return 0;
 }
 
-int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_ptr, double **val_ptr,
+int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_ptr, f_type **val_ptr,
                                 proc_info_t **ranks_info, int sqrRank, int rank) {
     FILE *f;
     MM_typecode matcode;
@@ -301,12 +301,12 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     /// Initialize CSR row, col and value pointer.
     (*row_ptr) = (int *) calloc_or_exit(((*ranks_info)[rank].M + 1), sizeof(int));
     (*col_ptr) = (int *) malloc_or_exit(nz_elements * sizeof(int));
-    (*val_ptr) = (double *) malloc_or_exit(nz_elements * sizeof(double));
+    (*val_ptr) = (f_type *) malloc_or_exit(nz_elements * sizeof(f_type));
 
     (*row_ptr)[0] = 0;
     int *i_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
     int *j_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
-    double *values = (double *) malloc_or_exit(nz_elements * sizeof(double));
+    f_type *values = (f_type *) malloc_or_exit(nz_elements * sizeof(f_type));
     /* read actual matrix */
     for (int i = 0; i < nz_elements; i++) {
         fscanf(f, "%d %d %lf", &(i_idx[i]), &(j_idx[i]), &(values[i]));

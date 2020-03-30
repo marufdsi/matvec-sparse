@@ -22,7 +22,9 @@ enum tag {
     REQUEST_TAG, RECEIVE_TAG
 };
 
-double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, int startCol, double *y) {
+//typedef float f_type;
+
+f_type *matMull(int rank, int *row_ptr, int *col_ptr, f_type *val_ptr, f_type *x, int nRow, int startCol, f_type *y) {
 
     /// multiplication
     for (int i = 0; i < nRow; ++i) {
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]) {
     int total_run = 30, skip = 5, nRanks, rank, knl = 0, TOTAL_MAT_MUL = 20, nodes = 0;
 
     int *row_ptr, *col_ptr;
-    double *val_ptr, *x, *y;
+    f_type *val_ptr, *x, *y;
     proc_info_t *ranks_info;
     proc_info_t *procs_info;
 
@@ -106,10 +108,11 @@ int main(int argc, char *argv[]) {
     }
 
 
-    y = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
-    x = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
+    y = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
+    x = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
     for (int i = 0; i < ranks_info[rank].M; ++i) {
         x[i] = 1.0;
+        y[i] = 0.0;
     }
     MPI_Barrier(MPI_COMM_WORLD);
 //    printf("[%d] Vector creation done!\n", rank);
@@ -121,9 +124,6 @@ int main(int argc, char *argv[]) {
     struct timespec start, end, b_start, b_end, r_start, r_end, m_start, m_end;
     for (int r = 0; r < total_run + skip; ++r) {
         for (int mul = 0; mul < TOTAL_MAT_MUL; ++mul) {
-            for (int i = 0; i < ranks_info[rank].M; ++i) {
-                y[i] = 0.0;
-            }
             clock_gettime(CLOCK_MONOTONIC, &start);
             clock_gettime(CLOCK_MONOTONIC, &b_start);
             //broadcast X along column communicator
@@ -215,13 +215,13 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "Name,MatrixSize,AvgRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,MaxNonZeroPerRow,AvgNonZeroPerBlock,MaxNonZeroPerBlock,Nodes,AvgNPRSD\n");
+                    "Name,MatrixSize,AvgRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,MaxNonZeroPerRow,AvgNonZeroPerBlock,MaxNonZeroPerBlock,Nodes,AvgNPRSD,DataType\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%lf,%d,%d,%lf\n", matrixName, procs_info[rank].N,
+        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%lf,%d,%d,%lf,%d\n", matrixName, procs_info[rank].N,
                 avg_row, min_time, max_time,
                 mean, avg_bcast_time, avg_matmul_time, avg_reduce_time, total_run, nRanks, avg_nnz_per_row, max_nnz_per_row, avg_nnz,
-                max_nnz, nodes, avg_sd);
+                max_nnz, nodes, avg_sd, sizeof(f_type));
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file %s", outputFile);
             exit(EXIT_FAILURE);
