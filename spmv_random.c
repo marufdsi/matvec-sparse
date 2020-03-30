@@ -25,7 +25,7 @@ enum tag {
 double *matMull(int rank, int *row_ptr, int *col_ptr, double *val_ptr, double *x, int nRow, int startCol, double *y) {
 
     /// multiplication
-    for (int i = 0; i <nRow; ++i) {
+    for (int i = 0; i < nRow; ++i) {
         for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k)
             y[i] += val_ptr[k] * x[col_ptr[k] - startCol];
     }
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     char *in_file;
     double comp_time = 0, bcast_time = 0.0, matmul_time = 0.0, reduce_time = 0.0, min_time = 0.0, max_time = 0.0,
             avg_time = 0.0, mean = 0.0, avg_bcast_time = 0.0, avg_matmul_time = 0.0, avg_reduce_time = 0.0;
-    int total_run = 30, skip=5, nRanks, rank, knl = 0, TOTAL_MAT_MUL = 20;
+    int total_run = 30, skip = 5, nRanks, rank, knl = 0, TOTAL_MAT_MUL = 20, nodes = 0;
 
     int *row_ptr, *col_ptr;
     double *val_ptr, *x, *y;
@@ -80,15 +80,15 @@ int main(int argc, char *argv[]) {
     ranks_info = (proc_info_t *) malloc_or_exit(nRanks * sizeof(proc_info_t));
 
     int sqrRank = sqrt(nRanks);
-    int row_rank = rank/sqrRank; //which col of proc am I
-    int col_rank = rank%sqrRank; //which row of proc am I
+    int row_rank = rank / sqrRank; //which col of proc am I
+    int col_rank = rank % sqrRank; //which row of proc am I
 
     //initialize communicators
     MPI_Comm commrow;
-    MPI_Comm_split (MPI_COMM_WORLD, row_rank, rank, &commrow);
+    MPI_Comm_split(MPI_COMM_WORLD, row_rank, rank, &commrow);
 
     MPI_Comm commcol;
-    MPI_Comm_split (MPI_COMM_WORLD, col_rank, rank, &commcol);
+    MPI_Comm_split(MPI_COMM_WORLD, col_rank, rank, &commcol);
 
     if (argc < 2) {
         printf("Usage: %s input_file [output_file]\n", argv[0]);
@@ -96,7 +96,9 @@ int main(int argc, char *argv[]) {
     } else {
         in_file = argv[1];
         if (argc > 2)
-            knl = atoi(argv[2]);
+            nodes = atoi(argv[2]);
+        if (argc > 3)
+            knl = atoi(argv[3]);
     }
     if (csr_read_2D_partitioned_mat(in_file, &row_ptr, &col_ptr, &val_ptr, &ranks_info, sqrRank, rank) != 0) {
         fprintf(stderr, "read_matrix: failed\n");
@@ -116,7 +118,7 @@ int main(int argc, char *argv[]) {
     /// Start sparse matrix vector multiplication for each rank
     MPI_Barrier(MPI_COMM_WORLD);
     struct timespec start, end, b_start, b_end, r_start, r_end, m_start, m_end;
-    for (int r = 0; r < total_run+skip; ++r) {
+    for (int r = 0; r < total_run + skip; ++r) {
         for (int mul = 0; mul < TOTAL_MAT_MUL; ++mul) {
             for (int i = 0; i < ranks_info[rank].M; ++i) {
                 y[i] = 0.0;
@@ -124,7 +126,8 @@ int main(int argc, char *argv[]) {
             clock_gettime(CLOCK_MONOTONIC, &start);
             clock_gettime(CLOCK_MONOTONIC, &b_start);
             //broadcast X along column communicator
-            MPI_Bcast(x, ranks_info[rank].M, MPI_FLOAT, col_rank, commcol); //col_rank is the one with the correct information
+            MPI_Bcast(x, ranks_info[rank].M, MPI_FLOAT, col_rank,
+                      commcol); //col_rank is the one with the correct information
             if (r >= skip) {
                 clock_gettime(CLOCK_MONOTONIC, &b_end);
                 bcast_time += ((b_end.tv_sec * 1000 + (b_end.tv_nsec / 1.0e6)) -
@@ -166,14 +169,15 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&avg_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&avg_time, &mean, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     mean = mean / nRanks;
-
+    MPI_Comm_free(&commrow);
+    MPI_Comm_free(&commcol);
     int max_nnz = 0, sum_nnz = 0, avg_row = 0;
-    double max_nnz_per_row = 0.0, nnz_per_row = (double)procs_info[rank].NZ/procs_info[rank].M, avg_nnz = 0.0;
+    double max_nnz_per_row = 0.0, nnz_per_row = (double) procs_info[rank].NZ / procs_info[rank].M, avg_nnz = 0.0;
     MPI_Reduce(&procs_info[rank].NZ, &max_nnz, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&procs_info[rank].NZ, &sum_nnz, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&procs_info[rank].M, &avg_row, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&nnz_per_row, &max_nnz_per_row, 1, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
-    avg_nnz = sum_nnz/nRanks;
+    avg_nnz = sum_nnz / nRanks;
     /// print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
@@ -181,7 +185,7 @@ int main(int argc, char *argv[]) {
         char *_ptr = strtok(in_file, "/");
         char *matrixName = strtok(strtok(NULL, "-"), ".");
         char outputFile[100] = "Skylake_CSR_Random_BrCast_Reduce_SpMV.csv";
-        if(knl > 0)
+        if (knl > 0)
             strcpy(outputFile, "KNL_CSR_Random_BrCast_Reduce_SpMV.csv");
 
         FILE *resultCSV;
@@ -199,11 +203,13 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "Name,MatrixSize,AvgRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,AvgNonZeroPerBlock,MaxNonZeroPerBlock\n");
+                    "Name,MatrixSize,AvgRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,AvgNonZeroPerBlock,MaxNonZeroPerBlock,Nodes\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%d\n", matrixName,procs_info[rank].N, avg_row, min_time, max_time,
-                mean, avg_bcast_time, avg_matmul_time, avg_reduce_time, total_run, nRanks, max_nnz_per_row, avg_nnz, max_nnz);
+        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%d,%d\n", matrixName, procs_info[rank].N,
+                avg_row, min_time, max_time,
+                mean, avg_bcast_time, avg_matmul_time, avg_reduce_time, total_run, nRanks, max_nnz_per_row, avg_nnz,
+                max_nnz, nodes);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file %s", outputFile);
             exit(EXIT_FAILURE);
