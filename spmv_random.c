@@ -105,6 +105,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+
     y = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
     x = (double *) malloc_or_exit(ranks_info[rank].M * sizeof(double));
     for (int i = 0; i < ranks_info[rank].M; ++i) {
@@ -172,12 +173,23 @@ int main(int argc, char *argv[]) {
     MPI_Comm_free(&commrow);
     MPI_Comm_free(&commcol);
     int max_nnz = 0, sum_nnz = 0, avg_row = 0;
-    double max_nnz_per_row = 0.0, nnz_per_row = (double) procs_info[rank].NZ / procs_info[rank].M, avg_nnz = 0.0;
+    double max_nnz_per_row = 0.0, avg_nnz_per_row = 0.0, nnz_per_row = (double) procs_info[rank].NZ / procs_info[rank].M,
+    avg_nnz = 0.0, sd = 0.0, avg_sd = 0.0;
+
+    for (int j = 1; j < procs_info[rank].M+1; ++j) {
+        sd += (row_ptr[j] - nnz_per_row) * (row_ptr[j] - nnz_per_row);
+    }
+    sd = sd/procs_info[rank].M;
+    sd = sqrt(sd);
     MPI_Reduce(&procs_info[rank].NZ, &max_nnz, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&procs_info[rank].NZ, &sum_nnz, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&procs_info[rank].M, &avg_row, 1, MPI_INT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&nnz_per_row, &avg_nnz_per_row, 1, MPI_DOUBLE, MPI_SUM, MASTER, MPI_COMM_WORLD);
     MPI_Reduce(&nnz_per_row, &max_nnz_per_row, 1, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&sd, &avg_sd, 1, MPI_DOUBLE, MPI_SUM, MASTER, MPI_COMM_WORLD);
     avg_nnz = sum_nnz / nRanks;
+    avg_nnz_per_row = avg_nnz_per_row/nRanks;
+    avg_sd = avg_sd/nRanks;
     /// print execution stats
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
@@ -203,13 +215,13 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             fprintf(resultCSV,
-                    "Name,MatrixSize,AvgRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,AvgNonZeroPerBlock,MaxNonZeroPerBlock,Nodes\n");
+                    "Name,MatrixSize,AvgRow,MinTime,MaxTime,AvgTime,AvgBcastTime,AvgMatmulTime,AvgReduceTime,TotalRun,nProcess,NonZeroPerRow,MaxNonZeroPerRow,AvgNonZeroPerBlock,MaxNonZeroPerBlock,Nodes,AvgNPRSD\n");
         }
 
-        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%d,%d\n", matrixName, procs_info[rank].N,
+        fprintf(resultCSV, "%s,%d,%d,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%lf,%d,%d,%lf\n", matrixName, procs_info[rank].N,
                 avg_row, min_time, max_time,
-                mean, avg_bcast_time, avg_matmul_time, avg_reduce_time, total_run, nRanks, max_nnz_per_row, avg_nnz,
-                max_nnz, nodes);
+                mean, avg_bcast_time, avg_matmul_time, avg_reduce_time, total_run, nRanks, avg_nnz_per_row, max_nnz_per_row, avg_nnz,
+                max_nnz, nodes, avg_sd);
         if (fclose(resultCSV) != 0) {
             fprintf(stderr, "fopen: failed to open file %s", outputFile);
             exit(EXIT_FAILURE);
