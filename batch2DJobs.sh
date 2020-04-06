@@ -2,7 +2,7 @@
 
 #qsub -q copperhead -N "omp_aff" -l nodes=$1:ppn=$2 -v procs=$3,input=$4 -d $(pwd) run2DSpMV.sh
 
-qsub -q copperhead -N "mpi_2D" -l nodes=$1:ppn=$2:ib_leaf7 -v nodes=$1,procs=$3 -d $(pwd) run2DSpMV.sh
+qsub -q copperhead -N "mpi_2D" -l nodes=$1:ppn=$2:ib_leaf7 -l pmem=5GB -v nodes=$1,procs=$3 -d $(pwd) run2DSpMV.sh
 
 
 #qsub -q copperhead -N "mpi_2D" -l nodes=$1:ppn=$2:skylake -v input=nlpkkt160,procs=$3 -d $(pwd) run2DSpMV.sh

@@ -4,6 +4,25 @@ module load openmpi/3.1.2
 
 lscpu
 #mpirun -n $procs ./spmv_random "input/"$input"_random_"$procs".mtx" $nodes
+of="../GraphConversionAndPartition/partition/2D_partition/output/"
+mpirun -n $procs ./spmv_random $of"delaunay_n24_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"hugetrace-00020_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"inf-europe_osm_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"inf-italy_osm_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"soc-livejourna_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"soc-BlogCatalog_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"soc-flickr_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"oc-flixster_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"soc-lastfm_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"soc-youtube_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"great-britain_osm_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"hugetrace-00010_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"it-2004_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"netherlands_osm_random_"$procs".mtx" $nodes
+#mpirun -n $procs ./spmv_random $of"rel9_random_"$procs".mtx" $nodes
+#mpirun -n $procs ./spmv_random $of"relat9_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random $of"sk-2005_random_"$procs".mtx" $nodes
+
 
 mpirun -n $procs ./spmv_random "input/cnr_random_"$procs".mtx" $nodes
 mpirun -n $procs ./spmv_random "input/eu_random_"$procs".mtx" $nodes
