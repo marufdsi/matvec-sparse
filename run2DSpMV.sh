@@ -2,7 +2,7 @@
 module remove openmpi/4.0.1
 module load openmpi/3.1.2
 
-lscpu
+#lscpu
 #mpirun -n $procs ./spmv_random "input/"$input"_random_"$procs".mtx" $nodes
 of="../GraphConversionAndPartition/partition/2D_partition/output/"
 mpirun -n $procs ./spmv_random $of"delaunay_n24_random_"$procs".mtx" $nodes
