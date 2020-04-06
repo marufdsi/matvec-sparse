@@ -17,7 +17,7 @@ mpirun -n $procs ./spmv_random "input/nlpkkt200_random_"$procs".mtx" $nodes
 mpirun -n $procs ./spmv_random "input/nlpkkt240_random_"$procs".mtx" $nodes
 mpirun -n $procs ./spmv_random "input/cage15_random_"$procs".mtx" $nodes
 mpirun -n $procs ./spmv_random "input/G3_circuit_random_"$procs".mtx" $nodes
-#mpirun -n $procs ./spmv_random "input/kkt_power_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random "input/kkt_power_random_"$procs".mtx" $nodes
 ##mpirun -n $procs ./spmv_random "input/ecology1_random_"$procs".mtx" $nodes
 mpirun -n $procs ./spmv_random "input/uk2002_random_"$procs".mtx" $nodes
 ##mpirun -n $procs ./spmv_random "input/uk2007_random_"$procs".mtx" $nodes
@@ -27,7 +27,7 @@ mpirun -n $procs ./spmv_random "input/coPapersDBLP_random_"$procs".mtx" $nodes
 mpirun -n $procs ./spmv_random "input/citationCiteseer_random_"$procs".mtx" $nodes
 ##mpirun -n $procs ./spmv_random "input/coPapersCiteseer_random_"$procs".mtx" $nodes
 ##mpirun -n $procs ./spmv_random "input/copter2_random_"$procs".mtx" $nodes
-##mpirun -n $procs ./spmv_random "input/333SP_random_"$procs".mtx" $nodes
+mpirun -n $procs ./spmv_random "input/333SP_random_"$procs".mtx" $nodes
 mpirun -n $procs ./spmv_random "input/af_shell10_random_"$procs".mtx" $nodes
 mpirun -n $procs ./spmv_random "input/AS365_random_"$procs".mtx" $nodes
 mpirun -n $procs ./spmv_random "input/europe_random_"$procs".mtx" $nodes
