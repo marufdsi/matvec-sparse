@@ -265,8 +265,11 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     char rank_wise_filename[MM_MAX_LINE_LENGTH];
     char file_n[100];
     strcpy(file_n, filename);
-    char *_ptr = strtok(file_n, ".");
-    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, strtok(NULL, "-"));
+//    char *_ptr = strtok(file_n, ".");
+//    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, strtok(NULL, "-"));
+    char *_ptr = strtok(file_n, ".mtx");
+    sprintf(rank_wise_filename, "%s_%d.%s", _ptr, rank, ".mtx");
+    printf("rank-wise file name: %s\n", rank_wise_filename);
     if ((f = fopen(rank_wise_filename, "r")) == NULL) {
         printf("Cannot open '%s'\n", rank_wise_filename);
         return 1;
