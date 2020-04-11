@@ -194,8 +194,17 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER) {
         printf("[%d] Computation MinTime: %10.3lf, MaxTime: %10.3lf, AvgTime: %10.3lf ms, NonZero: %d\n",
                rank, min_time, max_time, mean, procs_info[rank].NZ);
-        char *_ptr = strtok(in_file, "/");
-        char *matrixName = strtok(strtok(NULL, "-"), ".");
+//        char *_ptr = strtok(in_file, "/");
+        char * ptr = strtok(in_file, "/");
+        char *file[1025];
+        int f_i=0;
+        while(ptr != NULL)
+        {
+            file[f_i++] = ptr;
+            ptr = strtok(NULL, "/");
+        }
+        ptr = strtok(file[f_i-1], ".");
+        char *matrixName = ptr;
         char outputFile[100] = "Skylake_CSR_Random_BrCast_Reduce_SpMV.csv";
         if (knl > 0)
             strcpy(outputFile, "KNL_CSR_Random_BrCast_Reduce_SpMV.csv");
