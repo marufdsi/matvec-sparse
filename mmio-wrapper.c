@@ -357,8 +357,8 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         (*row_ptr)[i] = last;
         last = temp;
     }
-    free(ptr);
-    free(file);
+//    free(ptr);
+//    free(file);
     free(i_idx);
     free(j_idx);
     free(values);
