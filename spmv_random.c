@@ -110,6 +110,9 @@ int main(int argc, char *argv[]) {
     f_type tmp_val =0;
     int tmp_int = 0;
     for (int k = 0; k < ranks_info[rank].M; ++k) {
+        if (row_ptr[k]<0){
+            printf("[%d] Error data %d\n", rank, row_ptr[k]);
+        }
         tmp_int += row_ptr[k];
         for (int i = row_ptr[k]; i < row_ptr[k + 1]; ++i) {
             tmp_val += val_ptr[i] + col_ptr[i];
