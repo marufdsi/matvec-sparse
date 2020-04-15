@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
         if (row_ptr[k]<0){
             printf("[%d] Error data %d\n", rank, row_ptr[k]);
         }
-        tmp_int += row_ptr[k];
+        tmp_int += row_ptr[k+1]-row_ptr[k];
         for (int i = row_ptr[k]; i < row_ptr[k + 1]; ++i) {
             tmp_val += val_ptr[i] + col_ptr[i];
         }
