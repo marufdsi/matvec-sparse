@@ -360,9 +360,18 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     }
 //    free(ptr);
 //    free(file);
-    free(i_idx);
-    free(j_idx);
-    free(values);
+    if(!i_idx)
+        free(i_idx);
+    else
+        printf("i_dx null\n");
+    if(!j_idx)
+        free(j_idx);
+    else
+        printf("j_idx null\n");
+    if(!values)
+        free(values);
+    else
+        printf("values null\n");
     /* close the file */
     if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
