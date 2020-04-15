@@ -110,7 +110,12 @@ int main(int argc, char *argv[]) {
     printf("[%d] Done Reading, M=%d !\n", rank, ranks_info[rank].M);
     y = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
     x = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
-
+    if (!x) {
+        printf("[%d] failed to allocated x\n", rank);
+    }
+    if (!y) {
+        printf("[%d] failed to allocated y\n", rank);
+    }
     free(x);
     free(y);
     MPI_Finalize();
