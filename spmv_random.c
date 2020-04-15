@@ -109,6 +109,9 @@ int main(int argc, char *argv[]) {
     }
     printf("[%d] Done Reading", rank);
     printf(" M(%d)=%d !\n", rank, ranks_info[rank].M);
+
+    MPI_Finalize();
+    return 0;
     y = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
     x = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
     for (int i = 0; i < ranks_info[rank].M; ++i) {
@@ -120,9 +123,6 @@ int main(int argc, char *argv[]) {
     if(rank == MASTER){
         printf("Ready to perform mat-mul\n");
     }
-    MPI_Finalize();
-
-    return 0;
 //    printf("[%d] Vector creation done!\n", rank);
 
     /// Share process info among all the processes
