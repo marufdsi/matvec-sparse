@@ -102,11 +102,11 @@ int main(int argc, char *argv[]) {
         if (argc > 3)
             knl = atoi(argv[3]);
     }
-   /* if (csr_read_2D_partitioned_mat(in_file, &row_ptr, &col_ptr, &val_ptr, &ranks_info, sqrRank, rank) != 0) {
+    if (csr_read_2D_partitioned_mat(in_file, &row_ptr, &col_ptr, &val_ptr, &ranks_info, sqrRank, rank) != 0) {
         printf("Error in the process=%d\n", rank);
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
-    }*/
+    }
     m = 63067;
     printf("[%d] row %d\n", rank, m);
     printf("[%d] Done Reading, M=%d!\n", rank, m);
