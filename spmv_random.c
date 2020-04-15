@@ -120,6 +120,9 @@ int main(int argc, char *argv[]) {
     if(rank == MASTER){
         printf("Ready to perform mat-mul\n");
     }
+    MPI_Finalize();
+
+    return 0;
 //    printf("[%d] Vector creation done!\n", rank);
 
     /// Share process info among all the processes
