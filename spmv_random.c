@@ -111,6 +111,10 @@ int main(int argc, char *argv[]) {
     y = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
     x = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
 
+    free(x);
+    free(y);
+    MPI_Finalize();
+    return 0;
     for (int i = 0; i < ranks_info[rank].M; ++i) {
         x[i] = 1.0;
         y[i] = 0.0;
@@ -120,10 +124,6 @@ int main(int argc, char *argv[]) {
     if(rank == MASTER){
         printf("Ready to perform mat-mul\n");
     }
-    free(x);
-    free(y);
-    MPI_Finalize();
-    return 0;
 //    printf("[%d] Vector creation done!\n", rank);
 
     /// Share process info among all the processes
