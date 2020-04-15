@@ -282,7 +282,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     }
     ptr = strtok(file[i-1], ".");
     sprintf(rank_wise_filename, "%s%s_%d.mtx", n, ptr, rank);
-    printf("rank-wise file name: %s\n", rank_wise_filename);
+//    printf("rank-wise file name: %s\n", rank_wise_filename);
     if ((f = fopen(rank_wise_filename, "r")) == NULL) {
         printf("Cannot open '%s'\n", rank_wise_filename);
         return 1;
