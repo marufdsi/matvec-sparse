@@ -109,18 +109,7 @@ int main(int argc, char *argv[]) {
     }*/
     m = 63067;
     printf("[%d] row %d\n", rank, m);
-    f_type tmp_val =0;
-    int tmp_int = 0;
-    for (int k = 0; k < m; ++k) {
-        if (row_ptr[k]<0){
-            printf("[%d] Error data %d\n", rank, row_ptr[k]);
-        }
-        tmp_int += row_ptr[k+1]-row_ptr[k];
-        for (int i = row_ptr[k]; i < row_ptr[k + 1]; ++i) {
-            tmp_val += val_ptr[i] + col_ptr[i];
-        }
-    }
-    printf("[%d] Done Reading, M=%d NNZ =%d!\n", rank, ranks_info[rank].M, tmp_int);
+    printf("[%d] Done Reading, M=%d!\n", rank, m);
     y = (f_type *) malloc(m * sizeof(f_type));
     x = (f_type *) malloc(m * sizeof(f_type));
     for (int i = 0; i < m; ++i) {
