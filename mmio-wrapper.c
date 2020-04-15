@@ -360,15 +360,15 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     }
 //    free(ptr);
 //    free(file);
-    if(i_idx)
+    if(i_idx != NULL)
         free(i_idx);
     else
         printf("i_dx null\n");
-    if(j_idx)
+    if(j_idx != NULL)
         free(j_idx);
     else
         printf("j_idx null\n");
-    if(values)
+    if(values != NULL)
         free(values);
     else
         printf("values null\n");
