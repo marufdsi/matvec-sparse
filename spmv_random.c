@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-    m = ranks_info[rank].M;
+    m = 63067;
     printf("[%d] row %d\n", rank, m);
     f_type tmp_val =0;
     int tmp_int = 0;
