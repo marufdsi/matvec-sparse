@@ -107,7 +107,8 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-
+    printf("[%d] Done Reading", rank);
+    printf(" M(%d)=%d !\n", rank, ranks_info[rank].M);
     y = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
     x = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
     for (int i = 0; i < ranks_info[rank].M; ++i) {
