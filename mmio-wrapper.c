@@ -260,8 +260,8 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     FILE *f;
     MM_typecode matcode;
     int errorcode, nrows, ncols, nz_elements;
-
-    if(rank == 6){
+    int check_rank = 5;
+    if(rank == check_rank){
         printf("Start Reading\n");
     }
     /* open the file */
@@ -286,14 +286,14 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     ptr = strtok(file[i-1], ".");
     sprintf(rank_wise_filename, "%s%s_%d.mtx", n, ptr, rank);
 //    printf("rank-wise file name: %s\n", rank_wise_filename);
-    if(rank == 6){
+    if(rank == check_rank){
         printf("Open file= %s\n", rank_wise_filename);
     }
     if ((f = fopen(rank_wise_filename, "r")) == NULL) {
         printf("Cannot open '%s'\n", rank_wise_filename);
         return 1;
     }
-    if(rank == 6){
+    if(rank == check_rank){
         printf("Read banner\n");
     }
     /* process first line */
@@ -315,7 +315,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         printf("Error while processing array (file:'%s') (code:%d)\n", filename, errorcode);
         return 1;
     }
-    if(rank == 6){
+    if(rank == check_rank){
         printf("Matrix size, M=%d, N=%d, NNZ=%d\n", nrows, ncols, nz_elements);
     }
 
@@ -334,7 +334,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     int *i_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
     int *j_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
     f_type *values = (f_type *) malloc_or_exit(nz_elements * sizeof(f_type));
-    if(rank == 6){
+    if(rank == check_rank){
         printf("Initialization done\n");
     }
     /* read actual matrix */
@@ -343,7 +343,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         i_idx[i]--;
         j_idx[i]--;
     }
-    if(rank == 6){
+    if(rank == check_rank){
         printf("done reading\n");
     }
     for (int i = 0; i < nz_elements; i++) {
@@ -353,7 +353,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         }
         (*row_ptr)[i_idx[i] - startRow]++;
     }
-    if(rank == 6){
+    if(rank == check_rank){
         printf("1\n");
     }
     for (int i = 0, cumsum = 0; i < (*ranks_info)[rank].M; i++) {
@@ -361,11 +361,11 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         (*row_ptr)[i] = cumsum;
         cumsum += temp;
     }
-    if(rank == 6){
+    if(rank == check_rank){
         printf("2\n");
     }
     (*row_ptr)[(*ranks_info)[rank].M] = nz_elements;
-    if(rank == 6){
+    if(rank == check_rank){
         printf("3\n");
     }
     for (int n = 0; n < nz_elements; n++) {
@@ -381,7 +381,7 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         (*row_ptr)[row]++;
     }
 
-    if(rank == 6){
+    if(rank == check_rank){
         printf("4\n");
     }
     for (int i = 0, last = 0; i <= (*ranks_info)[rank].M; i++) {
@@ -389,14 +389,14 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         (*row_ptr)[i] = last;
         last = temp;
     }
-    if(rank == 6){
+    if(rank == check_rank){
         printf("5\n");
     }
     /* close the file */
     if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
     }
-    if(rank == 6){
+    if(rank == check_rank){
         printf("6\n");
     }
     return 0;
