@@ -121,7 +121,10 @@ int main(int argc, char *argv[]) {
     printf("[%d] Done Reading, M=%d NNZ =%d!\n", rank, ranks_info[rank].M, tmp_int);
     y = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
     x = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
-
+    for (int i = 0; i < ranks_info[rank].M; ++i) {
+        x[i] = 1.0;
+        y[i] = 0.0;
+    }
     MPI_Finalize();
     return 0;
     for (int i = 0; i < ranks_info[rank].M; ++i) {
