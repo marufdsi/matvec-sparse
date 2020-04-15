@@ -313,14 +313,15 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     (*ranks_info)[rank].first_row = startRow;
     (*ranks_info)[rank].last_row = startRow + (*ranks_info)[rank].M - 1;
     /// Initialize CSR row, col and value pointer.
-    (*row_ptr) = (int *) calloc_or_exit(((*ranks_info)[rank].M + 1), sizeof(int));
-    (*col_ptr) = (int *) malloc_or_exit(nz_elements * sizeof(int));
-    (*val_ptr) = (f_type *) malloc_or_exit(nz_elements * sizeof(f_type));
-
-    (*row_ptr)[0] = 0;
-    int *i_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
-    int *j_idx = (int *) malloc_or_exit(nz_elements * sizeof(int));
-    f_type *values = (f_type *) malloc_or_exit(nz_elements * sizeof(f_type));
+    (*row_ptr) = (int *) malloc(((*ranks_info)[rank].M + 1)*sizeof(int));
+    (*col_ptr) = (int *) malloc(nz_elements * sizeof(int));
+    (*val_ptr) = (f_type *) malloc(nz_elements * sizeof(f_type));
+    for (int k = 0; k < (*ranks_info)[rank].M; ++k) {
+        (*row_ptr)[k] = 0;
+    }
+    int *i_idx = (int *) malloc(nz_elements * sizeof(int));
+    int *j_idx = (int *) malloc(nz_elements * sizeof(int));
+    f_type *values = (f_type *) malloc(nz_elements * sizeof(f_type));
     /* read actual matrix */
     for (int i = 0; i < nz_elements; i++) {
         fscanf(f, "%d %d %lf", &(i_idx[i]), &(j_idx[i]), &(values[i]));
@@ -359,9 +360,9 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     }
 //    free(ptr);
 //    free(file);
-//    free(i_idx);
-//    free(j_idx);
-//    free(values);
+    free(i_idx);
+    free(j_idx);
+    free(values);
     /* close the file */
     if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
