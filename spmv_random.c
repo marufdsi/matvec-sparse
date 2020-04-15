@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     char *in_file;
     double comp_time = 0, bcast_time = 0.0, matmul_time = 0.0, reduce_time = 0.0, min_time = 0.0, max_time = 0.0,
             avg_time = 0.0, mean = 0.0, avg_bcast_time = 0.0, avg_matmul_time = 0.0, avg_reduce_time = 0.0;
-    int total_run = 30, skip = 5, nRanks, rank, knl = 0, TOTAL_MAT_MUL = 20, nodes = 0;
+    int total_run = 30, skip = 5, nRanks, rank, knl = 0, TOTAL_MAT_MUL = 20, nodes = 0, m;
 
     int *row_ptr, *col_ptr;
     f_type *val_ptr, *x, *y;
@@ -107,9 +107,11 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
+    m = ranks_info[rank].M;
+    printf("[%d] row %d\n", rank, m);
     f_type tmp_val =0;
     int tmp_int = 0;
-    for (int k = 0; k < ranks_info[rank].M; ++k) {
+    for (int k = 0; k < m; ++k) {
         if (row_ptr[k]<0){
             printf("[%d] Error data %d\n", rank, row_ptr[k]);
         }
@@ -119,12 +121,13 @@ int main(int argc, char *argv[]) {
         }
     }
     printf("[%d] Done Reading, M=%d NNZ =%d!\n", rank, ranks_info[rank].M, tmp_int);
-    y = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
-    x = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
-    for (int i = 0; i < ranks_info[rank].M; ++i) {
+    y = (f_type *) malloc(m * sizeof(f_type));
+    x = (f_type *) malloc(m * sizeof(f_type));
+    for (int i = 0; i < m; ++i) {
         x[i] = 1.0;
         y[i] = 0.0;
     }
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
     return 0;
     for (int i = 0; i < ranks_info[rank].M; ++i) {
