@@ -107,7 +107,15 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-    printf("[%d] Done Reading, M=%d !\n", rank, ranks_info[rank].M);
+    f_type tmp_val =0;
+    int tmp_int = 0;
+    for (int k = 0; k < ranks_info[rank].M; ++k) {
+        tmp_int += row_ptr[k];
+        for (int i = row_ptr[k]; i < row_ptr[k + 1]; ++i) {
+            tmp_val += val_ptr[i] + col_ptr[i];
+        }
+    }
+    printf("[%d] Done Reading, M=%d NNZ =%d!\n", rank, ranks_info[rank].M, tmp_int);
     y = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
     x = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
 
