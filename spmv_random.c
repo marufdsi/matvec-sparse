@@ -107,7 +107,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-    printf("[%d] Done Reading!\n", rank);
 
     y = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
     x = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
@@ -115,6 +114,7 @@ int main(int argc, char *argv[]) {
         x[i] = 1.0;
         y[i] = 0.0;
     }
+    printf("[%d] Done Initialization!\n", rank);
     MPI_Barrier(MPI_COMM_WORLD);
     if(rank == MASTER){
         printf("Ready to perform mat-mul\n");
