@@ -108,8 +108,8 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     printf("[%d] Done Reading, M=%d !\n", rank, ranks_info[rank].M);
-    y = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
-    x = (f_type *) malloc_or_exit(ranks_info[rank].M * sizeof(f_type));
+    y = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
+    x = (f_type *) malloc(ranks_info[rank].M * sizeof(f_type));
     free(x);
     free(y);
     MPI_Finalize();
