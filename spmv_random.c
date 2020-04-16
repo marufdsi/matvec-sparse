@@ -112,10 +112,10 @@ int main(int argc, char *argv[]) {
     printf("[%d] Done Reading, M=%d!\n", rank, m);
     y = (f_type *) malloc(m * sizeof(f_type));
     x = (f_type *) malloc(m * sizeof(f_type));
-    for (int i = 0; i < m; ++i) {
-        x[i] = 1.0;
-        y[i] = 0.0;
-    }
+//    for (int i = 0; i < m; ++i) {
+//        x[i] = 1.0;
+//        y[i] = 0.0;
+//    }
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
     return 0;
