@@ -305,77 +305,110 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
         printf("Error while processing array (file:'%s') (code:%d)\n", filename, errorcode);
         return 1;
     }
-
-    int startRow = ceil(((double) ncols / sqrRank)) * (rank / sqrRank);
-    (*ranks_info)[rank].M = ceil(((double)ncols)/sqrRank);
-    (*ranks_info)[rank].N = ncols;
-    (*ranks_info)[rank].NZ = nz_elements;
-    (*ranks_info)[rank].first_row = startRow;
-    (*ranks_info)[rank].last_row = startRow + (*ranks_info)[rank].M - 1;
-    /// Initialize CSR row, col and value pointer.
-    (*row_ptr) = (int *) malloc(((*ranks_info)[rank].M + 1)*sizeof(int));
-    (*col_ptr) = (int *) malloc(nz_elements * sizeof(int));
-    (*val_ptr) = (f_type *) malloc(nz_elements * sizeof(f_type));
-    for (int k = 0; k < (*ranks_info)[rank].M; ++k) {
-        (*row_ptr)[k] = 0;
+    int *csrRowPtrA_counter = (int *) malloc((nrows + 1) * sizeof(int));
+    for (i = 0; i < nrows + 1; ++i) {
+        csrRowPtrA_counter[i] = 0;
     }
-    int *i_idx = (int *) malloc(nz_elements * sizeof(int));
-    int *j_idx = (int *) malloc(nz_elements * sizeof(int));
-    f_type *values = (f_type *) malloc(nz_elements * sizeof(f_type));
-    /* read actual matrix */
+    int *csrRowIdxA_tmp = (int *) malloc(nz_elements * sizeof(int));
+    int *csrColIdxA_tmp = (int *) malloc(nz_elements * sizeof(int));
+    f_type *csrValA_tmp = (f_type *) malloc(nz_elements * sizeof(f_type));
+    int isReal = 0, isInteger=0, isPattern=0, isSymmetric = 0;
+    if (mm_is_real(matcode))
+        isReal = 1;
+    else if (mm_is_pattern(matcode))
+        isPattern = 1;
+    else if (mm_is_integer(matcode))
+        isInteger = 1;
+    if(mm_is_symmetric(matcode))
+        isSymmetric = 1;
     for (int i = 0; i < nz_elements; i++) {
-        fscanf(f, "%d %d %lf", &(i_idx[i]), &(j_idx[i]), &(values[i]));
-        i_idx[i]--;
-        j_idx[i]--;
-    }
-    for (int i = 0; i < nz_elements; i++) {
-        if ((i_idx[i] - startRow) >= (*ranks_info)[rank].M || (i_idx[i] - startRow) < 0) {
-            printf("[%d] Index out of bound for row=%d, start row=%d\n", rank, i_idx[i], startRow);
-            return 1;
-        }
-        (*row_ptr)[i_idx[i] - startRow]++;
-    }
-    for (int i = 0, cumsum = 0; i < (*ranks_info)[rank].M; i++) {
-        int temp = (*row_ptr)[i];
-        (*row_ptr)[i] = cumsum;
-        cumsum += temp;
-    }
-    (*row_ptr)[(*ranks_info)[rank].M] = nz_elements;
-    for (int n = 0; n < nz_elements; n++) {
-        int row = i_idx[n] - startRow;
-        if (row < 0 || row >= (*ranks_info)[rank].M) {
-            printf("[%d] out of bound for row=%d, start row=%d\n", rank, row, startRow);
-            return 1;
-        }
-        int dest = (*row_ptr)[row];
-        (*col_ptr)[dest] = j_idx[n];
-        (*val_ptr)[dest] = values[n];
+        int idxi, idxj;
+        f_type fval;
+        int ival;
 
-        (*row_ptr)[row]++;
+        if (isReal) {
+            int count = fscanf(f, "%d %d %lg\n", &idxi, &idxj, &fval);
+        }
+        else if (isInteger) {
+            int count = fscanf(f, "%d %d %d\n", &idxi, &idxj, &ival);
+            fval = ival;
+        } else if (isPattern) {
+            int count = fscanf(f, "%d %d\n", &idxi, &idxj);
+            fval = 1.0;
+        }
+
+        // adjust from 1-based to 0-based
+        idxi--;
+        idxj--;
+
+        csrRowPtrA_counter[idxi]++;
+        csrRowIdxA_tmp[i] = idxi;
+        csrColIdxA_tmp[i] = idxj;
+        csrValA_tmp[i] = fval;
     }
-    for (int i = 0, last = 0; i <= (*ranks_info)[rank].M; i++) {
-        int temp = (*row_ptr)[i];
-        (*row_ptr)[i] = last;
-        last = temp;
+    if (isSymmetric) {
+        for (i = 0; i < nz_elements; i++) {
+            if (csrRowIdxA_tmp[i] != csrColIdxA_tmp[i])
+                csrRowPtrA_counter[csrColIdxA_tmp[i]]++;
+        }
     }
-//    free(ptr);
-//    free(file);
-    /*if(i_idx != NULL)
-        free(i_idx);
-    else
-        printf("i_dx null\n");
-    if(j_idx != NULL)
-        free(j_idx);
-    else
-        printf("j_idx null\n");
-    if(values != NULL)
-        free(values);
-    else
-        printf("values null\n");*/
-    /* close the file */
+
+    int old_val, new_val;
+    old_val = csrRowPtrA_counter[0];
+    csrRowPtrA_counter[0] = 0;
+    for (i = 1; i <= nrows; i++) {
+        new_val = csrRowPtrA_counter[i];
+        csrRowPtrA_counter[i] = old_val + csrRowPtrA_counter[i - 1];
+        old_val = new_val;
+    }
     if (fclose(f) != 0) {
         fprintf(stderr, "Cannot close file (fil:'%s')\n", filename);
     }
+    int startRow = ceil(((double) ncols / sqrRank)) * (rank / sqrRank);
+    (*ranks_info)[rank].M = ceil(((double)ncols)/sqrRank);
+    (*ranks_info)[rank].N = ncols;
+    (*ranks_info)[rank].NZ = csrRowPtrA_counter[nrows];
+    (*ranks_info)[rank].first_row = startRow;
+    (*ranks_info)[rank].last_row = startRow + (*ranks_info)[rank].M - 1;
+    /// Initialize CSR row, col and value pointer.
+    (*row_ptr) = (int *) malloc((nrows + 1)*sizeof(int));
+    memcpy((*row_ptr), csrRowPtrA_counter, (nrows + 1) * sizeof(int));
+    memset(csrRowPtrA_counter, 0, (nrows + 1) * sizeof(int));
+    (*col_ptr) = (int *) malloc((*ranks_info)[rank].NZ * sizeof(int));
+    (*val_ptr) = (f_type *) malloc((*ranks_info)[rank].NZ * sizeof(f_type));
+
+    if (isSymmetric) {
+        for (i = 0; i < nz_elements; i++) {
+            if (csrRowIdxA_tmp[i] != csrColIdxA_tmp[i]) {
+                int offset = (*row_ptr)[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
+                (*col_ptr)[offset] = csrColIdxA_tmp[i];
+                (*val_ptr)[offset] = csrValA_tmp[i];
+                csrRowPtrA_counter[csrRowIdxA_tmp[i]]++;
+
+                offset = (*row_ptr)[csrColIdxA_tmp[i]] + csrRowPtrA_counter[csrColIdxA_tmp[i]];
+                (*col_ptr)[offset] = csrRowIdxA_tmp[i];
+                (*val_ptr)[offset] = csrValA_tmp[i];
+                csrRowPtrA_counter[csrColIdxA_tmp[i]]++;
+            } else {
+                int offset = (*row_ptr)[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
+                (*col_ptr)[offset] = csrColIdxA_tmp[i];
+                (*val_ptr)[offset] = csrValA_tmp[i];
+                csrRowPtrA_counter[csrRowIdxA_tmp[i]]++;
+            }
+        }
+    } else {
+        for (i = 0; i < nz_elements; i++) {
+            int offset = (*row_ptr)[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
+            (*col_ptr)[offset] = csrColIdxA_tmp[i];
+            (*val_ptr)[offset] = csrValA_tmp[i];
+            csrRowPtrA_counter[csrRowIdxA_tmp[i]]++;
+        }
+    }
+    // free tmp space
+    free(csrColIdxA_tmp);
+    free(csrValA_tmp);
+    free(csrRowIdxA_tmp);
+    free(csrRowPtrA_counter);
     return 0;
 }
 
