@@ -255,8 +255,11 @@ int test_csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **
     return 0;
 }
 
-int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_ptr, f_type **val_ptr,
+int csr_read_2D_partitioned_mat(const char *filename,
                                 proc_info_t **ranks_info, int sqrRank, int rank) {
+    int *row_ptr;
+    int *col_ptr;
+    f_type *val_ptr;
     FILE *f;
     MM_typecode matcode;
     int errorcode, nrows, ncols, nz_elements;
@@ -371,36 +374,36 @@ int csr_read_2D_partitioned_mat(const char *filename, int **row_ptr, int **col_p
     (*ranks_info)[rank].first_row = startRow;
     (*ranks_info)[rank].last_row = startRow + (*ranks_info)[rank].M - 1;
     /// Initialize CSR row, col and value pointer.
-    (*row_ptr) = (int *) malloc((nrows + 1)*sizeof(int));
+    row_ptr = (int *) malloc((nrows + 1)*sizeof(int));
     memcpy((*row_ptr), csrRowPtrA_counter, (nrows + 1) * sizeof(int));
     memset(csrRowPtrA_counter, 0, (nrows + 1) * sizeof(int));
-    (*col_ptr) = (int *) malloc((*ranks_info)[rank].NZ * sizeof(int));
-    (*val_ptr) = (f_type *) malloc((*ranks_info)[rank].NZ * sizeof(f_type));
+    col_ptr = (int *) malloc((*ranks_info)[rank].NZ * sizeof(int));
+    val_ptr = (f_type *) malloc((*ranks_info)[rank].NZ * sizeof(f_type));
 
     if (isSymmetric) {
         for (i = 0; i < nz_elements; i++) {
             if (csrRowIdxA_tmp[i] != csrColIdxA_tmp[i]) {
-                int offset = (*row_ptr)[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
-                (*col_ptr)[offset] = csrColIdxA_tmp[i];
-                (*val_ptr)[offset] = csrValA_tmp[i];
+                int offset = row_ptr[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
+                col_ptr[offset] = csrColIdxA_tmp[i];
+                val_ptr[offset] = csrValA_tmp[i];
                 csrRowPtrA_counter[csrRowIdxA_tmp[i]]++;
 
-                offset = (*row_ptr)[csrColIdxA_tmp[i]] + csrRowPtrA_counter[csrColIdxA_tmp[i]];
-                (*col_ptr)[offset] = csrRowIdxA_tmp[i];
-                (*val_ptr)[offset] = csrValA_tmp[i];
+                offset = row_ptr[csrColIdxA_tmp[i]] + csrRowPtrA_counter[csrColIdxA_tmp[i]];
+                col_ptr[offset] = csrRowIdxA_tmp[i];
+                val_ptr[offset] = csrValA_tmp[i];
                 csrRowPtrA_counter[csrColIdxA_tmp[i]]++;
             } else {
-                int offset = (*row_ptr)[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
-                (*col_ptr)[offset] = csrColIdxA_tmp[i];
-                (*val_ptr)[offset] = csrValA_tmp[i];
+                int offset = row_ptr[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
+                col_ptr[offset] = csrColIdxA_tmp[i];
+                val_ptr[offset] = csrValA_tmp[i];
                 csrRowPtrA_counter[csrRowIdxA_tmp[i]]++;
             }
         }
     } else {
         for (i = 0; i < nz_elements; i++) {
-            int offset = (*row_ptr)[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
-            (*col_ptr)[offset] = csrColIdxA_tmp[i];
-            (*val_ptr)[offset] = csrValA_tmp[i];
+            int offset = row_ptr[csrRowIdxA_tmp[i]] + csrRowPtrA_counter[csrRowIdxA_tmp[i]];
+            col_ptr[offset] = csrColIdxA_tmp[i];
+            val_ptr[offset] = csrValA_tmp[i];
             csrRowPtrA_counter[csrRowIdxA_tmp[i]]++;
         }
     }
