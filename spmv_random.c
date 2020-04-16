@@ -107,11 +107,11 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "read_matrix: failed\n");
         exit(EXIT_FAILURE);
     }
-    m = 63067;
-    printf("[%d] row %d\n", rank, m);
-    printf("[%d] Done Reading, M=%d!\n", rank, m);
-    y = (f_type *) malloc(m * sizeof(f_type));
-    x = (f_type *) malloc(m * sizeof(f_type));
+//    m = 63067;
+//    printf("[%d] row %d\n", rank, m);
+//    printf("[%d] Done Reading, M=%d!\n", rank, m);
+//    y = (f_type *) malloc(m * sizeof(f_type));
+//    x = (f_type *) malloc(m * sizeof(f_type));
 //    for (int i = 0; i < m; ++i) {
 //        x[i] = 1.0;
 //        y[i] = 0.0;

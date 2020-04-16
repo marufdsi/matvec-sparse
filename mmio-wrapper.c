@@ -408,10 +408,10 @@ int csr_read_2D_partitioned_mat(const char *filename,
         }
     }
     // free tmp space
-//    free(csrColIdxA_tmp);
-//    free(csrValA_tmp);
-//    free(csrRowIdxA_tmp);
-//    free(csrRowPtrA_counter);
+    free(csrColIdxA_tmp);
+    free(csrValA_tmp);
+    free(csrRowIdxA_tmp);
+    free(csrRowPtrA_counter);
     return 0;
 }
 
